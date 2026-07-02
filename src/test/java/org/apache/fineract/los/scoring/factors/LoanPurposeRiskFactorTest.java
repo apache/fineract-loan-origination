@@ -21,6 +21,7 @@ package org.apache.fineract.los.scoring.factors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.fineract.los.domain.enums.LoanPurpose;
 import org.apache.fineract.los.scoring.ScoringWeightsProperties;
 import org.apache.fineract.los.scoring.model.ApplicantScoringProfile;
 import org.apache.fineract.los.scoring.model.FactorScore;
@@ -91,6 +92,8 @@ class LoanPurposeRiskFactorTest {
   @Test
   @DisplayName("Unrecognised purpose scores neutral default")
   void unrecognisedPurposeScoresNeutral() {
+    // Intentionally not a LoanPurpose enum constant — this
+    // test asserts behaviour for values outside the known set.
     final ApplicantScoringProfile profile =
         ApplicantScoringProfile.builder().loanPurpose("VACATION").build();
 
@@ -103,7 +106,9 @@ class LoanPurposeRiskFactorTest {
   @DisplayName("Purpose comparison is case-insensitive")
   void purposeComparisonIsCaseInsensitive() {
     final ApplicantScoringProfile profile =
-        ApplicantScoringProfile.builder().loanPurpose("agriculture").build();
+        ApplicantScoringProfile.builder()
+            .loanPurpose(LoanPurpose.AGRICULTURE.name().toLowerCase())
+            .build();
 
     final FactorScore result = factor.score(profile);
 
@@ -114,7 +119,7 @@ class LoanPurposeRiskFactorTest {
   @DisplayName("Points never exceed configured maxPoints")
   void pointsNeverExceedMaxPoints() {
     final ApplicantScoringProfile profile =
-        ApplicantScoringProfile.builder().loanPurpose("EDUCATION").build();
+        ApplicantScoringProfile.builder().loanPurpose(LoanPurpose.EDUCATION.name()).build();
 
     final FactorScore result = factor.score(profile);
 

@@ -21,6 +21,7 @@ package org.apache.fineract.los.scoring.factors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.fineract.los.domain.enums.EmploymentStatus;
 import org.apache.fineract.los.scoring.ScoringWeightsProperties;
 import org.apache.fineract.los.scoring.model.ApplicantScoringProfile;
 import org.apache.fineract.los.scoring.model.FactorScore;
@@ -60,7 +61,7 @@ class EmploymentStabilityFactorTest {
   void employedLongTenureScoresMaximum() {
     final ApplicantScoringProfile profile =
         ApplicantScoringProfile.builder()
-            .employmentStatus("EMPLOYED")
+            .employmentStatus(EmploymentStatus.EMPLOYED.name())
             .employmentDurationMonths(48)
             .build();
 
@@ -74,7 +75,7 @@ class EmploymentStabilityFactorTest {
   void unemployedStatusPortionScoresZero() {
     final ApplicantScoringProfile profile =
         ApplicantScoringProfile.builder()
-            .employmentStatus("UNEMPLOYED")
+            .employmentStatus(EmploymentStatus.UNEMPLOYED.name())
             .employmentDurationMonths(60)
             .build();
 
@@ -108,7 +109,7 @@ class EmploymentStabilityFactorTest {
   void nonPositiveDurationScoresZeroDurationPortion(final int months) {
     final ApplicantScoringProfile profile =
         ApplicantScoringProfile.builder()
-            .employmentStatus("EMPLOYED")
+            .employmentStatus(EmploymentStatus.EMPLOYED.name())
             .employmentDurationMonths(months)
             .build();
 
@@ -123,7 +124,7 @@ class EmploymentStabilityFactorTest {
   void nullDurationScoresZeroDurationPortion() {
     final ApplicantScoringProfile profile =
         ApplicantScoringProfile.builder()
-            .employmentStatus("EMPLOYED")
+            .employmentStatus(EmploymentStatus.EMPLOYED.name())
             .employmentDurationMonths(null)
             .build();
 
@@ -152,7 +153,7 @@ class EmploymentStabilityFactorTest {
   void statusComparisonIsCaseInsensitive() {
     final ApplicantScoringProfile profile =
         ApplicantScoringProfile.builder()
-            .employmentStatus("employed")
+            .employmentStatus(EmploymentStatus.EMPLOYED.name().toLowerCase())
             .employmentDurationMonths(48)
             .build();
 
@@ -166,7 +167,7 @@ class EmploymentStabilityFactorTest {
   void pointsNeverExceedMaxPoints() {
     final ApplicantScoringProfile profile =
         ApplicantScoringProfile.builder()
-            .employmentStatus("EMPLOYED")
+            .employmentStatus(EmploymentStatus.EMPLOYED.name())
             .employmentDurationMonths(1000)
             .build();
 
