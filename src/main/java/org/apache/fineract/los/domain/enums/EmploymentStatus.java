@@ -22,21 +22,20 @@ package org.apache.fineract.los.domain.enums;
 /**
  * Represents the employment status of a loan applicant.
  *
- * <p>Used as an input to the employment stability scoring
- * factor (20% weight per CGAP guidelines). Higher employment
- * stability correlates with lower credit risk.
+ * <p>Used as an input to the employment stability scoring factor (20% weight per CGAP guidelines).
+ * Higher employment stability correlates with lower credit risk.
  */
 public enum EmploymentStatus {
 
-    /** Formally employed with a registered employer. */
-    EMPLOYED,
+  /** Formally employed with a registered employer. */
+  EMPLOYED,
 
-    /** Self-employed or running own business. */
-    SELF_EMPLOYED,
+  /** Self-employed or running own business. */
+  SELF_EMPLOYED,
 
-    /** Employed in the informal economy — no formal contract. */
-    INFORMAL,
+  /** Employed in the informal economy — no formal contract. */
+  INFORMAL,
 
-    /** Not currently employed. Lowest stability score. */
-    UNEMPLOYED
+  /** Not currently employed. Lowest stability score. */
+  UNEMPLOYED
 }

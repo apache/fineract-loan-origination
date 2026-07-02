@@ -22,33 +22,32 @@ package org.apache.fineract.los.domain.enums;
 /**
  * Represents the declared purpose of a loan application.
  *
- * <p>Used as an input to the loan purpose risk scoring factor
- * (10% weight per CGAP guidelines). Purposes with more
- * predictable income generation score higher.
+ * <p>Used as an input to the loan purpose risk scoring factor (10% weight per CGAP guidelines).
+ * Purposes with more predictable income generation score higher.
  */
 public enum LoanPurpose {
 
-    /** Agricultural input, equipment, or working capital. */
-    AGRICULTURE,
+  /** Agricultural input, equipment, or working capital. */
+  AGRICULTURE,
 
-    /** School fees, training, or skills development. */
-    EDUCATION,
+  /** School fees, training, or skills development. */
+  EDUCATION,
 
-    /** Small business working capital or equipment. */
-    BUSINESS,
+  /** Small business working capital or equipment. */
+  BUSINESS,
 
-    /** Home repairs or improvements. */
-    HOME_IMPROVEMENT,
+  /** Home repairs or improvements. */
+  HOME_IMPROVEMENT,
 
-    /** General consumer goods or services. */
-    CONSUMER,
+  /** General consumer goods or services. */
+  CONSUMER,
 
-    /** Medical expenses or healthcare. */
-    MEDICAL,
+  /** Medical expenses or healthcare. */
+  MEDICAL,
 
-    /** High-risk speculative investment. */
-    SPECULATION,
+  /** High-risk speculative investment. */
+  SPECULATION,
 
-    /** Any purpose not covered by the above categories. */
-    OTHER
+  /** Any purpose not covered by the above categories. */
+  OTHER
 }
