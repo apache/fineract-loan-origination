@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.fineract.los.dto.request;
 
 import jakarta.validation.Valid;
