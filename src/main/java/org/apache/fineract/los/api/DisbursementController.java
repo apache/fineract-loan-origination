@@ -34,7 +34,9 @@ import org.springframework.web.bind.annotation.RestController;
  * REST API for triggering the disbursement bridge — calls Fineract's {@code POST /loans} (real or
  * mocked, per {@code los.fineract.mock-enabled}) once an application is APPROVED.
  */
-@Tag(name = "Disbursement", description = "Bridge an APPROVED application into a real Fineract loan")
+@Tag(
+    name = "Disbursement",
+    description = "Bridge an APPROVED application into a real Fineract loan")
 @RestController
 @RequestMapping("/api/v1/loan-applications/{applicationRef}/disburse")
 @RequiredArgsConstructor

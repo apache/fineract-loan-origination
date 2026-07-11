@@ -28,46 +28,40 @@ import lombok.Setter;
 @Builder
 public class CreateLoanApplicationRequest {
 
-    @NotNull
-    @DecimalMin(value = "0.01", message = "requestedAmount must be greater than zero")
-    private BigDecimal requestedAmount;
+  @NotNull
+  @DecimalMin(value = "0.01", message = "requestedAmount must be greater than zero")
+  private BigDecimal requestedAmount;
 
-    private String currency;
+  private String currency;
 
-    private String loanPurpose;
+  private String loanPurpose;
 
-    @Min(1)
-    private Integer tenorMonths;
+  @Min(1)
+  private Integer tenorMonths;
 
-    private Long fineractLoanProductId;
+  private Long fineractLoanProductId;
 
-    @NotNull
-    @Valid
-    private ApplicantDetails applicant;
+  @NotNull @Valid private ApplicantDetails applicant;
 
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class ApplicantDetails {
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Builder
+  public static class ApplicantDetails {
 
-        @NotBlank
-        private String fullName;
+    @NotBlank private String fullName;
 
-        private String nationalId;
+    private String nationalId;
 
-        @PositiveOrZero
-        private BigDecimal monthlyIncome;
+    @PositiveOrZero private BigDecimal monthlyIncome;
 
-        private String employmentStatus;
+    private String employmentStatus;
 
-        @PositiveOrZero
-        private Integer employmentDurationMonths;
+    @PositiveOrZero private Integer employmentDurationMonths;
 
-        @PositiveOrZero
-        private BigDecimal existingLoanObligations;
+    @PositiveOrZero private BigDecimal existingLoanObligations;
 
-        private Long fineractClientId;
-    }
+    private Long fineractClientId;
+  }
 }

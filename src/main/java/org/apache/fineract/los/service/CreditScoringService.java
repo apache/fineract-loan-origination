@@ -88,6 +88,7 @@ public class CreditScoringService {
             })
         .orElseGet(() -> computeAndSave(application));
   }
+
   /**
    * Returns the persisted credit score for an application, if one has been computed.
    *

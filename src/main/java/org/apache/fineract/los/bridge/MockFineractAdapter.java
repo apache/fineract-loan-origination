@@ -29,39 +29,33 @@ import org.springframework.stereotype.Component;
 /**
  * Mock implementation of {@link FineractIntegrationPort}.
  *
- * <p>Active on {@code dev} and {@code test} Spring profiles.
- * Returns simulated loan IDs without calling any external
- * system — enables full end-to-end demonstration without
- * a running Fineract instance.
+ * <p>Active on {@code dev} and {@code test} Spring profiles. Returns simulated loan IDs without
+ * calling any external system — enables full end-to-end demonstration without a running Fineract
+ * instance.
  *
- * <p>The generated loan ID starts at 100001 and increments
- * per call, matching the format visible in the database
- * screenshots shared during midterm evaluation.
+ * <p>The generated loan ID starts at 100001 and increments per call, matching the format visible in
+ * the database screenshots shared during midterm evaluation.
  */
 @Slf4j
 @Component
 @Profile({"dev", "test", "default"})
 public class MockFineractAdapter implements FineractIntegrationPort {
 
-    private static final AtomicLong LOAN_ID_SEQUENCE =
-            new AtomicLong(100001);
+  private static final AtomicLong LOAN_ID_SEQUENCE = new AtomicLong(100001);
 
-    @Override
-    public FineractLoanResponse createLoan(
-            final FineractLoanRequest request) {
+  @Override
+  public FineractLoanResponse createLoan(final FineractLoanRequest request) {
 
-        final long simulatedLoanId =
-                LOAN_ID_SEQUENCE.getAndIncrement();
+    final long simulatedLoanId = LOAN_ID_SEQUENCE.getAndIncrement();
 
-        log.info(
-                "[MOCK] Fineract loan created: "
-                        + "principal={} loanId={}",
-                request.getPrincipal(),
-                simulatedLoanId);
+    log.info(
+        "[MOCK] Fineract loan created: " + "principal={} loanId={}",
+        request.getPrincipal(),
+        simulatedLoanId);
 
-        return FineractLoanResponse.builder()
-                .loanId(simulatedLoanId)
-                .resourceId(simulatedLoanId)
-                .build();
-    }
+    return FineractLoanResponse.builder()
+        .loanId(simulatedLoanId)
+        .resourceId(simulatedLoanId)
+        .build();
+  }
 }

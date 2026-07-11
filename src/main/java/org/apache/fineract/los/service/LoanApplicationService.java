@@ -34,10 +34,10 @@ import org.apache.fineract.los.exception.LosErrorConstants;
 import org.apache.fineract.los.repository.ApplicantProfileRepository;
 import org.apache.fineract.los.repository.LoanApplicationRepository;
 import org.apache.fineract.los.statemachine.LoanOriginationStateMachine;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.data.domain.Pageable;
 
 /**
  * Service layer responsible for the lifecycle of a {@link LoanApplication}: creation, submission,
@@ -133,21 +133,20 @@ public class LoanApplicationService {
     stateMachine.transition(application, LoanApplicationStatus.SUBMITTED);
     return loanApplicationRepository.save(application);
   }
-  /**
- * Returns all loan applications for the given tenant.
- *
- * <p>Used by the dashboard/list endpoint.
- *
- * @param tenantId institution identifier
- * @return all applications for the tenant
- */
-@Transactional(readOnly = true)
-public List<LoanApplication> getAllApplications(final String tenantId) {
 
-  return loanApplicationRepository
-      .findAllByTenantId(tenantId, Pageable.unpaged())
-      .getContent();
-}
+  /**
+   * Returns all loan applications for the given tenant.
+   *
+   * <p>Used by the dashboard/list endpoint.
+   *
+   * @param tenantId institution identifier
+   * @return all applications for the tenant
+   */
+  @Transactional(readOnly = true)
+  public List<LoanApplication> getAllApplications(final String tenantId) {
+
+    return loanApplicationRepository.findAllByTenantId(tenantId, Pageable.unpaged()).getContent();
+  }
 
   /**
    * Moves a SUBMITTED or REFERRED application into UNDER_REVIEW via the state machine, then

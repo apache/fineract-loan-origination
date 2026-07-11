@@ -26,33 +26,29 @@ import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
  * Port (interface) for integration with Apache Fineract core.
  *
  * <p>Two implementations exist:
+ *
  * <ul>
- *   <li>{@code MockFineractAdapter} — active on {@code dev}
- *       profile, returns simulated responses without calling
- *       any external system. Enables full end-to-end demo
- *       without a running Fineract instance.</li>
- *   <li>{@code RealFineractAdapter} — active on {@code prod}
- *       profile, calls Fineract's {@code POST /loans} API
- *       with the exact payload Fineract expects.</li>
+ *   <li>{@code MockFineractAdapter} — active on {@code dev} profile, returns simulated responses
+ *       without calling any external system. Enables full end-to-end demo without a running
+ *       Fineract instance.
+ *   <li>{@code RealFineractAdapter} — active on {@code prod} profile, calls Fineract's {@code POST
+ *       /loans} API with the exact payload Fineract expects.
  * </ul>
  *
- * <p>Switching between implementations requires only changing
- * the active Spring profile — no business logic changes.
+ * <p>Switching between implementations requires only changing the active Spring profile — no
+ * business logic changes.
  *
- * <p>The correlation ID from {@code X-Correlation-Id} is
- * forwarded on every outbound call so LOS and Fineract logs
- * can be joined during debugging (FINERACT-1656).
+ * <p>The correlation ID from {@code X-Correlation-Id} is forwarded on every outbound call so LOS
+ * and Fineract logs can be joined during debugging (FINERACT-1656).
  */
 public interface FineractIntegrationPort {
 
-    /**
-     * Creates a loan in Apache Fineract for an approved
-     * loan application.
-     *
-     * @param request payload constructed from the approved
-     *                LoanApplication and ApplicantProfile
-     * @return response containing the Fineract loan ID
-     * @throws FineractIntegrationException if the call fails
-     */
-    FineractLoanResponse createLoan(FineractLoanRequest request);
+  /**
+   * Creates a loan in Apache Fineract for an approved loan application.
+   *
+   * @param request payload constructed from the approved LoanApplication and ApplicantProfile
+   * @return response containing the Fineract loan ID
+   * @throws FineractIntegrationException if the call fails
+   */
+  FineractLoanResponse createLoan(FineractLoanRequest request);
 }

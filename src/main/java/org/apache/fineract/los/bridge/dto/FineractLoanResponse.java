@@ -25,23 +25,19 @@ import lombok.Getter;
 /**
  * Response from Fineract's {@code POST /loans} endpoint.
  *
- * <p>The {@code loanId} is stored on the {@code LoanApplication}
- * entity as {@code fineractLoanId} after successful disbursement,
- * providing a permanent cross-system reference.
+ * <p>The {@code loanId} is stored on the {@code LoanApplication} entity as {@code fineractLoanId}
+ * after successful disbursement, providing a permanent cross-system reference.
  */
 @Getter
 @Builder
 public class FineractLoanResponse {
 
-    /**
-     * Fineract-assigned loan ID.
-     * Stored as fineractLoanId on LoanApplication after
-     * successful disbursement.
-     */
-    private final Long loanId;
+  /**
+   * Fineract-assigned loan ID. Stored as fineractLoanId on LoanApplication after successful
+   * disbursement.
+   */
+  private final Long loanId;
 
-    /**
-     * Fineract resource ID — same as loanId in most cases.
-     */
-    private final Long resourceId;
+  /** Fineract resource ID — same as loanId in most cases. */
+  private final Long resourceId;
 }

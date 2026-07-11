@@ -29,12 +29,10 @@ import lombok.Setter;
 import org.apache.fineract.los.domain.enums.ApprovalDecision;
 
 /**
- * Input payload for recording a single approval-stage decision against a loan
- * application.
+ * Input payload for recording a single approval-stage decision against a loan application.
  *
- * <p>Consumed by {@code ApprovalWorkflowService#recordDecision}. The
- * {@code comments} field is validated by the service layer (mandatory for
- * REJECT and REFER decisions).
+ * <p>Consumed by {@code ApprovalWorkflowService#recordDecision}. The {@code comments} field is
+ * validated by the service layer (mandatory for REJECT and REFER decisions).
  */
 @Getter
 @Setter
@@ -43,31 +41,15 @@ import org.apache.fineract.los.domain.enums.ApprovalDecision;
 @Builder
 public class ApprovalDecisionRequest {
 
-    /**
-     * Workflow stage name.
-     * Example:
-     * LOAN_OFFICER
-     * BRANCH_MANAGER
-     * CREDIT_COMMITTEE
-     */
-    @NotBlank
-    private String stageName;
+  /** Workflow stage name. Example: LOAN_OFFICER BRANCH_MANAGER CREDIT_COMMITTEE */
+  @NotBlank private String stageName;
 
-    /**
-     * Officer making the decision.
-     */
-    @NotBlank
-    private String assignedOfficer;
+  /** Officer making the decision. */
+  @NotBlank private String assignedOfficer;
 
-    /**
-     * APPROVE / REJECT / REFER
-     */
-    @NotNull
-    private ApprovalDecision decision;
+  /** APPROVE / REJECT / REFER */
+  @NotNull private ApprovalDecision decision;
 
-    /**
-     * Optional comments.
-     * Required by the service layer for REJECT and REFER.
-     */
-    private String comments;
+  /** Optional comments. Required by the service layer for REJECT and REFER. */
+  private String comments;
 }

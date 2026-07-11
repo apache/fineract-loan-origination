@@ -24,55 +24,52 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * Exact payload structure expected by Fineract's
- * {@code POST /fineract-provider/api/v1/loans} endpoint.
+ * Exact payload structure expected by Fineract's {@code POST /fineract-provider/api/v1/loans}
+ * endpoint.
  *
- * <p>Field names match Fineract's JSON contract exactly —
- * do not rename without verifying against the Fineract API.
+ * <p>Field names match Fineract's JSON contract exactly — do not rename without verifying against
+ * the Fineract API.
  */
 @Getter
 @Builder
 public class FineractLoanRequest {
 
-    /** Fineract client ID for the borrower. */
-    private final Long clientId;
+  /** Fineract client ID for the borrower. */
+  private final Long clientId;
 
-    /** Fineract loan product ID. */
-    private final Long productId;
+  /** Fineract loan product ID. */
+  private final Long productId;
 
-    /** Loan amount — matches LoanApplication.requestedAmount. */
-    private final BigDecimal principal;
+  /** Loan amount — matches LoanApplication.requestedAmount. */
+  private final BigDecimal principal;
 
-    /** Repayment frequency — e.g. 12 for 12 months. */
-    private final Integer loanTermFrequency;
+  /** Repayment frequency — e.g. 12 for 12 months. */
+  private final Integer loanTermFrequency;
 
-    /**
-     * Repayment frequency type.
-     * 0=days, 1=weeks, 2=months, 3=years.
-     */
-    private final Integer loanTermFrequencyType;
+  /** Repayment frequency type. 0=days, 1=weeks, 2=months, 3=years. */
+  private final Integer loanTermFrequencyType;
 
-    /** Loan type — "individual" or "group". */
-    private final String loanType;
+  /** Loan type — "individual" or "group". */
+  private final String loanType;
 
-    /** Interest rate per period. */
-    private final BigDecimal interestRatePerPeriod;
+  /** Interest rate per period. */
+  private final BigDecimal interestRatePerPeriod;
 
-    /** Amortization type. 1=equal installments. */
-    private final Integer amortizationType;
+  /** Amortization type. 1=equal installments. */
+  private final Integer amortizationType;
 
-    /** Number of repayments. */
-    private final Integer numberOfRepayments;
+  /** Number of repayments. */
+  private final Integer numberOfRepayments;
 
-    /** Repayment every N periods. */
-    private final Integer repaymentEvery;
+  /** Repayment every N periods. */
+  private final Integer repaymentEvery;
 
-    /** Expected disbursement date. Format: dd MMMM yyyy. */
-    private final String expectedDisbursementDate;
+  /** Expected disbursement date. Format: dd MMMM yyyy. */
+  private final String expectedDisbursementDate;
 
-    /** Submission date. Format: dd MMMM yyyy. */
-    private final String submittedOnDate;
+  /** Submission date. Format: dd MMMM yyyy. */
+  private final String submittedOnDate;
 
-    /** Loan purpose ID in Fineract. Optional. */
-    private final Long loanPurposeId;
+  /** Loan purpose ID in Fineract. Optional. */
+  private final Long loanPurposeId;
 }

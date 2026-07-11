@@ -38,11 +38,14 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST API for recording multi-stage approval decisions against a loan application.
  *
- * <p>A single endpoint accepts APPROVE / REJECT / REFER via {@link ApprovalDecisionRequest#getDecision()}
- * rather than three separate endpoints — keeps the state-transition logic entirely inside {@code
- * ApprovalWorkflowService}, with the controller as a thin pass-through.
+ * <p>A single endpoint accepts APPROVE / REJECT / REFER via {@link
+ * ApprovalDecisionRequest#getDecision()} rather than three separate endpoints — keeps the
+ * state-transition logic entirely inside {@code ApprovalWorkflowService}, with the controller as a
+ * thin pass-through.
  */
-@Tag(name = "Approval Workflow", description = "Record loan officer / branch manager / credit committee decisions")
+@Tag(
+    name = "Approval Workflow",
+    description = "Record loan officer / branch manager / credit committee decisions")
 @RestController
 @RequestMapping("/api/v1/loan-applications/{applicationRef}/approval-decisions")
 @RequiredArgsConstructor

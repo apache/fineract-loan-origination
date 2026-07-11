@@ -19,10 +19,10 @@
 
 package org.apache.fineract.los.api;
 
-import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.api.dto.response.CreditScoreResponse;
 import org.apache.fineract.los.api.dto.response.LoanApplicationResponse;
@@ -65,21 +65,20 @@ public class LoanApplicationController {
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
       @Valid @RequestBody final CreateLoanApplicationRequest request) {
 
-    final LoanApplication application =
-        loanApplicationService.createApplication(request, tenantId);
+    final LoanApplication application = loanApplicationService.createApplication(request, tenantId);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(LoanApplicationResponse.from(application));
   }
-  @Operation(summary = "Retrieve all loan applications for the tenant")
-@GetMapping
-public List<LoanApplicationResponse> getAll(
-    @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT)
-        final String tenantId) {
 
-  return loanApplicationService.getAllApplications(tenantId).stream()
-      .map(LoanApplicationResponse::from)
-      .toList();
-}
+  @Operation(summary = "Retrieve all loan applications for the tenant")
+  @GetMapping
+  public List<LoanApplicationResponse> getAll(
+      @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId) {
+
+    return loanApplicationService.getAllApplications(tenantId).stream()
+        .map(LoanApplicationResponse::from)
+        .toList();
+  }
 
   @Operation(summary = "Retrieve a loan application by its reference")
   @GetMapping("/{applicationRef}")
@@ -97,8 +96,7 @@ public List<LoanApplicationResponse> getAll(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
       @PathVariable final String applicationRef) {
 
-    return LoanApplicationResponse.from(
-        loanApplicationService.submit(applicationRef, tenantId));
+    return LoanApplicationResponse.from(loanApplicationService.submit(applicationRef, tenantId));
   }
 
   @Operation(

@@ -37,14 +37,11 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Real implementation of {@link FineractIntegrationPort}.
  *
- * <p>Active on {@code prod} Spring profile only. Calls
- * Fineract's {@code POST /loans} API with the exact payload
- * structure Fineract expects.
+ * <p>Active on {@code prod} Spring profile only. Calls Fineract's {@code POST /loans} API with the
+ * exact payload structure Fineract expects.
  *
- * <p>The {@code X-Correlation-Id} header is forwarded on
- * every outbound call so that LOS logs and Fineract core
- * logs can be joined on the same identifier during debugging
- * (FINERACT-1656).
+ * <p>The {@code X-Correlation-Id} header is forwarded on every outbound call so that LOS logs and
+ * Fineract core logs can be joined on the same identifier during debugging (FINERACT-1656).
  */
 @Slf4j
 @Component
@@ -52,68 +49,56 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class RealFineractAdapter implements FineractIntegrationPort {
 
-    private final RestTemplate restTemplate;
+  private final RestTemplate restTemplate;
 
-    @Value("${los.fineract.base-url}")
-    private String fineractBaseUrl;
+  @Value("${los.fineract.base-url}")
+  private String fineractBaseUrl;
 
-    @Value("${los.fineract.tenant-id:default}")
-    private String fineractTenantId;
+  @Value("${los.fineract.tenant-id:default}")
+  private String fineractTenantId;
 
-    @Value("${los.fineract.username}")
-    private String fineractUsername;
+  @Value("${los.fineract.username}")
+  private String fineractUsername;
 
-    @Value("${los.fineract.password}")
-    private String fineractPassword;
+  @Value("${los.fineract.password}")
+  private String fineractPassword;
 
-    @Override
-    public FineractLoanResponse createLoan(
-            final FineractLoanRequest request) {
+  @Override
+  public FineractLoanResponse createLoan(final FineractLoanRequest request) {
 
-        final String url = fineractBaseUrl
-                + "/fineract-provider/api/v1/loans";
+    final String url = fineractBaseUrl + "/fineract-provider/api/v1/loans";
 
-        final HttpHeaders headers = buildHeaders();
-        final HttpEntity<FineractLoanRequest> entity =
-                new HttpEntity<>(request, headers);
+    final HttpHeaders headers = buildHeaders();
+    final HttpEntity<FineractLoanRequest> entity = new HttpEntity<>(request, headers);
 
-        log.info(
-                "Calling Fineract POST /loans: "
-                        + "principal={} clientId={}",
-                request.getPrincipal(),
-                request.getClientId());
+    log.info(
+        "Calling Fineract POST /loans: " + "principal={} clientId={}",
+        request.getPrincipal(),
+        request.getClientId());
 
-        final FineractLoanResponse response =
-                restTemplate.postForObject(
-                        url, entity, FineractLoanResponse.class);
+    final FineractLoanResponse response =
+        restTemplate.postForObject(url, entity, FineractLoanResponse.class);
 
-        log.info(
-                "Fineract loan created: loanId={}",
-                response != null ? response.getLoanId() : "null");
+    log.info("Fineract loan created: loanId={}", response != null ? response.getLoanId() : "null");
 
-        return response;
+    return response;
+  }
+
+  /**
+   * Builds HTTP headers for the Fineract API call including: - Basic auth credentials - Tenant ID
+   * header - Correlation ID forwarded from MDC
+   */
+  private HttpHeaders buildHeaders() {
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.setBasicAuth(fineractUsername, fineractPassword);
+    headers.set("Fineract-Platform-TenantId", fineractTenantId);
+
+    final String correlationId = MDC.get(CorrelationIdFilter.MDC_KEY);
+    if (StringUtils.hasText(correlationId)) {
+      headers.set(CorrelationIdFilter.CORRELATION_ID_HEADER, correlationId);
     }
 
-    /**
-     * Builds HTTP headers for the Fineract API call including:
-     * - Basic auth credentials
-     * - Tenant ID header
-     * - Correlation ID forwarded from MDC
-     */
-    private HttpHeaders buildHeaders() {
-        final HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(fineractUsername, fineractPassword);
-        headers.set("Fineract-Platform-TenantId", fineractTenantId);
-
-        final String correlationId = MDC.get(
-                CorrelationIdFilter.MDC_KEY);
-        if (StringUtils.hasText(correlationId)) {
-            headers.set(
-                    CorrelationIdFilter.CORRELATION_ID_HEADER,
-                    correlationId);
-        }
-
-        return headers;
-    }
+    return headers;
+  }
 }
