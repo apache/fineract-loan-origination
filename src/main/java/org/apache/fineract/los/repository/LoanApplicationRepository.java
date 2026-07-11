@@ -125,16 +125,15 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
   long countByStatusAndTenantId(LoanApplicationStatus status, String tenantId);
 
   /**
-   * Returns applications assigned to a specific loan officer for a given tenant.
+   * Counts the total number of applications ever created for a tenant, regardless of status.
    *
-   * <p>Uses Spring Data JPA method derivation — no custom query needed since both fields
-   * (assignedOfficer, tenantId) live directly on {@link LoanApplication}.
+   * <p>Used by {@code LoanApplicationService} as the seed value when generating the next
+   * human-readable application reference (LOS-{YEAR}-{SEQUENCE}). Collisions are still checked via
+   * {@link #existsByApplicationRefAndTenantId} — this count is a starting point, not a guarantee of
+   * uniqueness.
    *
-   * @param assignedOfficer officer identifier from JWT claims
    * @param tenantId institution identifier
-   * @param pageable pagination parameters
-   * @return paginated applications for the officer
+   * @return total number of applications for the tenant
    */
-  Page<LoanApplication> findByAssignedOfficerAndTenantId(
-      String assignedOfficer, String tenantId, Pageable pageable);
+  long countByTenantId(String tenantId);
 }

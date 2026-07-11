@@ -112,6 +112,15 @@ public class ApplicantProfile {
   @Column(name = "existing_loan_obligations", precision = 19, scale = 2)
   private BigDecimal existingLoanObligations = BigDecimal.ZERO;
 
+  /**
+   * The applicant's existing Fineract {@code clientId}. Required before the disbursement bridge can
+   * call {@code POST /loans} — Fineract needs a pre-existing client record to attach the loan to.
+   * Nullable during DRAFT/SUBMITTED/UNDER_REVIEW; the disbursement bridge fails fast with a clear
+   * error if this is still null when the application reaches APPROVED.
+   */
+  @Column(name = "fineract_client_id")
+  private Long fineractClientId;
+
   /** Tenant identifier — must match parent LoanApplication. */
   @Column(name = "tenant_id", nullable = false, length = 100, updatable = false)
   private String tenantId;
