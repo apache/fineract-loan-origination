@@ -21,8 +21,8 @@ spring:
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/los_db}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:sujan2003}
+    username: ${DB_USERNAME:password}
+    password: ${DB_PASSWORD:password}
 
     hikari:
       pool-name: LOS-HikariPool
