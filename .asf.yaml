@@ -19,6 +19,10 @@ notifications:
   commits: commits@fineract.apache.org
   pullrequests: issues@fineract.apache.org
 github:
+  features:
+    wiki: true
+    issues: true
+    projects: true
   enabled_merge_buttons:
     merge: true
     squash: false
