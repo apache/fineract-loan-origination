@@ -49,21 +49,13 @@ public class SecurityConfig {
   @Bean
   SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
 
-    http
-        // CSRF disabled intentionally — stateless REST API,
-        // no session cookies, clients use Authorization header.
-        // See class-level Javadoc for full rationale.
-        .csrf(csrf -> csrf.disable())
-        // Stateless session — no HttpSession created or used
+    http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
             auth ->
-                auth
-                    // Health and info endpoints are public
-                    .requestMatchers("/actuator/health", "/actuator/info")
+                auth.requestMatchers("/actuator/health", "/actuator/info")
                     .permitAll()
-                    // All other requests require authentication
                     .anyRequest()
                     .authenticated())
         .httpBasic(basic -> basic.realmName("Fineract Loan Origination Service"))
