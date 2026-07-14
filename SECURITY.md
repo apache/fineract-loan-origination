@@ -2,7 +2,7 @@
 
 ## Apache Fineract Loan Origination System (LOS) Security Model
 
-> Status: Draft (Initial LOS implementation)
+> Status: Draft (Initial LOS implementation) — codebase is not release ready.
 
 ### Overview
 
