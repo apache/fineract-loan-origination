@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Local environment overrides — never commit
+application-local.yml
+*.local.yml

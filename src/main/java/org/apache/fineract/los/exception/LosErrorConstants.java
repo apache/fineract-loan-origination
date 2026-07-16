@@ -51,6 +51,24 @@ public final class LosErrorConstants {
   /** Error code for uninitialised entity state. */
   public static final String ERR_UNINITIALISED_STATUS = "los.error.entity.uninitialised-status";
 
+  /** Error code for application-not-found lookups. */
+  public static final String ERR_APPLICATION_NOT_FOUND = "los.error.application.not-found";
+
+  /** Error code for applicant-profile-not-found lookups. */
+  public static final String ERR_PROFILE_NOT_FOUND = "los.error.profile.not-found";
+
+  /** Error code for disbursement attempted on a non-APPROVED application. */
+  public static final String ERR_DISBURSEMENT_NOT_ALLOWED = "los.error.disbursement.not-allowed";
+
+  /** Error code for failures calling the Fineract core API. */
+  public static final String ERR_FINERACT_INTEGRATION = "los.error.fineract.integration-failure";
+
+  /** Error code for a decision recorded twice by the same officer on the same application. */
+  public static final String ERR_DUPLICATE_APPROVAL = "los.error.approval.duplicate";
+
+  /** Error code for an unrecognised approval workflow stage name. */
+  public static final String ERR_UNKNOWN_STAGE = "los.error.approval.unknown-stage";
+
   // ─────────────────────────────────────────────────────────
   // State Machine Messages
   // ─────────────────────────────────────────────────────────
@@ -78,4 +96,61 @@ public final class LosErrorConstants {
   /** Template for terminal state error message. Parameters: applicationRef, currentStatus. */
   public static final String MSG_TERMINAL_STATE_TEMPLATE =
       "Application [%s] is in terminal state [%s]. " + "No further transitions are permitted.";
+
+  // ─────────────────────────────────────────────────────────
+  // Service Layer Message Templates
+  // ─────────────────────────────────────────────────────────
+
+  /** Template for application-not-found error message. Parameters: applicationRef, tenantId. */
+  public static final String MSG_APPLICATION_NOT_FOUND_TEMPLATE =
+      "No loan application found with reference [%s] for tenant [%s].";
+
+  /** Template for profile-not-found error message. Parameters: applicationRef, tenantId. */
+  public static final String MSG_PROFILE_NOT_FOUND_TEMPLATE =
+      "No applicant profile found for application [%s] in tenant [%s].";
+
+  /** Template for reference generation failure. Parameters: tenantId, attempts. */
+  public static final String MSG_REFERENCE_GENERATION_FAILED_TEMPLATE =
+      "Unable to generate a unique application reference for tenant [%s] "
+          + "after %d attempts. This indicates unexpectedly high contention "
+          + "or a reference-format collision — investigate before retrying.";
+
+  /** Template for disbursement-not-allowed error. Parameters: applicationRef, currentStatus. */
+  public static final String MSG_DISBURSEMENT_NOT_ALLOWED_TEMPLATE =
+      "Cannot disburse application [%s] — current status is [%s] but "
+          + "disbursement requires status APPROVED.";
+
+  /** Message when the applicant profile is missing a Fineract clientId at disbursement time. */
+  public static final String MSG_MISSING_FINERACT_CLIENT_ID_TEMPLATE =
+      "Cannot disburse application [%s] — applicant profile has no "
+          + "fineractClientId. The applicant must be linked to an existing "
+          + "Fineract client before the disbursement bridge can run.";
+
+  /**
+   * Message when the application is missing a Fineract loan product mapping at disbursement time.
+   */
+  public static final String MSG_MISSING_LOAN_PRODUCT_TEMPLATE =
+      "Cannot disburse application [%s] — no fineractLoanProductId is set. "
+          + "Configure a product mapping for loan purpose [%s] before "
+          + "approval.";
+
+  /** Template for Fineract integration failure. Parameters: applicationRef, root cause message. */
+  public static final String MSG_FINERACT_CALL_FAILED_TEMPLATE =
+      "Call to Fineract POST /loans failed for application [%s]: %s";
+
+  /** Template for duplicate approval decision. Parameters: applicationRef, assignedOfficer. */
+  public static final String MSG_DUPLICATE_APPROVAL_TEMPLATE =
+      "Officer [%s] has already recorded a decision on application [%s]. "
+          + "The four-eyes principle requires a different officer for each "
+          + "approval stage.";
+
+  /** Template for unknown workflow stage. Parameters: stageName, configuredStages. */
+  public static final String MSG_UNKNOWN_STAGE_TEMPLATE =
+      "Stage [%s] is not a configured approval stage. Configured stages: %s.";
+
+  /** Template for a decision recorded on an application that is not UNDER_REVIEW. */
+  public static final String MSG_NOT_UNDER_REVIEW_TEMPLATE =
+      "Cannot record an approval decision for application [%s] — current "
+          + "status is [%s] but decisions may only be recorded while the "
+          + "application is UNDER_REVIEW.";
 }

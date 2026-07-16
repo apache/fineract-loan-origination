@@ -113,6 +113,22 @@ public class LoanApplication {
   private Integer tenorMonths;
 
   /**
+   * Fineract loan product identifier this application will be disbursed against. Populated at
+   * application creation time (institution configures a default product per loan purpose, or the
+   * caller supplies it explicitly). Required before the disbursement bridge can run.
+   */
+  @Column(name = "fineract_loan_product_id")
+  private Long fineractLoanProductId;
+
+  /**
+   * The Fineract {@code loanId} returned by {@code POST /loans} once the disbursement bridge has
+   * successfully created the loan. Null until the application reaches DISBURSED. Immutable once set
+   * — this is the audit link between the external LOS record and the Fineract core loan.
+   */
+  @Column(name = "fineract_loan_id")
+  private Long fineractLoanId;
+
+  /**
    * Tenant identifier — maps to the institution using this LOS. Extracted from
    * X-Fineract-Platform-TenantId header. Every repository query MUST filter by this field.
    */
