@@ -17,6 +17,7 @@
 
 notifications:
   commits: commits@fineract.apache.org
+  issues: issues@fineract.apache.org
   pullrequests: issues@fineract.apache.org
 github:
   features:
