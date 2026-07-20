@@ -1,0 +1,93 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="application-form">
+  <h1>New Loan Application</h1>
+
+  <fieldset>
+    <legend>Loan Details</legend>
+
+    <label>
+      Requested Amount
+      <input type="number" formControlName="requestedAmount" min="0.01" step="0.01" />
+    </label>
+
+    <label>
+      Currency
+      <input formControlName="currency" placeholder="USD" />
+    </label>
+
+    <label>
+      Loan Purpose
+      <select formControlName="loanPurpose">
+        <option value="AGRICULTURE">Agriculture</option>
+        <option value="EDUCATION">Education</option>
+        <option value="BUSINESS">Business</option>
+        <option value="HOME_IMPROVEMENT">Home Improvement</option>
+        <option value="CONSUMER">Consumer</option>
+        <option value="MEDICAL">Medical</option>
+        <option value="SPECULATION">Speculation</option>
+        <option value="OTHER">Other</option>
+      </select>
+    </label>
+
+    <label>
+      Tenor (months)
+      <input type="number" formControlName="tenorMonths" min="1" />
+    </label>
+
+    <label>
+      Fineract Loan Product ID
+      <input type="number" formControlName="fineractLoanProductId" />
+    </label>
+  </fieldset>
+
+  <fieldset formGroupName="applicant">
+    <legend>Applicant Details</legend>
+
+    <label>
+      Full Name
+      <input formControlName="fullName" />
+    </label>
+
+    <label>
+      National ID
+      <input formControlName="nationalId" />
+    </label>
+
+    <label>
+      Monthly Income
+      <input type="number" formControlName="monthlyIncome" min="0" step="0.01" />
+    </label>
+
+    <label>
+      Employment Status
+      <select formControlName="employmentStatus">
+        <option value="EMPLOYED">Employed</option>
+        <option value="SELF_EMPLOYED">Self-employed</option>
+        <option value="INFORMAL">Informal</option>
+        <option value="UNEMPLOYED">Unemployed</option>
+      </select>
+    </label>
+
+    <label>
+      Employment Duration (months)
+      <input type="number" formControlName="employmentDurationMonths" min="0" />
+    </label>
+
+    <label>
+      Existing Loan Obligations
+      <input type="number" formControlName="existingLoanObligations" min="0" step="0.01" />
+    </label>
+
+    <label>
+      Fineract Client ID
+      <input type="number" formControlName="fineractClientId" />
+    </label>
+  </fieldset>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <button type="submit" [disabled]="form.invalid || submitting()">
+    {{ submitting() ? 'Creating…' : 'Create Application' }}
+  </button>
+</form>

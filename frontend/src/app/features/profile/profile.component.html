@@ -1,0 +1,16 @@
+<h1>Profile</h1>
+
+@if (profile) {
+  <dl class="profile-details">
+    <dt>Display name</dt>
+    <dd>{{ profile.displayName }}</dd>
+    <dt>Fineract client ID</dt>
+    <dd>{{ profile.clientId }}</dd>
+  </dl>
+  <p class="note">
+    This is a minimal profile view backed by demo customer identity — full profile editing isn't
+    built yet.
+  </p>
+} @else {
+  <p class="error">Profile unavailable — try signing in again.</p>
+}

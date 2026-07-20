@@ -1,0 +1,35 @@
+<div class="list-header">
+  <h1>Loan Applications</h1>
+  <a routerLink="/apply" class="button">New Application</a>
+</div>
+
+@if (loading()) {
+  <p>Loading applications…</p>
+} @else if (error()) {
+  <p class="error">{{ error() }}</p>
+} @else if (applications().length === 0) {
+  <p>No applications yet.</p>
+} @else {
+  <table>
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Status</th>
+        <th>Amount</th>
+        <th>Purpose</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (app of applications(); track app.applicationRef) {
+        <tr [routerLink]="['/loan-application', app.applicationRef]" class="row-link">
+          <td>{{ app.applicationRef }}</td>
+          <td class="status-{{ app.status.toLowerCase() }}">{{ app.status }}</td>
+          <td>{{ app.requestedAmount }} {{ app.currency }}</td>
+          <td>{{ app.loanPurpose }}</td>
+          <td>{{ app.createdAt | date: 'medium' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

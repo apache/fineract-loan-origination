@@ -1,0 +1,48 @@
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+}
+
+.loan-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.loan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  text-decoration: none;
+  color: var(--color-text);
+
+  &:hover {
+    border-color: var(--color-primary);
+  }
+}
+
+.loan-ref {
+  font-weight: 600;
+}
+
+.loan-amount {
+  font-size: 1.2rem;
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.loan-meta {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}

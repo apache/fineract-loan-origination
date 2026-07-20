@@ -1,0 +1,60 @@
+:root {
+  --color-primary: #0e7c7b;
+  --color-primary-dark: #0a5f5e;
+  --color-primary-light: #e6f5f4;
+  --color-primary-contrast: #ffffff;
+
+  --color-bg: #fafaf9;
+  --color-surface: #ffffff;
+  --color-border: #e2e8e7;
+
+  --color-text: #1a2e2b;
+  --color-text-muted: #5b6b69;
+  --color-text-faint: #a3aeac;
+
+  --color-error: #b3261e;
+  --color-error-bg: #fdecea;
+  --color-success: #1c7a4b;
+  --color-success-bg: #e7f6ee;
+
+  --radius: 6px;
+}
+
+[data-theme='dark'] {
+  --color-primary: #2dd4cf;
+  --color-primary-dark: #14b8b6;
+  --color-primary-light: #16302e;
+  --color-primary-contrast: #04211f;
+
+  --color-bg: #10181a;
+  --color-surface: #17201f;
+  --color-border: #283231;
+
+  --color-text: #e7efed;
+  --color-text-muted: #a9b6b3;
+  --color-text-faint: #6b7876;
+
+  --color-error: #f2867e;
+  --color-error-bg: #3a1c1a;
+  --color-success: #59d9a0;
+  --color-success-bg: #123326;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}

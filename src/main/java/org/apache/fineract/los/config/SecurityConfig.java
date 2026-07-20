@@ -19,39 +19,67 @@
 
 package org.apache.fineract.los.config;
 
+import java.util.List;
+import org.apache.fineract.los.security.MockCustomerIdentityService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * Security configuration for the Loan Origination Service.
- *
- * <p>This service is a stateless REST API secured via the {@code X-Fineract-Platform-TenantId}
- * header and Basic authentication. CSRF protection is intentionally disabled because:
- *
- * <ul>
- *   <li>The API is stateless — no session cookies are used
- *   <li>All clients are server-side (Angular uses Authorization header, not cookies)
- *   <li>CSRF attacks require cookie-based session state which this service does not maintain
- * </ul>
- *
- * <p>This follows the standard practice for REST APIs as documented in the Spring Security
- * reference:
- * https://docs.spring.io/spring-security/reference/features/exploits/csrf.html#csrf-when-to-use
- */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
+  /**
+   * Customer-facing security chain. Matched first ({@code @Order(1)}) so any request under
+   * {@code /api/v1/customer/**} authenticates against {@link MockCustomerIdentityService}
+   * (producing a {@code CustomerPrincipal}) rather than the static staff account below.
+   *
+   * <p>CORS must be applied here explicitly — it is NOT inherited from the staff chain, since each
+   * {@code SecurityFilterChain} is independently matched and configured.
+   */
   @Bean
-  SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+  @Order(1)
+  SecurityFilterChain customerSecurityFilterChain(
+      final HttpSecurity http, final MockCustomerIdentityService customerIdentityService)
+      throws Exception {
+
+    http.securityMatcher("/api/v1/customer/**")
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        .httpBasic(Customizer.withDefaults())
+        .userDetailsService(customerIdentityService)
+        .csrf(AbstractHttpConfigurer::disable)
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+    return http.build();
+  }
+
+  /** Staff-facing security chain — explicitly ordered after the customer chain. */
+  @Bean
+  @Order(2)
+  SecurityFilterChain securityFilterChain(
+      final HttpSecurity http, final InMemoryUserDetailsManager staffUserDetailsService)
+      throws Exception {
 
     http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .userDetailsService(staffUserDetailsService)
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers("/actuator/health", "/actuator/info")
@@ -62,5 +90,36 @@ public class SecurityConfig {
         .formLogin(form -> form.disable());
 
     return http.build();
+  }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
+
+  @Bean
+  PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  /** Explicit staff identity — replaces the auto-configured default user, which Spring Boot
+   * silently disables once any custom UserDetailsService bean (like MockCustomerIdentityService)
+   * is present in the context. */
+  @Bean
+  InMemoryUserDetailsManager staffUserDetailsService(final PasswordEncoder passwordEncoder) {
+    final UserDetails staffUser =
+        User.withUsername("admin")
+            .password(passwordEncoder.encode("somepassword"))
+            .roles("STAFF")
+            .build();
+    return new InMemoryUserDetailsManager(staffUser);
   }
 }

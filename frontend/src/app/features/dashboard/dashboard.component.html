@@ -1,0 +1,39 @@
+<h1>Welcome back, {{ displayName }}</h1>
+
+@if (loading) {
+  <p>Loading your dashboard…</p>
+} @else if (error) {
+  <p class="error">{{ error }}</p>
+} @else {
+  <div class="summary-cards">
+    <div class="card">
+      <span class="card-value">{{ applications.length }}</span>
+      <span class="card-label">Total applications</span>
+    </div>
+    <div class="card">
+      <span class="card-value">{{ activeCount }}</span>
+      <span class="card-label">In progress</span>
+    </div>
+    <div class="card">
+      <span class="card-value">{{ disbursedCount }}</span>
+      <span class="card-label">Disbursed loans</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a routerLink="/apply" class="primary-button">Start a new application</a>
+    <a routerLink="/loan-application" class="secondary-link">View all applications</a>
+  </div>
+
+  @if (applications.length > 0) {
+    <h2>Recent activity</h2>
+    <ul class="recent-list">
+      @for (app of applications.slice(0, 5); track app.applicationRef) {
+        <li>
+          <a [routerLink]="['/loan-application', app.applicationRef]">{{ app.applicationRef }}</a>
+          <span class="status-{{ app.status.toLowerCase() }}">{{ app.status }}</span>
+        </li>
+      }
+    </ul>
+  }
+}

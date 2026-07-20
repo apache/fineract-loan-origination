@@ -1,0 +1,19 @@
+<h1>My loans</h1>
+
+@if (loading) {
+  <p>Loading…</p>
+} @else if (error) {
+  <p class="error">{{ error }}</p>
+} @else if (loans.length === 0) {
+  <p>You have no disbursed loans yet. Once an application is approved and disbursed, it'll show up here.</p>
+} @else {
+  <div class="loan-cards">
+    @for (loan of loans; track loan.applicationRef) {
+      <a [routerLink]="['/loan-application', loan.applicationRef]" class="loan-card">
+        <span class="loan-ref">{{ loan.applicationRef }}</span>
+        <span class="loan-amount">{{ loan.requestedAmount }} {{ loan.currency }}</span>
+        <span class="loan-meta">{{ loan.tenorMonths }} months · {{ loan.loanPurpose }}</span>
+      </a>
+    }
+  </div>
+}

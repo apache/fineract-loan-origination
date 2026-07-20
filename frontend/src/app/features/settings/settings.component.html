@@ -1,0 +1,9 @@
+<h1>Settings</h1>
+
+<section class="settings-section">
+  <h2>Account</h2>
+  <p>Signed in as {{ profile?.displayName }} (Client #{{ profile?.clientId }})</p>
+  <button (click)="logout()">Sign out</button>
+</section>
+
+<p class="note">More settings (notifications, language, theme) aren't built yet.</p>

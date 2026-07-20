@@ -42,6 +42,19 @@ public interface ApplicantProfileRepository extends JpaRepository<ApplicantProfi
    * @param application the parent loan application
    * @return the applicant profile if it exists
    */
+  /**
+   * Finds all applicant profiles belonging to a given Fineract client, scoped to a tenant.
+   *
+   * <p>Used by the customer-facing controller to scope "my applications" to only what the
+   * authenticated customer's clientId actually owns.
+   *
+   * @param fineractClientId the Fineract client identifier of the logged-in customer
+   * @param tenantId institution identifier
+   * @return all applicant profiles for that client within the tenant
+   */
+  java.util.List<ApplicantProfile> findAllByFineractClientIdAndTenantId(
+      Long fineractClientId, String tenantId);
+
   Optional<ApplicantProfile> findByApplication(LoanApplication application);
 
   /**

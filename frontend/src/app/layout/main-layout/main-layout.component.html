@@ -1,0 +1,89 @@
+<div class="shell">
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
+    <div class="brand">
+      <span class="brand-mark">F</span>
+      @if (!sidebarCollapsed()) {
+        <span class="brand-name">Apache Fineract</span>
+      }
+      <button
+        class="collapse-toggle"
+        type="button"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        [title]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      >
+        <svg viewBox="0 0 16 16" width="14" height="14" [class.flipped]="sidebarCollapsed()">
+          <path d="M10 2 L5 8 L10 14" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
+
+    <nav class="nav">
+      @for (item of navItems; track item.path) {
+        @if (item.enabled) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="active"
+            class="nav-item"
+            [title]="sidebarCollapsed() ? item.label : null"
+          >
+            @if (!sidebarCollapsed()) {
+              {{ item.label }}
+            } @else {
+              {{ item.label.charAt(0) }}
+            }
+          </a>
+        } @else {
+          <span class="nav-item disabled" [title]="item.label + ' — coming soon'">
+            @if (!sidebarCollapsed()) {
+              {{ item.label }}
+            } @else {
+              {{ item.label.charAt(0) }}
+            }
+          </span>
+        }
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <button
+        class="theme-toggle"
+        type="button"
+        (click)="toggleTheme()"
+        [title]="themeService.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+      >
+        @if (themeService.theme() === 'dark') {
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="10" cy="10" r="4" />
+            <path stroke-linecap="round" d="M10 1.5v2M10 16.5v2M18.5 10h-2M3.5 10h-2M15.6 4.4l-1.4 1.4M5.8 14.2l-1.4 1.4M15.6 15.6l-1.4-1.4M5.8 5.8L4.4 4.4" />
+          </svg>
+        } @else {
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+            <path d="M17.5 12.5A7.5 7.5 0 0 1 7.5 2.5a7.5 7.5 0 1 0 10 10Z" />
+          </svg>
+        }
+        @if (!sidebarCollapsed()) {
+          <span>{{ themeService.theme() === 'dark' ? 'Light theme' : 'Dark theme' }}</span>
+        }
+      </button>
+
+      @if (profile && !sidebarCollapsed()) {
+        <div class="profile-chip">
+          <span class="profile-name">{{ profile.displayName }}</span>
+          <span class="profile-id">Client #{{ profile.clientId }}</span>
+        </div>
+      }
+      <button class="logout-button" (click)="logout()" [title]="sidebarCollapsed() ? 'Sign out' : null">
+        @if (!sidebarCollapsed()) {
+          Sign out
+        } @else {
+          ⏻
+        }
+      </button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>
