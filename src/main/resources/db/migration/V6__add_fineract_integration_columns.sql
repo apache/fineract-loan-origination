@@ -24,3 +24,6 @@ ALTER TABLE applicant_profile
 
 CREATE INDEX idx_loan_application_fineract_loan_id
     ON loan_application(fineract_loan_id);
+
+CREATE INDEX idx_applicant_profile_fineract_client_tenant
+    ON applicant_profile(fineract_client_id, tenant_id);

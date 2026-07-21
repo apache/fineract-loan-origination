@@ -25,3 +25,6 @@ CREATE TABLE required_document (
     tenant_id           VARCHAR(100) NOT NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX idx_required_document_application
+    ON required_document(application_id);
