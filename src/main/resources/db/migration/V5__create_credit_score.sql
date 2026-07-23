@@ -17,7 +17,7 @@
 
 CREATE TABLE credit_score (
     id                          BIGSERIAL PRIMARY KEY,
-    application_id              BIGINT NOT NULL REFERENCES loan_application(id),
+    application_id              BIGINT NOT NULL UNIQUE REFERENCES loan_application(id),
     score                       INTEGER NOT NULL,
     risk_category               VARCHAR(20) NOT NULL,
     income_ratio_score          INTEGER,

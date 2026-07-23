@@ -17,7 +17,7 @@
 
 CREATE TABLE applicant_profile (
     id                              BIGSERIAL PRIMARY KEY,
-    application_id                  BIGINT NOT NULL REFERENCES loan_application(id),
+    application_id                  BIGINT NOT NULL UNIQUE REFERENCES loan_application(id),
     full_name                       VARCHAR(200) NOT NULL,
     national_id                     VARCHAR(100),
     monthly_income                  NUMERIC(19,2),
