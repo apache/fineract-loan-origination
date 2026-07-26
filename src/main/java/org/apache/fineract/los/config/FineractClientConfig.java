@@ -19,20 +19,24 @@
 
 package org.apache.fineract.los.config;
 
+import java.time.Duration;
 import org.apache.fineract.los.bridge.FineractClientProperties;
+import org.apache.fineract.los.security.JwtProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.web.client.RestTemplate;
 
-/**
- * Enables binding of {@link FineractClientProperties} from {@code application.yml}.
- *
- * <p>Bean selection between the real and mock {@code FineractLoanApiClient} implementations is
- * handled declaratively via {@code @ConditionalOnProperty} directly on {@code
- * RestFineractLoanApiClient} and {@code MockFineractLoanApiClient} — this class only registers the
- * properties bean.
- */
+/** Enables binding of {@link FineractClientProperties} from {@code application.yml}. */
 @Configuration
-@EnableConfigurationProperties(FineractClientProperties.class)
+@EnableConfigurationProperties({FineractClientProperties.class, JwtProperties.class})
 public class FineractClientConfig {
-  // Marker configuration class — no beans defined here.
+
+  @Bean
+  RestTemplate fineractRestTemplate(final FineractClientProperties props) {
+    final JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory();
+    factory.setReadTimeout(Duration.ofMillis(props.getReadTimeoutMs()));
+    return new RestTemplate(factory);
+  }
 }

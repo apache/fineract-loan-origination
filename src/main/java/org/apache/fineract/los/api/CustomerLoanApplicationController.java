@@ -47,8 +47,8 @@ import org.springframework.web.bind.annotation.RestController;
  * calls, distinct from the staff-facing {@link LoanApplicationController}.
  *
  * <p>Customers may create, view, and submit their own applications. Back-office actions
- * (start-review, approval decisions, disbursement) remain staff-only and live exclusively in
- * {@link LoanApplicationController}.
+ * (start-review, approval decisions, disbursement) remain staff-only and live exclusively in {@link
+ * LoanApplicationController}.
  */
 @RestController
 @RequestMapping("/api/v1/customer/loan-applications")
@@ -60,6 +60,7 @@ public class CustomerLoanApplicationController {
 
   private final LoanApplicationService loanApplicationService;
   private final CreditScoringService creditScoringService;
+
   /** Creates a new application, forcing the applicant's clientId to the caller's own identity. */
   @PostMapping
   public ResponseEntity<LoanApplicationResponse> create(

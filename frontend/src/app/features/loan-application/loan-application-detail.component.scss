@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 h1 {
   font-size: 1.3rem;
   margin: 0 0 1rem;
@@ -77,10 +95,31 @@ button {
   font-weight: 600;
   text-transform: uppercase;
 }
-.status-draft { background: #eceef1; color: #4b5563; }
-.status-submitted { background: #e5edff; color: #2952e3; }
-.status-under_review { background: #fff6e0; color: #92700f; }
-.status-approved { background: var(--color-success-bg); color: var(--color-success); }
-.status-rejected { background: var(--color-error-bg); color: var(--color-error); }
-.status-referred { background: #f3e8ff; color: #7e22ce; }
-.status-disbursed { background: #dcfce7; color: #15803d; }
+.status-draft {
+  background: #eceef1;
+  color: #4b5563;
+}
+.status-submitted {
+  background: #e5edff;
+  color: #2952e3;
+}
+.status-under_review {
+  background: #fff6e0;
+  color: #92700f;
+}
+.status-approved {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.status-rejected {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+.status-referred {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+.status-disbursed {
+  background: #dcfce7;
+  color: #15803d;
+}

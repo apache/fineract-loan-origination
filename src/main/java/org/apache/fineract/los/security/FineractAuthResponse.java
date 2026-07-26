@@ -16,16 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { RiskCategory } from './enums';
 
-/** Mirrors CreditScoreResponse.java exactly. */
-export interface CreditScore {
-  score: number;
-  riskCategory: RiskCategory;
-  incomeRatioScore: number;
-  debtBurdenScore: number;
-  employmentScore: number;
-  repaymentHistoryScore: number;
-  loanPurposeScore: number;
-  scoredAt: string;
+package org.apache.fineract.los.security;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * DTO for POST /v1/authentication response from Fineract.
+ *
+ * <p>{@code clientId} is present only when the app user is linked to a client record. Staff users
+ * (e.g. mifos) will have a null clientId.
+ */
+@Getter
+@Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class FineractAuthResponse {
+  private String username;
+  private Long userId;
+  private Long clientId;
+  private String displayName;
+  private boolean authenticated;
+  private String base64EncodedAuthenticationKey;
 }

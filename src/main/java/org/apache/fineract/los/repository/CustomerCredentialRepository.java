@@ -16,16 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { RiskCategory } from './enums';
 
-/** Mirrors CreditScoreResponse.java exactly. */
-export interface CreditScore {
-  score: number;
-  riskCategory: RiskCategory;
-  incomeRatioScore: number;
-  debtBurdenScore: number;
-  employmentScore: number;
-  repaymentHistoryScore: number;
-  loanPurposeScore: number;
-  scoredAt: string;
+package org.apache.fineract.los.repository;
+
+import java.util.Optional;
+import org.apache.fineract.los.domain.CustomerCredential;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CustomerCredentialRepository extends JpaRepository<CustomerCredential, Long> {
+
+  Optional<CustomerCredential> findByUsername(String username);
+
+  boolean existsByUsernameAndTenantId(String username, String tenantId);
 }

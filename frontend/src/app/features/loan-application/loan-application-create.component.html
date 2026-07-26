@@ -1,93 +1,126 @@
-<form [formGroup]="form" (ngSubmit)="submit()" class="application-form">
-  <h1>New Loan Application</h1>
+<!--
 
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements. See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership. The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations
+  under the License.
+
+-->
+<div class="page-header">
+  <h1>New Loan Application</h1>
+  <p class="subtitle">Fill in the loan and applicant details below to start the review process.</p>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="submit()" class="application-form">
   <fieldset>
     <legend>Loan Details</legend>
+    <div class="field-grid">
+      <label>
+        <span>Requested Amount <span class="required">*</span></span>
+        <input
+          type="number"
+          formControlName="requestedAmount"
+          min="0.01"
+          step="0.01"
+          placeholder="e.g. 5000"
+        />
+      </label>
 
-    <label>
-      Requested Amount
-      <input type="number" formControlName="requestedAmount" min="0.01" step="0.01" />
-    </label>
+      <label>
+        <span>Currency</span>
+        <input formControlName="currency" placeholder="USD" />
+      </label>
 
-    <label>
-      Currency
-      <input formControlName="currency" placeholder="USD" />
-    </label>
+      <label>
+        <span>Loan Purpose</span>
+        <select formControlName="loanPurpose">
+          <option value="AGRICULTURE">Agriculture</option>
+          <option value="EDUCATION">Education</option>
+          <option value="BUSINESS">Business</option>
+          <option value="HOME_IMPROVEMENT">Home Improvement</option>
+          <option value="CONSUMER">Consumer</option>
+          <option value="MEDICAL">Medical</option>
+          <option value="SPECULATION">Speculation</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </label>
 
-    <label>
-      Loan Purpose
-      <select formControlName="loanPurpose">
-        <option value="AGRICULTURE">Agriculture</option>
-        <option value="EDUCATION">Education</option>
-        <option value="BUSINESS">Business</option>
-        <option value="HOME_IMPROVEMENT">Home Improvement</option>
-        <option value="CONSUMER">Consumer</option>
-        <option value="MEDICAL">Medical</option>
-        <option value="SPECULATION">Speculation</option>
-        <option value="OTHER">Other</option>
-      </select>
-    </label>
+      <label>
+        <span>Tenor (months) <span class="required">*</span></span>
+        <input type="number" formControlName="tenorMonths" min="1" />
+      </label>
 
-    <label>
-      Tenor (months)
-      <input type="number" formControlName="tenorMonths" min="1" />
-    </label>
-
-    <label>
-      Fineract Loan Product ID
-      <input type="number" formControlName="fineractLoanProductId" />
-    </label>
+      <label class="span-2">
+        <span>Fineract Loan Product ID</span>
+        <input type="number" formControlName="fineractLoanProductId" />
+      </label>
+    </div>
   </fieldset>
 
   <fieldset formGroupName="applicant">
     <legend>Applicant Details</legend>
+    <div class="field-grid">
+      <label class="span-2">
+        <span>Full Name <span class="required">*</span></span>
+        <input formControlName="fullName" placeholder="e.g. John Doe" />
+      </label>
 
-    <label>
-      Full Name
-      <input formControlName="fullName" />
-    </label>
+      <label>
+        <span>National ID</span>
+        <input formControlName="nationalId" />
+      </label>
 
-    <label>
-      National ID
-      <input formControlName="nationalId" />
-    </label>
+      <label>
+        <span>Monthly Income</span>
+        <input type="number" formControlName="monthlyIncome" min="0" step="0.01" />
+      </label>
 
-    <label>
-      Monthly Income
-      <input type="number" formControlName="monthlyIncome" min="0" step="0.01" />
-    </label>
+      <label>
+        <span>Employment Status</span>
+        <select formControlName="employmentStatus">
+          <option value="EMPLOYED">Employed</option>
+          <option value="SELF_EMPLOYED">Self-employed</option>
+          <option value="INFORMAL">Informal</option>
+          <option value="UNEMPLOYED">Unemployed</option>
+        </select>
+      </label>
 
-    <label>
-      Employment Status
-      <select formControlName="employmentStatus">
-        <option value="EMPLOYED">Employed</option>
-        <option value="SELF_EMPLOYED">Self-employed</option>
-        <option value="INFORMAL">Informal</option>
-        <option value="UNEMPLOYED">Unemployed</option>
-      </select>
-    </label>
+      <label>
+        <span>Employment Duration (months)</span>
+        <input type="number" formControlName="employmentDurationMonths" min="0" />
+      </label>
 
-    <label>
-      Employment Duration (months)
-      <input type="number" formControlName="employmentDurationMonths" min="0" />
-    </label>
+      <label>
+        <span>Existing Loan Obligations</span>
+        <input type="number" formControlName="existingLoanObligations" min="0" step="0.01" />
+      </label>
 
-    <label>
-      Existing Loan Obligations
-      <input type="number" formControlName="existingLoanObligations" min="0" step="0.01" />
-    </label>
-
-    <label>
-      Fineract Client ID
-      <input type="number" formControlName="fineractClientId" />
-    </label>
+      <label>
+        <span>Fineract Client ID</span>
+        <input type="number" formControlName="fineractClientId" />
+      </label>
+    </div>
   </fieldset>
 
   @if (error()) {
     <p class="error">{{ error() }}</p>
   }
 
-  <button type="submit" [disabled]="form.invalid || submitting()">
-    {{ submitting() ? 'Creating…' : 'Create Application' }}
-  </button>
+  <div class="form-actions">
+    <button type="submit" [disabled]="form.invalid || submitting()">
+      {{ submitting() ? 'Creating…' : 'Create Application' }}
+    </button>
+  </div>
 </form>

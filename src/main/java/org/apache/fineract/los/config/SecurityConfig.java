@@ -20,11 +20,11 @@
 package org.apache.fineract.los.config;
 
 import java.util.List;
-import org.apache.fineract.los.security.MockCustomerIdentityService;
+import org.apache.fineract.los.security.JwtAuthFilter;
+import org.apache.fineract.los.security.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -35,6 +35,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -44,34 +45,41 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   /**
-   * Customer-facing security chain. Matched first ({@code @Order(1)}) so any request under
-   * {@code /api/v1/customer/**} authenticates against {@link MockCustomerIdentityService}
-   * (producing a {@code CustomerPrincipal}) rather than the static staff account below.
+   * Customer-facing security chain. Matched first ({@code @Order(1)}) so any request under {@code
+   * /api/v1/customer/**} authenticates against {@link MockCustomerIdentityService} (producing a
+   * {@code CustomerPrincipal}) rather than the static staff account below.
    *
    * <p>CORS must be applied here explicitly — it is NOT inherited from the staff chain, since each
    * {@code SecurityFilterChain} is independently matched and configured.
    */
+  /**
+   * JWT chain — covers all /api/v1/** except public and admin endpoints. john (and any customer)
+   * uses their JWT token here.
+   */
   @Bean
   @Order(1)
-  SecurityFilterChain customerSecurityFilterChain(
-      final HttpSecurity http, final MockCustomerIdentityService customerIdentityService)
+  SecurityFilterChain jwtSecurityFilterChain(final HttpSecurity http, final JwtService jwtService)
       throws Exception {
 
-    http.securityMatcher("/api/v1/customer/**")
+    http.securityMatcher("/api/v1/loan-applications/**", "/api/v1/customer/**")
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-        .httpBasic(Customizer.withDefaults())
-        .userDetailsService(customerIdentityService)
+        .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
         .csrf(AbstractHttpConfigurer::disable)
-        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .formLogin(AbstractHttpConfigurer::disable);
 
     return http.build();
   }
 
-  /** Staff-facing security chain — explicitly ordered after the customer chain. */
+  /**
+   * Staff/admin chain — covers auth login, admin endpoints, actuator, swagger. Uses Basic Auth with
+   * the in-memory admin account.
+   */
   @Bean
   @Order(2)
-  SecurityFilterChain securityFilterChain(
+  SecurityFilterChain staffSecurityFilterChain(
       final HttpSecurity http, final InMemoryUserDetailsManager staffUserDetailsService)
       throws Exception {
 
@@ -82,7 +90,13 @@ public class SecurityConfig {
         .userDetailsService(staffUserDetailsService)
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/actuator/health", "/actuator/info")
+                auth.requestMatchers(
+                        "/actuator/health",
+                        "/actuator/info",
+                        "/api/v1/auth/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
@@ -110,9 +124,11 @@ public class SecurityConfig {
     return new BCryptPasswordEncoder();
   }
 
-  /** Explicit staff identity — replaces the auto-configured default user, which Spring Boot
-   * silently disables once any custom UserDetailsService bean (like MockCustomerIdentityService)
-   * is present in the context. */
+  /**
+   * Explicit staff identity — replaces the auto-configured default user, which Spring Boot silently
+   * disables once any custom UserDetailsService bean (like MockCustomerIdentityService) is present
+   * in the context.
+   */
   @Bean
   InMemoryUserDetailsManager staffUserDetailsService(final PasswordEncoder passwordEncoder) {
     final UserDetails staffUser =

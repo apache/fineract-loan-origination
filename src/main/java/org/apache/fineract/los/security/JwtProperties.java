@@ -16,16 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { RiskCategory } from './enums';
 
-/** Mirrors CreditScoreResponse.java exactly. */
-export interface CreditScore {
-  score: number;
-  riskCategory: RiskCategory;
-  incomeRatioScore: number;
-  debtBurdenScore: number;
-  employmentScore: number;
-  repaymentHistoryScore: number;
-  loanPurposeScore: number;
-  scoredAt: string;
+package org.apache.fineract.los.security;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@Getter
+@Setter
+@ConfigurationProperties(prefix = "los.jwt")
+public class JwtProperties {
+
+  /** HMAC-SHA256 signing secret — must be at least 32 characters. */
+  private String secret = "change-me-in-production-min-32-chars!!";
+
+  /** Token validity in minutes. Defaults to 15. */
+  private int expiryMinutes = 15;
 }

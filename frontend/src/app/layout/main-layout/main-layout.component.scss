@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 .shell {
   display: flex;
   min-height: 100vh;
@@ -20,6 +38,17 @@
       padding: 0 0.6rem 1.25rem;
       justify-content: center;
       position: relative;
+
+      .brand-logo {
+        height: 24px;
+      }
+
+      .collapse-toggle {
+        position: absolute;
+        right: -11px;
+        top: 0;
+        background: var(--color-surface);
+      }
     }
 
     .nav {
@@ -28,14 +57,12 @@
     }
 
     .nav-item {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0;
-      text-transform: uppercase;
-      font-weight: 600;
     }
 
     .sidebar-footer {
@@ -47,9 +74,10 @@
 
     .theme-toggle,
     .logout-button {
-      width: 36px;
+      width: 40px;
+      height: 40px;
       justify-content: center;
-      padding: 0.5rem 0;
+      padding: 0;
     }
   }
 }
@@ -92,29 +120,18 @@
   }
 }
 
-.sidebar.collapsed .collapse-toggle {
-  position: absolute;
-  right: -11px;
-  top: 0;
-  background: var(--color-surface);
-}
-
-.brand-mark {
-  width: 28px;
+.brand-logo {
   height: 28px;
-  border-radius: 6px;
-  background: var(--color-primary);
-  color: var(--color-primary-contrast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.95rem;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .brand-name {
   font-weight: 600;
   color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .nav {
@@ -126,7 +143,9 @@
 }
 
 .nav-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   padding: 0.55rem 0.75rem;
   border-radius: 6px;
   color: var(--color-text-muted);
@@ -148,6 +167,19 @@
     color: var(--color-text-faint);
     cursor: default;
   }
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-footer {
@@ -173,7 +205,31 @@
   }
 }
 
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.6rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font: inherit;
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary-dark);
+  }
+}
+
 .logout-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   width: 100%;
   background: none;
   border: 1px solid var(--color-border);
@@ -186,6 +242,35 @@
   &:hover {
     border-color: var(--color-primary);
     color: var(--color-primary-dark);
+  }
+}
+
+// Instant custom tooltip — replaces slow native `title` delay
+.nav-item,
+.theme-toggle,
+.logout-button {
+  position: relative;
+
+  &[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--color-text);
+    color: var(--color-surface);
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease;
+    z-index: 20;
+  }
+
+  &:hover[data-tooltip]::after {
+    opacity: 1;
   }
 }
 

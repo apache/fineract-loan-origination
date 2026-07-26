@@ -42,3 +42,5 @@ frontend/dist/
 frontend/.angular/
 frontend/coverage/
 *.tsbuildinfo
+
+memory.md

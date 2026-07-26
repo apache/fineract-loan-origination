@@ -38,7 +38,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create
 
     show-sql: false
 
@@ -65,8 +65,14 @@ management:
   endpoint:
     health:
       show-details: always
-
+logging:
+  level:
+    org.flywaydb: DEBUG
 los:
+
+  jwt:
+    secret: ${JWT_SECRET:los-dev-secret-min-32-chars-change-in-prod!!}
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:15}
 
   scoring:
 
@@ -119,3 +125,4 @@ los:
     locale: en
 
     date-format: "dd MMMM yyyy"
+    
