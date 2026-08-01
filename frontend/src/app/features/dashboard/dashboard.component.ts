@@ -19,6 +19,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { finalize, take } from 'rxjs';
 import { CustomerLoanApplicationService } from '../../core/services/customer-loan-application.service';
 import { AuthService } from '../../core/services/auth.service';
 import { LoanApplication } from '../../core/models';
@@ -52,15 +53,19 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.customerLoanApplicationService.myApplications().subscribe({
-      next: (apps) => {
-        this.applications = apps;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.error = err?.message ?? 'Could not load your applications.';
-        this.loading = false;
-      },
-    });
+    this.customerLoanApplicationService
+      .myApplications()
+      .pipe(
+        take(1),
+        finalize(() => (this.loading = false)),
+      )
+      .subscribe({
+        next: (apps) => {
+          this.applications = apps;
+        },
+        error: (err) => {
+          this.error = err?.message ?? 'Could not load your applications.';
+        },
+      });
   }
 }

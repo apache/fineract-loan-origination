@@ -133,6 +133,11 @@ under the License.
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
+
         <!-- ==================== API DOCS ==================== -->
         <dependency>
             <groupId>org.springdoc</groupId>

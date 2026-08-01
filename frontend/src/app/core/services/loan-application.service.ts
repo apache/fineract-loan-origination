@@ -44,9 +44,9 @@ export class LoanApplicationService {
     return this.http.get<LoanApplication>(`${STAFF_BASE_URL}/${applicationRef}`);
   }
 
-  /** POST /api/v1/loan-applications/{applicationRef}/submit — DRAFT -> SUBMITTED */
+  /** POST /api/v1/customer/loan-applications/{applicationRef}/submit — DRAFT -> SUBMITTED */
   submit(applicationRef: string): Observable<LoanApplication> {
-    return this.http.post<LoanApplication>(`${STAFF_BASE_URL}/${applicationRef}/submit`, {});
+    return this.http.post<LoanApplication>(`${CUSTOMER_BASE_URL}/${applicationRef}/submit`, {});
   }
 
   /** POST /api/v1/loan-applications/{applicationRef}/start-review — SUBMITTED -> UNDER_REVIEW */

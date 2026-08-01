@@ -22,7 +22,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CreditScore } from '../models';
 
-const BASE_URL = `${environment.losApiUrl}/loan-applications`;
+const BASE_URL = `${environment.losApiUrl}/customer/loan-applications`;
 
 @Injectable({ providedIn: 'root' })
 export class CustomerCreditScoringService {

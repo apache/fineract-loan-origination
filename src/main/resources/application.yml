@@ -3,18 +3,7 @@
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
 # regarding copyright ownership. The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
-# with the License. You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied. See the License for the
-# specific language governing permissions and limitations
-# under the License.
+# to you under the Apache License, Version 2.0.
 #
 
 spring:
@@ -22,7 +11,7 @@ spring:
     user:
       name: admin
       password: somepassword
-      
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/los_db}
     username: postgres
@@ -38,7 +27,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
 
     show-sql: false
 
@@ -65,9 +54,11 @@ management:
   endpoint:
     health:
       show-details: always
+
 logging:
   level:
     org.flywaydb: DEBUG
+
 los:
 
   jwt:
@@ -75,9 +66,7 @@ los:
     expiry-minutes: ${JWT_EXPIRY_MINUTES:15}
 
   scoring:
-
     weights:
-
       income-ratio: 30
       debt-burden: 25
       employment-stability: 20
@@ -94,35 +83,32 @@ los:
       debt-burden-severe-threshold: 0.70
 
   workflow:
-    stages:
-      - LOAN_OFFICER
-      - BRANCH_MANAGER
-      - CREDIT_COMMITTEE
+  stages:
+    - LOAN_OFFICER
+    - CREDIT_COMMITTEE
+    - BRANCH_MANAGER
+  role-mapping:
+    loan_officer: LOAN_OFFICER
+    credit_committee: CREDIT_COMMITTEE
+    branch_manager: BRANCH_MANAGER
+  final-stage: BRANCH_MANAGER
 
   fineract:
-    base-url: ${FINERACT_BASE_URL:https://localhost/fineract-provider/api/v1}
-
+    base-url: ${FINERACT_BASE_URL:https://localhost:8443}
     tenant-id: ${FINERACT_TENANT_ID:default}
-
     username: ${FINERACT_USERNAME:mifos}
-
     password: ${FINERACT_PASSWORD:password}
 
-    mock-enabled: ${FINERACT_MOCK_ENABLED:true}
+    # Use the real Fineract instance
+    mock-enabled: false
 
     connect-timeout-ms: 5000
-
     read-timeout-ms: 10000
 
     default-transaction-processing-strategy-code: "1"
-
     default-frequency-type: "2"
-
     default-repayment-every: 1
-
     default-interest-rate-per-period: "12"
 
     locale: en
-
     date-format: "dd MMMM yyyy"
-    

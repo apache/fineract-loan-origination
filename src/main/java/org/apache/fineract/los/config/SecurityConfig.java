@@ -20,6 +20,7 @@
 package org.apache.fineract.los.config;
 
 import java.util.List;
+import org.apache.fineract.los.security.FineractAuthenticationProvider;
 import org.apache.fineract.los.security.JwtAuthFilter;
 import org.apache.fineract.los.security.JwtService;
 import org.springframework.context.annotation.Bean;
@@ -29,11 +30,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -45,23 +43,16 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   /**
-   * Customer-facing security chain. Matched first ({@code @Order(1)}) so any request under {@code
-   * /api/v1/customer/**} authenticates against {@link MockCustomerIdentityService} (producing a
-   * {@code CustomerPrincipal}) rather than the static staff account below.
-   *
-   * <p>CORS must be applied here explicitly — it is NOT inherited from the staff chain, since each
-   * {@code SecurityFilterChain} is independently matched and configured.
-   */
-  /**
-   * JWT chain — covers all /api/v1/** except public and admin endpoints. john (and any customer)
-   * uses their JWT token here.
+   * Customer-facing chain (Order 1). Covers all customer and loan-application endpoints.
+   * Authentication is handled via LOS-issued JWT tokens — credentials are validated locally against
+   * the {@code customer_credentials} table; Fineract is never consulted for customer login.
    */
   @Bean
   @Order(1)
   SecurityFilterChain jwtSecurityFilterChain(final HttpSecurity http, final JwtService jwtService)
       throws Exception {
 
-    http.securityMatcher("/api/v1/loan-applications/**", "/api/v1/customer/**")
+    http.securityMatcher("/api/v1/customer/**")
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
         .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
@@ -74,20 +65,24 @@ public class SecurityConfig {
   }
 
   /**
-   * Staff/admin chain — covers auth login, admin endpoints, actuator, swagger. Uses Basic Auth with
-   * the in-memory admin account.
+   * Staff/backoffice chain (Order 2). Covers all remaining endpoints including admin, approval,
+   * disbursement, and actuator routes.
+   *
+   * <p>Authentication is delegated to Fineract: the backoffice UI forwards its Fineract Basic Auth
+   * credential to LOS, which validates it against Fineract's {@code /api/v1/authentication}
+   * endpoint via {@link FineractAuthenticationProvider}. No local staff user store exists in LOS.
    */
   @Bean
   @Order(2)
   SecurityFilterChain staffSecurityFilterChain(
-      final HttpSecurity http, final InMemoryUserDetailsManager staffUserDetailsService)
+      final HttpSecurity http, final FineractAuthenticationProvider fineractAuthenticationProvider)
       throws Exception {
 
     http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .userDetailsService(staffUserDetailsService)
+        .authenticationProvider(fineractAuthenticationProvider)
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
@@ -101,41 +96,33 @@ public class SecurityConfig {
                     .anyRequest()
                     .authenticated())
         .httpBasic(basic -> basic.realmName("Fineract Loan Origination Service"))
-        .formLogin(form -> form.disable());
+        .formLogin(AbstractHttpConfigurer::disable);
 
     return http.build();
   }
 
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+    final CorsConfiguration configuration = new CorsConfiguration();
+    // localhost:4200 / 4201 = LOS customer Angular app
+    // localhost:60506 = Fineract Backoffice UI
+    configuration.setAllowedOrigins(
+        List.of("http://localhost:4200", "http://localhost:4201", "http://localhost:60506"));
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true);
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
   }
 
+  /**
+   * Password encoder used for customer credential hashing only. Staff passwords are never stored in
+   * LOS — all staff auth is delegated to Fineract.
+   */
   @Bean
   PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
-  }
-
-  /**
-   * Explicit staff identity — replaces the auto-configured default user, which Spring Boot silently
-   * disables once any custom UserDetailsService bean (like MockCustomerIdentityService) is present
-   * in the context.
-   */
-  @Bean
-  InMemoryUserDetailsManager staffUserDetailsService(final PasswordEncoder passwordEncoder) {
-    final UserDetails staffUser =
-        User.withUsername("admin")
-            .password(passwordEncoder.encode("somepassword"))
-            .roles("STAFF")
-            .build();
-    return new InMemoryUserDetailsManager(staffUser);
   }
 }

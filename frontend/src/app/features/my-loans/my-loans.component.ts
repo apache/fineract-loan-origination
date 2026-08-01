@@ -19,6 +19,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { finalize, take } from 'rxjs';
 import { CustomerLoanApplicationService } from '../../core/services/customer-loan-application.service';
 import { LoanApplication } from '../../core/models';
 
@@ -37,15 +38,19 @@ export class MyLoansComponent implements OnInit {
   loans: LoanApplication[] = [];
 
   ngOnInit(): void {
-    this.customerLoanApplicationService.myApplications().subscribe({
-      next: (apps) => {
-        this.loans = apps.filter((a) => a.status === 'DISBURSED');
-        this.loading = false;
-      },
-      error: (err) => {
-        this.error = err?.message ?? 'Could not load your loans.';
-        this.loading = false;
-      },
-    });
+    this.customerLoanApplicationService
+      .myApplications()
+      .pipe(
+        take(1),
+        finalize(() => (this.loading = false)),
+      )
+      .subscribe({
+        next: (apps) => {
+          this.loans = apps.filter((a) => a.status === 'DISBURSED');
+        },
+        error: (err) => {
+          this.error = err?.message ?? 'Could not load your loans.';
+        },
+      });
   }
 }
