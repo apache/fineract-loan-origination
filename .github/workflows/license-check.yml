@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-name: 'Dependency License Audit'
+name: 'CI'
 
 on:
   push:
@@ -27,6 +27,8 @@ jobs:
   license-check:
     name: Frontend License Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: frontend
@@ -37,7 +39,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
@@ -46,3 +48,6 @@ jobs:
 
       - name: Run license audit
         run: npx license-checker --production --summary --failOn "GPL-2.0;GPL-3.0;AGPL-3.0;AGPL-3.0-only;AGPL-3.0-or-later"
+
+
+
