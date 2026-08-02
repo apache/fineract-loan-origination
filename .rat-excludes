@@ -41,3 +41,4 @@ frontend/tsconfig.app.json
 frontend/tsconfig.spec.json
 frontend/eslint.config.js
 frontend/assets/**
+**/README.md
