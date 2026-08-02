@@ -16,22 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.fineract.los.api;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.domain.CustomerCredential;
 import org.apache.fineract.los.repository.CustomerCredentialRepository;
 import org.apache.fineract.los.security.JwtService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -49,31 +49,34 @@ public class AuthController {
       String token, String username, Long clientId, String tenantId, int expiresInMinutes) {}
 
   @PostMapping("/login")
-  public LoginResponse login(@Valid @RequestBody final LoginRequest request) {
+  public ResponseEntity<LoginResponse> login(@Valid @RequestBody final LoginRequest request) {
+    final Optional<CustomerCredential> credentialOpt =
+        credentialRepository.findByUsername(request.username());
 
-    final CustomerCredential credential =
-        credentialRepository
-            .findByUsername(request.username())
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+    if (credentialOpt.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    final CustomerCredential credential = credentialOpt.get();
 
     if (!credential.getTenantId().equals(request.tenantId())) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     if (!passwordEncoder.matches(request.password(), credential.getPasswordHash())) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     final String token =
         jwtService.generateToken(
             credential.getUsername(), credential.getFineractClientId(), credential.getTenantId());
 
-    return new LoginResponse(
-        token,
-        credential.getUsername(),
-        credential.getFineractClientId(),
-        credential.getTenantId(),
-        15);
+    return ResponseEntity.ok(
+        new LoginResponse(
+            token,
+            credential.getUsername(),
+            credential.getFineractClientId(),
+            credential.getTenantId(),
+            15));
   }
 }
