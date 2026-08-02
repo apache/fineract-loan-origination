@@ -44,3 +44,4 @@ frontend/coverage/
 *.tsbuildinfo
 
 memory.md
+rat-report.txt

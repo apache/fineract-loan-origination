@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+@use '../../shared/styles/status-colors' as *;
+
 .list-header {
   display: flex;
   align-items: center;
@@ -89,16 +91,16 @@ tbody tr:last-child td {
   text-transform: uppercase;
 }
 .status-draft {
-  background: #eceef1;
-  color: #4b5563;
+  background: $status-draft-bg;
+  color: $status-draft-text;
 }
 .status-submitted {
-  background: #e5edff;
-  color: #2952e3;
+  background: $status-submitted-bg;
+  color: $status-submitted-text;
 }
 .status-under_review {
-  background: #fff6e0;
-  color: #92700f;
+  background: $status-under-review-bg;
+  color: $status-under-review-text;
 }
 .status-approved {
   background: var(--color-success-bg);
@@ -109,10 +111,10 @@ tbody tr:last-child td {
   color: var(--color-error);
 }
 .status-referred {
-  background: #f3e8ff;
-  color: #7e22ce;
+  background: $status-referred-bg;
+  color: $status-referred-text;
 }
 .status-disbursed {
-  background: #dcfce7;
-  color: #15803d;
+  background: $status-disbursed-bg;
+  color: $status-disbursed-text;
 }

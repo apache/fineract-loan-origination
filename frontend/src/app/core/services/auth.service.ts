@@ -39,8 +39,10 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly tokenSubject = new BehaviorSubject<string | null>(null);
   private readonly profileSubject = new BehaviorSubject<CustomerProfile | null>(null);
+  private readonly tenantIdSubject = new BehaviorSubject<string>('default');
 
   profile$ = this.profileSubject.asObservable();
+  readonly tenantId$ = this.tenantIdSubject.asObservable();
 
   login(username: string, password: string): Observable<boolean> {
     return this.http
@@ -53,6 +55,7 @@ export class AuthService {
         tap((res) => {
           this.tokenSubject.next(res.token);
           this.profileSubject.next({ clientId: res.clientId, displayName: res.username });
+          this.setTenantId(res.tenantId);
         }),
         map(() => true),
         catchError(() => of(false)),
@@ -62,6 +65,14 @@ export class AuthService {
   getAuthHeader(): string | null {
     const token = this.tokenSubject.value;
     return token ? `Bearer ${token}` : null;
+  }
+
+  getTenantId(): string {
+    return this.tenantIdSubject.value;
+  }
+
+  setTenantId(tenantId: string): void {
+    this.tenantIdSubject.next(tenantId?.trim() || 'default');
   }
 
   getProfile(): CustomerProfile | null {
@@ -75,5 +86,6 @@ export class AuthService {
   logout(): void {
     this.tokenSubject.next(null);
     this.profileSubject.next(null);
+    this.tenantIdSubject.next('default');
   }
 }

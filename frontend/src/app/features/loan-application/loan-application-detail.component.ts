@@ -42,6 +42,14 @@ export class LoanApplicationDetailComponent implements OnInit {
   private readonly customerLoanApplicationService = inject(CustomerLoanApplicationService);
   private readonly customerCreditScoringService = inject(CustomerCreditScoringService);
 
+  /** Statuses for which a credit score is expected to exist and should be fetched. */
+ /** Statuses for which a credit score is expected to exist and should be fetched. */
+private readonly scoredStatuses: readonly LoanApplication['status'][] = [
+  'UNDER_REVIEW',
+  'APPROVED',
+  'DISBURSED',
+];
+
   loading = signal(true);
   application = signal<LoanApplication | null>(null);
   loadError = signal<string | null>(null);
@@ -66,11 +74,7 @@ export class LoanApplicationDetailComponent implements OnInit {
       next: (app) => {
         this.application.set(app);
         this.loading.set(false);
-        if (
-          app.status === 'UNDER_REVIEW' ||
-          app.status === 'APPROVED' ||
-          app.status === 'DISBURSED'
-        ) {
+        if (this.scoredStatuses.includes(app.status)) {
           this.loadCreditScore();
         }
       },

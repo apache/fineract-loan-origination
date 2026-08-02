@@ -1,0 +1,125 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: 'Sync LOS OpenAPI Spec'
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch: {}
+
+jobs:
+  sync-spec:
+    name: 'Sync spec and regenerate client'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Start LOS backend
+        run: |
+          ./mvnw spring-boot:run &
+          for i in {1..30}; do
+            if curl -sf http://localhost:8082/actuator/health > /dev/null; then
+              echo "Backend is up."
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Fetch LOS OpenAPI spec
+        run: curl -sSf http://localhost:8082/v3/api-docs -o /tmp/los-spec-new.json
+
+      - name: Compare against committed spec
+        id: diff
+        run: |
+          NEW_SHA=$(sha256sum /tmp/los-spec-new.json | cut -d' ' -f1)
+          OLD_SHA=$(jq -r '.spec.committedSha256 // "none"' frontend/openapi/los.provenance.json 2>/dev/null || echo "none")
+          echo "new_sha=$NEW_SHA" >> "$GITHUB_OUTPUT"
+          if [ "$NEW_SHA" = "$OLD_SHA" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update spec and provenance
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          cp /tmp/los-spec-new.json frontend/openapi/los-spec.json
+          cat > frontend/openapi/los.provenance.json <<EOF
+          {
+            "\$comment": "Provenance for frontend/openapi/los-spec.json. Written by .github/workflows/los-api-spec-sync.yml; do not edit by hand.",
+            "license": "Apache-2.0",
+            "fetchedAt": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
+            "source": {
+              "project": "org.apache.fineract.los",
+              "method": "http",
+              "url": "http://localhost:8082/v3/api-docs"
+            },
+            "spec": {
+              "path": "frontend/openapi/los-spec.json",
+              "committedSha256": "${{ steps.diff.outputs.new_sha }}"
+            },
+            "generator": {
+              "tool": "openapi-generator-cli",
+              "output": "frontend/src/app/api"
+            }
+          }
+          EOF
+
+      - name: Setup Node.js
+        if: steps.diff.outputs.changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        if: steps.diff.outputs.changed == 'true'
+        working-directory: frontend
+        run: npm ci
+
+      - name: Regenerate API client
+        if: steps.diff.outputs.changed == 'true'
+        working-directory: frontend
+        run: npx openapi-generator-cli generate
+
+      - name: Create Pull Request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(api): sync the LOS OpenAPI spec'
+          title: 'chore(api): sync the LOS OpenAPI spec'
+          body: >
+            LOS backend's OpenAPI spec has changed. This regenerates
+            `frontend/src/app/api/` from it.
+          branch: chore/los-spec-sync
+          delete-branch: true

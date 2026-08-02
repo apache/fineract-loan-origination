@@ -52,11 +52,13 @@ public class SecurityConfig {
   SecurityFilterChain jwtSecurityFilterChain(final HttpSecurity http, final JwtService jwtService)
       throws Exception {
 
-    http.securityMatcher("/api/v1/customer/**")
+    http.securityMatcher("/api/v1/loan-applications/**", "/api/v1/customer/**")
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
         .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
-        .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/customer/**"))
+        .csrf(
+            csrf ->
+                csrf.ignoringRequestMatchers("/api/v1/loan-applications/**", "/api/v1/customer/**"))
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .httpBasic(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable);
@@ -65,8 +67,8 @@ public class SecurityConfig {
   }
 
   /**
-   * Staff/backoffice chain (Order 2). Covers all remaining endpoints including admin, approval,
-   * disbursement, and actuator routes.
+   * Staff (Order 2). Covers all remaining endpoints including admin, approval, disbursement, and
+   * actuator routes.
    *
    * <p>Authentication is delegated to Fineract: the backoffice UI forwards its Fineract Basic Auth
    * credential to LOS, which validates it against Fineract's {@code /api/v1/authentication}

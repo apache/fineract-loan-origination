@@ -17,25 +17,21 @@
  * under the License.
  */
 
-import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
+// Shared loan-application status badge colors.
+// Anything that isn't already themed via --color-* CSS variables lives here,
+// so a palette change is a one-file edit instead of a repo-wide grep.
 
-/** Attaches Bearer JWT token and the caller's tenant ID to every outgoing request. */
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const authHeader = authService.getAuthHeader();
+$status-draft-bg: #eceef1;
+$status-draft-text: #4b5563;
 
-  if (!authHeader) return next(req);
+$status-submitted-bg: #e5edff;
+$status-submitted-text: #2952e3;
 
-  const tenantId = authService.getTenantId();
+$status-under-review-bg: #fff6e0;
+$status-under-review-text: #92700f;
 
-  return next(
-    req.clone({
-      setHeaders: {
-        Authorization: authHeader,
-        'Fineract-Platform-TenantId': tenantId,
-      },
-    }),
-  );
-};
+$status-referred-bg: #f3e8ff;
+$status-referred-text: #7e22ce;
+
+$status-disbursed-bg: #dcfce7;
+$status-disbursed-text: #15803d;
