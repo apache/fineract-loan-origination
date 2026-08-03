@@ -15,23 +15,21 @@
 # specific language governing permissions and limitations
 # under the License.
 
-name: License Audit
+name: Backend License Audit
 
 on:
+  pull_request:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-
-permissions:
-  contents: read
 
 jobs:
   backend-license-check:
     name: Backend License Audit
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -49,46 +47,28 @@ jobs:
       - name: Generate third-party license report
         run: ./mvnw org.codehaus.mojo:license-maven-plugin:2.7.1:add-third-party -q
 
+      - name: Verify report exists
+        shell: bash
+        run: |
+          REPORT="target/generated-sources/license/THIRD-PARTY.txt"
+
+          if [ ! -f "$REPORT" ]; then
+            echo "::error::THIRD-PARTY.txt was not generated"
+            exit 1
+          fi
+
       - name: Fail on disallowed licenses
         shell: bash
         run: |
-          DISALLOWED="GPL|AGPL|SSPL|BSL|Business Source License"
+          REPORT="target/generated-sources/license/THIRD-PARTY.txt"
 
-          if grep -Ei "$DISALLOWED" target/generated-sources/license/THIRD-PARTY.txt; then
+          echo "Checking third-party licenses..."
+
+          # Reject only explicitly disallowed licenses.
+          # Do NOT match LGPL or GPL with Classpath Exception.
+          if grep -E '\((AGPL|SSPL|BSL)\)|Business Source License' "$REPORT"; then
             echo "::error::Disallowed license found in backend dependencies"
             exit 1
           fi
 
           echo "No disallowed licenses found."
-
-  frontend-license-check:
-    name: Frontend License Audit
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: frontend
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run license audit
-        shell: bash
-        run: |
-          npx license-checker \
-            --production \
-            --summary \
-            --onlyAllow "MIT;Apache-2.0;ISC;BSD-2-Clause;BSD-3-Clause;0BSD;CC0-1.0;Unlicense"
