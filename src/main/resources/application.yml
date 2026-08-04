@@ -91,6 +91,7 @@ los:
       debt-burden-severe-threshold: 0.70
 
   workflow:
+<<<<<<< HEAD
   stages:
     - LOAN_OFFICER
     - CREDIT_COMMITTEE
@@ -100,6 +101,16 @@ los:
     credit_committee: CREDIT_COMMITTEE
     branch_manager: BRANCH_MANAGER
   final-stage: BRANCH_MANAGER
+=======
+    stages:
+      - LOAN_OFFICER
+      - BRANCH_MANAGER
+      - CREDIT_COMMITTEE
+    role-mapping:
+      loan_officer: LOAN_OFFICER
+      branch_manager: BRANCH_MANAGER
+      credit_committee: CREDIT_COMMITTEE
+>>>>>>> 7930a75d (FINERACT-2442: Enforce role-based approval workflow and derive stage from authenticated staff)
 
   fineract:
     base-url: ${FINERACT_BASE_URL:https://localhost:8443}

@@ -20,6 +20,7 @@
 package org.apache.fineract.los.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.domain.ApprovalStage;
@@ -27,25 +28,35 @@ import org.apache.fineract.los.domain.LoanApplication;
 import org.apache.fineract.los.domain.enums.ApprovalDecision;
 import org.apache.fineract.los.domain.enums.LoanApplicationStatus;
 import org.apache.fineract.los.dto.request.ApprovalDecisionRequest;
+import org.apache.fineract.los.exception.ApplicationNotFoundException;
+import org.apache.fineract.los.exception.ApprovalStageMismatchException;
 import org.apache.fineract.los.exception.DuplicateApprovalException;
 import org.apache.fineract.los.exception.LosErrorConstants;
+import org.apache.fineract.los.exception.LosRoleNotAssignedException;
 import org.apache.fineract.los.repository.ApprovalStageRepository;
 import org.apache.fineract.los.repository.LoanApplicationRepository;
+import org.apache.fineract.los.security.LosRole;
 import org.apache.fineract.los.statemachine.LoanOriginationStateMachine;
 import org.apache.fineract.los.workflow.ApprovalWorkflowProperties;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /**
- * Orchestrates the multi-stage approval workflow (LOAN_OFFICER → BRANCH_MANAGER → CREDIT_COMMITTEE,
+ * Orchestrates the multi-stage approval workflow (LOAN_OFFICER → CREDIT_COMMITTEE → BRANCH_MANAGER,
  * configurable via {@link ApprovalWorkflowProperties}).
  *
- * <p>This service owns the mapping from an {@link ApprovalDecision} recorded on an {@link
- * ApprovalStage} to the corresponding {@link LoanApplicationStatus} transition, and is the
- * <strong>only</strong> caller of {@link LoanOriginationStateMachine} for decisions made during
- * review — matching the design contract that no code outside the state machine ever calls {@code
- * LoanApplication#setStatus} directly.
+ * <p>Both the workflow stage an application is currently awaiting a decision at, and the officer
+ * recording that decision, are derived entirely server-side — from the count of prior APPROVE
+ * decisions and from the authenticated {@link Authentication} principal respectively. Neither is
+ * accepted from client input (see {@link ApprovalDecisionRequest}), which is what makes the
+ * four-eyes / sequential-stage enforcement in {@link #validateStageMatchesRole} meaningful: a
+ * caller cannot simply claim to be acting at a stage they haven't reached.
+ *
+ * <p>This service owns the mapping from an {@link ApprovalDecision} to the corresponding {@link
+ * LoanApplicationStatus} transition, and is the <strong>only</strong> caller of {@link
+ * LoanOriginationStateMachine} for decisions made during review.
  *
  * <p>Transition rules applied here:
  *
@@ -73,50 +84,115 @@ public class ApprovalWorkflowService {
    *
    * @param applicationRef human-readable application reference
    * @param tenantId institution identifier
-   * @param request the decision payload
+   * @param request the decision payload (decision + optional comments only)
+   * @param authentication the authenticated staff principal recording this decision
    * @return the persisted {@link ApprovalStage} record
    */
   @Transactional
   public ApprovalStage recordDecision(
-      final String applicationRef, final String tenantId, final ApprovalDecisionRequest request) {
+      final String applicationRef,
+      final String tenantId,
+      final ApprovalDecisionRequest request,
+      final Authentication authentication) {
 
     final LoanApplication application =
         loanApplicationRepository
             .findByApplicationRefAndTenantId(applicationRef, tenantId)
-            .orElseThrow(
-                () ->
-                    new org.apache.fineract.los.exception.ApplicationNotFoundException(
-                        applicationRef, tenantId));
+            .orElseThrow(() -> new ApplicationNotFoundException(applicationRef, tenantId));
 
-    validateStageName(request.getStageName());
     validateUnderReview(application);
-    validateCommentsForNegativeDecisions(request);
-    validateNoDuplicateOfficerDecision(application, request.getAssignedOfficer());
+    validateComments(request);
+
+    final String currentStage = resolveCurrentStage(application);
+    final String assignedOfficer = authentication.getName();
+    final LosRole callerRole = resolveCallerRole(authentication, assignedOfficer);
+
+    validateStageMatchesRole(application, currentStage, callerRole, assignedOfficer);
+    validateNoDuplicateOfficerDecision(application, assignedOfficer);
 
     final ApprovalStage stage = new ApprovalStage();
     stage.setApplication(application);
     stage.setTenantId(tenantId);
-    stage.setStageName(request.getStageName());
-    stage.setAssignedOfficer(request.getAssignedOfficer());
+    stage.setStageName(currentStage);
+    stage.setAssignedOfficer(assignedOfficer);
     stage.setDecision(request.getDecision());
     stage.setComments(request.getComments());
     stage.setDecidedAt(LocalDateTime.now());
 
     final ApprovalStage savedStage = approvalStageRepository.save(stage);
 
-    applyTransition(application, request.getStageName(), request.getDecision());
+    applyTransition(application, currentStage, request.getDecision());
     loanApplicationRepository.save(application);
 
     log.info(
-        "Approval decision recorded: applicationRef={} stage={} officer={} "
+        "Approval decision recorded: tenant={} applicationRef={} stage={} officer={} "
             + "decision={} newStatus={}",
+        tenantId,
         applicationRef,
-        request.getStageName(),
-        request.getAssignedOfficer(),
+        currentStage,
+        assignedOfficer,
         request.getDecision(),
         application.getStatus());
 
     return savedStage;
+  }
+
+  /**
+   * Derives the workflow stage this application is currently awaiting a decision at.
+   *
+   * <p>The number of prior APPROVE decisions recorded is the zero-based index into the configured
+   * stage sequence. REJECT ends the workflow entirely (terminal), and REFER returns the application
+   * to the applicant without advancing the stage pointer — so a re-submitted, re-reviewed
+   * application resumes at the same stage it was referred from.
+   */
+  private String resolveCurrentStage(final LoanApplication application) {
+    final long approvedStagesCompleted =
+        approvalStageRepository.countByApplicationAndDecision(
+            application, ApprovalDecision.APPROVE);
+
+    final List<String> stages = workflowProperties.getStages();
+    final int index = (int) approvedStagesCompleted;
+
+    if (index >= stages.size()) {
+      // Defensive only — should be unreachable: the final APPROVE moves the application out of
+      // UNDER_REVIEW, and validateUnderReview() above already rejects non-UNDER_REVIEW
+      // applications.
+      throw new IllegalStateException(
+          String.format(
+              "Application [%s] has %d recorded APPROVE decisions but only %d stages are "
+                  + "configured, and it is still UNDER_REVIEW — workflow configuration or state "
+                  + "machine invariant violated.",
+              application.getApplicationRef(), approvedStagesCompleted, stages.size()));
+    }
+
+    return stages.get(index);
+  }
+
+  /**
+   * Resolves the caller's LOS workflow role from their granted authorities.
+   *
+   * @throws LosRoleNotAssignedException if the authenticated principal has no LOS workflow role
+   */
+  private LosRole resolveCallerRole(final Authentication authentication, final String username) {
+    return LosRole.fromAuthorities(authentication.getAuthorities())
+        .orElseThrow(() -> new LosRoleNotAssignedException(username));
+  }
+
+  /**
+   * Enforces that the caller's role matches the application's current stage — the sequential
+   * workflow guarantee. A BRANCH_MANAGER cannot act while the application is still awaiting its
+   * LOAN_OFFICER decision, and vice versa.
+   */
+  private void validateStageMatchesRole(
+      final LoanApplication application,
+      final String currentStage,
+      final LosRole callerRole,
+      final String assignedOfficer) {
+
+    if (callerRole != LosRole.valueOf(currentStage)) {
+      throw new ApprovalStageMismatchException(
+          application.getApplicationRef(), currentStage, assignedOfficer);
+    }
   }
 
   /**
@@ -142,17 +218,12 @@ public class ApprovalWorkflowService {
               application.getApplicationRef());
         }
       }
-      default -> throw new IllegalStateException("Unrecognised ApprovalDecision: " + decision);
-    }
-  }
-
-  private void validateStageName(final String stageName) {
-    if (!StringUtils.hasText(stageName) || workflowProperties.indexOf(stageName) < 0) {
-      throw new IllegalArgumentException(
-          String.format(
-              LosErrorConstants.MSG_UNKNOWN_STAGE_TEMPLATE,
-              stageName,
-              workflowProperties.getStages()));
+      default ->
+          throw new IllegalStateException(
+              String.format(
+                  "Unhandled approval decision [%s] for applicationRef=%s — no state transition "
+                      + "is defined for this decision type.",
+                  decision, application.getApplicationRef()));
     }
   }
 
@@ -166,14 +237,9 @@ public class ApprovalWorkflowService {
     }
   }
 
-  private void validateCommentsForNegativeDecisions(final ApprovalDecisionRequest request) {
-    final boolean requiresComments =
-        request.getDecision() == ApprovalDecision.REJECT
-            || request.getDecision() == ApprovalDecision.REFER;
-
-    if (requiresComments && !StringUtils.hasText(request.getComments())) {
-      throw new IllegalArgumentException(
-          "Comments are mandatory when recording a REJECT or REFER decision.");
+  private void validateComments(final ApprovalDecisionRequest request) {
+    if (!StringUtils.hasText(request.getComments())) {
+      throw new IllegalArgumentException(LosErrorConstants.MSG_APPROVAL_COMMENTS_REQUIRED);
     }
   }
 
