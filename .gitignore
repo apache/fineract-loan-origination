@@ -35,3 +35,13 @@ build/
 # Local environment overrides — never commit
 application-local.yml
 *.local.yml
+
+### Angular / Node (frontend) ###
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+*.tsbuildinfo
+
+memory.md
+rat-report.txt

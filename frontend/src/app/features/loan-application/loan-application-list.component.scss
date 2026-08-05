@@ -1,0 +1,120 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+@use '../../shared/styles/status-colors' as *;
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+
+  h1 {
+    font-size: 1.4rem;
+    margin: 0;
+  }
+}
+
+.button {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+th {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.row-link {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-primary-light);
+  }
+}
+
+.error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+}
+
+[class^='status-'] {
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.status-draft {
+  background: $status-draft-bg;
+  color: $status-draft-text;
+}
+.status-submitted {
+  background: $status-submitted-bg;
+  color: $status-submitted-text;
+}
+.status-under_review {
+  background: $status-under-review-bg;
+  color: $status-under-review-text;
+}
+.status-approved {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.status-rejected {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+.status-referred {
+  background: $status-referred-bg;
+  color: $status-referred-text;
+}
+.status-disbursed {
+  background: $status-disbursed-bg;
+  color: $status-disbursed-text;
+}

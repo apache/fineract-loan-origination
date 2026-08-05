@@ -19,48 +19,112 @@
 
 package org.apache.fineract.los.config;
 
+import java.util.List;
+import org.apache.fineract.los.security.FineractAuthenticationProvider;
+import org.apache.fineract.los.security.JwtAuthFilter;
+import org.apache.fineract.los.security.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * Security configuration for the Loan Origination Service.
- *
- * <p>This service is a stateless REST API secured via the {@code X-Fineract-Platform-TenantId}
- * header and Basic authentication. CSRF protection is intentionally disabled because:
- *
- * <ul>
- *   <li>The API is stateless — no session cookies are used
- *   <li>All clients are server-side (Angular uses Authorization header, not cookies)
- *   <li>CSRF attacks require cookie-based session state which this service does not maintain
- * </ul>
- *
- * <p>This follows the standard practice for REST APIs as documented in the Spring Security
- * reference:
- * https://docs.spring.io/spring-security/reference/features/exploits/csrf.html#csrf-when-to-use
- */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
+  /**
+   * Customer-facing chain (Order 1). Covers all customer and loan-application endpoints.
+   * Authentication is handled via LOS-issued JWT tokens — credentials are validated locally against
+   * the {@code customer_credentials} table; Fineract is never consulted for customer login.
+   */
   @Bean
-  SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+  @Order(1)
+  SecurityFilterChain jwtSecurityFilterChain(final HttpSecurity http, final JwtService jwtService)
+      throws Exception {
+
+    http.securityMatcher("/api/v1/loan-applications/**", "/api/v1/customer/**")
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
+        .csrf(
+            csrf ->
+                csrf.ignoringRequestMatchers("/api/v1/loan-applications/**", "/api/v1/customer/**"))
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .formLogin(AbstractHttpConfigurer::disable);
+
+    return http.build();
+  }
+
+  /**
+   * Staff (Order 2). Covers all remaining endpoints including admin, approval, disbursement, and
+   * actuator routes.
+   *
+   * <p>Authentication is delegated to Fineract: the backoffice UI forwards its Fineract Basic Auth
+   * credential to LOS, which validates it against Fineract's {@code /api/v1/authentication}
+   * endpoint via {@link FineractAuthenticationProvider}. No local staff user store exists in LOS.
+   */
+  @Bean
+  @Order(2)
+  SecurityFilterChain staffSecurityFilterChain(
+      final HttpSecurity http, final FineractAuthenticationProvider fineractAuthenticationProvider)
+      throws Exception {
 
     http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authenticationProvider(fineractAuthenticationProvider)
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/actuator/health", "/actuator/info")
+                auth.requestMatchers(
+                        "/actuator/health",
+                        "/actuator/info",
+                        "/api/v1/auth/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
         .httpBasic(basic -> basic.realmName("Fineract Loan Origination Service"))
-        .formLogin(form -> form.disable());
+        .formLogin(AbstractHttpConfigurer::disable);
 
     return http.build();
+  }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    final CorsConfiguration configuration = new CorsConfiguration();
+    // localhost:4200 / 4201 = LOS customer Angular app
+    // localhost:60506 = Fineract Backoffice UI
+    configuration.setAllowedOrigins(
+        List.of("http://localhost:4200", "http://localhost:4201", "http://localhost:60506"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(true);
+
+    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
+
+  /**
+   * Password encoder used for customer credential hashing only. Staff passwords are never stored in
+   * LOS — all staff auth is delegated to Fineract.
+   */
+  @Bean
+  PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
   }
 }

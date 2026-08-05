@@ -15,30 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 
-**/node_modules/**
-**/target/**
-**/dist/**
-**/build/**
-.rat-excludes
-LICENSE
-LICENSE.md
-*.jar
-.gitignore
-.gitattributes
-**/.gitignore
-**/.gitattributes
-CONTRIBUTORS.md
-SECURITY.md
-frontend/node_modules/**
-frontend/dist/**
-frontend/.angular/**
-frontend/coverage/**
-frontend/package.json
-frontend/package-lock.json
-frontend/angular.json
-frontend/tsconfig.json
-frontend/tsconfig.app.json
-frontend/tsconfig.spec.json
-frontend/eslint.config.js
-frontend/assets/**
-**/README.md
+{
+  'singleQuote': true,
+  'semi': true,
+  'printWidth': 100,
+  'trailingComma': 'all',
+  'htmlWhitespaceSensitivity': 'ignore',
+  'plugins': ['prettier-plugin-organize-attributes'],
+}

@@ -1,0 +1,74 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Backend License Audit
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  backend-license-check:
+    name: Backend License Audit
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@d7793b545071e98d581d3bf084a51c3213318a07 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Generate third-party license report
+        run: ./mvnw org.codehaus.mojo:license-maven-plugin:2.7.1:add-third-party -q
+
+      - name: Verify report exists
+        shell: bash
+        run: |
+          REPORT="target/generated-sources/license/THIRD-PARTY.txt"
+
+          if [ ! -f "$REPORT" ]; then
+            echo "::error::THIRD-PARTY.txt was not generated"
+            exit 1
+          fi
+
+      - name: Fail on disallowed licenses
+        shell: bash
+        run: |
+          REPORT="target/generated-sources/license/THIRD-PARTY.txt"
+
+          echo "Checking third-party licenses..."
+
+          # Reject only explicitly disallowed licenses.
+          # Do NOT match LGPL or GPL with Classpath Exception.
+          if grep -E '\((AGPL|SSPL|BSL)\)|Business Source License' "$REPORT"; then
+            echo "::error::Disallowed license found in backend dependencies"
+            exit 1
+          fi
+
+          echo "No disallowed licenses found."

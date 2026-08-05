@@ -1,0 +1,101 @@
+<!--
+
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements. See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership. The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations
+  under the License.
+
+-->
+@if (loading()) {
+  <p>Loading application…</p>
+} @else if (!application()) {
+  <p class="error">{{ loadError() }}</p>
+} @else {
+  <section class="application-summary">
+    <h1>{{ application()!.applicationRef }}</h1>
+    <dl>
+      <dt>Status</dt>
+      <dd class="status-{{ application()!.status.toLowerCase() }}">
+        {{ application()!.status }}
+      </dd>
+      <dt>Requested Amount</dt>
+      <dd>{{ application()!.requestedAmount }} {{ application()!.currency }}</dd>
+      <dt>Loan Purpose</dt>
+      <dd>{{ application()!.loanPurpose }}</dd>
+      <dt>Tenor</dt>
+      <dd>{{ application()!.tenorMonths }} months</dd>
+      <dt>Fineract Loan ID</dt>
+      <dd>{{ application()!.fineractLoanId ?? '—' }}</dd>
+    </dl>
+  </section>
+
+  @if (application()!.status === 'DRAFT') {
+    <section class="lifecycle-actions">
+      <h2>Actions</h2>
+      <button (click)="submitApplication()" [disabled]="actionInFlight()">
+        {{ actionInFlight() ? 'Submitting…' : 'Submit Application' }}
+      </button>
+      @if (actionError()) {
+        <p class="error">{{ actionError() }}</p>
+      }
+    </section>
+  }
+
+  @if (
+    application()!.status === 'UNDER_REVIEW' ||
+    application()!.status === 'APPROVED' ||
+    application()!.status === 'DISBURSED'
+  ) {
+    <section class="credit-score">
+      <h2>Credit Score</h2>
+      @if (creditScore(); as score) {
+        <dl>
+          <dt>Overall Score</dt>
+          <dd>{{ score.score }} / 100 ({{ score.riskCategory }})</dd>
+          <dt>Income Ratio</dt>
+          <dd>{{ score.incomeRatioScore }}</dd>
+          <dt>Debt Burden</dt>
+          <dd>{{ score.debtBurdenScore }}</dd>
+          <dt>Employment</dt>
+          <dd>{{ score.employmentScore }}</dd>
+          <dt>Repayment History</dt>
+          <dd>{{ score.repaymentHistoryScore }}</dd>
+          <dt>Loan Purpose Risk</dt>
+          <dd>{{ score.loanPurposeScore }}</dd>
+        </dl>
+      } @else if (creditScoreError()) {
+        <p class="error">{{ creditScoreError() }}</p>
+      } @else {
+        <p>Loading credit score…</p>
+      }
+    </section>
+  }
+
+  @if (application()!.status === 'SUBMITTED' || application()!.status === 'REFERRED') {
+    <p class="note">
+      This application is awaiting review — we'll update the status here once it moves forward.
+    </p>
+  }
+
+  @if (application()!.status === 'DISBURSED') {
+    <p class="success">
+      Loan fully disbursed — Fineract loan ID {{ application()!.fineractLoanId }}.
+    </p>
+  }
+
+  @if (application()!.status === 'REJECTED') {
+    <p class="error">This application was rejected and cannot proceed further.</p>
+  }
+}

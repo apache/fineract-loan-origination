@@ -169,6 +169,19 @@ public class LoanApplicationService {
     return saved;
   }
 
+  public List<LoanApplication> getApplicationsForFineractClient(
+      final Long fineractClientId, final String tenantId) {
+    return applicantProfileRepository
+        .findAllByFineractClientIdAndTenantId(fineractClientId, tenantId)
+        .stream()
+        .map(ApplicantProfile::getApplication)
+        .toList();
+  }
+
+  public Long getFineractClientIdOrThrow(LoanApplication application) {
+    return getProfileOrThrow(application).getFineractClientId();
+  }
+
   /**
    * Loads an application by reference and tenant, or throws {@link ApplicationNotFoundException}.
    *
@@ -180,6 +193,27 @@ public class LoanApplicationService {
     return loanApplicationRepository
         .findByApplicationRefAndTenantId(applicationRef, tenantId)
         .orElseThrow(() -> new ApplicationNotFoundException(applicationRef, tenantId));
+  }
+
+  /**
+   * Creates a loan application on behalf of an authenticated customer. Identical to {@link
+   * #createApplication} except the applicant's {@code fineractClientId} is always forced to the
+   * caller's own client ID — never trusted from the request body — so a customer cannot create an
+   * application under someone else's identity.
+   *
+   * @param request validated creation payload
+   * @param tenantId institution identifier
+   * @param callerClientId the authenticated customer's own Fineract client ID
+   * @return the persisted, DRAFT-status application, owned by the caller
+   */
+  @Transactional
+  public LoanApplication createApplicationForCustomer(
+      final CreateLoanApplicationRequest request,
+      final String tenantId,
+      final Long callerClientId) {
+
+    request.getApplicant().setFineractClientId(callerClientId);
+    return createApplication(request, tenantId);
   }
 
   /**

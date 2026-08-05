@@ -1,0 +1,229 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+}
+
+.summary-cards {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 74px;
+  justify-content: center;
+}
+
+.card-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  line-height: 1;
+}
+
+.card-label {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  min-height: 40px;
+}
+
+.primary-button {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border-radius: var(--radius);
+  padding: 0.6rem 1.2rem;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.secondary-link {
+  color: var(--color-primary-dark);
+  text-decoration: none;
+  font-size: 0.9rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.recent-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    a {
+      color: var(--color-text);
+      text-decoration: none;
+      font-weight: 500;
+
+      &:hover {
+        color: var(--color-primary-dark);
+      }
+    }
+  }
+}
+
+.empty-note {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+}
+
+[class^='status-'] {
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.status-draft {
+  background: #eceef1;
+  color: #4b5563;
+}
+.status-submitted {
+  background: #e5edff;
+  color: #2952e3;
+}
+.status-under_review {
+  background: #fff6e0;
+  color: #92700f;
+}
+.status-approved {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.status-rejected {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+.status-referred {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+.status-disbursed {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+// --- Skeleton loading state (matches loaded layout exactly, no reflow) ---
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton-line {
+  display: inline-block;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 25%,
+    var(--color-primary-light) 50%,
+    var(--color-border) 75%
+  );
+  background-size: 200px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.card.skeleton {
+  gap: 0.5rem;
+}
+
+.skeleton-value {
+  width: 40px;
+  height: 1.8rem;
+}
+
+.skeleton-label {
+  width: 100px;
+  height: 0.85rem;
+}
+
+.skeleton-button {
+  width: 190px;
+  height: 40px;
+  border-radius: var(--radius);
+}
+
+.skeleton-list {
+  padding: 0.4rem 0;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+}
+
+.skeleton-ref {
+  width: 140px;
+  height: 1rem;
+}
+
+.skeleton-badge {
+  width: 80px;
+  height: 1.2rem;
+  border-radius: 999px;
+}
