@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.domain.CustomerCredential;
 import org.apache.fineract.los.repository.CustomerCredentialRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -62,6 +63,7 @@ public class AdminCustomerController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("hasRole('ADMIN')")
   public RegisterCustomerResponse register(
       @Valid @RequestBody final RegisterCustomerRequest request) {
 

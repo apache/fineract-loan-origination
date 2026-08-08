@@ -32,6 +32,7 @@ import org.apache.fineract.los.service.CreditScoringService;
 import org.apache.fineract.los.service.LoanApplicationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -104,6 +105,7 @@ public class LoanApplicationController {
           "Move a SUBMITTED or REFERRED application into review: -> UNDER_REVIEW, "
               + "triggers credit scoring")
   @PostMapping("/{applicationRef}/start-review")
+  @PreAuthorize("hasRole('STAFF')")
   public LoanApplicationResponse startReview(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
       @PathVariable final String applicationRef) {
@@ -130,5 +132,17 @@ public class LoanApplicationController {
                     "No credit score computed yet for application ["
                         + applicationRef
                         + "] — call /start-review first."));
+  }
+
+  @Operation(
+      summary =
+          "Staff-only: retrieve full application detail including applicant profile, "
+              + "credit score, and complete approval history in a single response")
+  @GetMapping("/{applicationRef}/staff-detail")
+  @PreAuthorize("hasRole('STAFF')")
+  public org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse getStaffDetail(
+      @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
+      @PathVariable final String applicationRef) {
+    return loanApplicationService.getStaffDetail(applicationRef, tenantId);
   }
 }

@@ -43,22 +43,23 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   /**
-   * Customer-facing chain (Order 1). Covers all customer and loan-application endpoints.
-   * Authentication is handled via LOS-issued JWT tokens — credentials are validated locally against
-   * the {@code customer_credentials} table; Fineract is never consulted for customer login.
+   * Customer-facing chain (Order 1). Covers customer endpoints only. Authentication is handled via
+   * LOS-issued JWT tokens — credentials are validated locally against the {@code
+   * customer_credentials} table; Fineract is never consulted for customer login.
+   *
+   * <p>Note: `/api/v1/loan-applications/**` is intentionally EXCLUDED here so that staff can access
+   * these endpoints via Basic Auth (handled by Order 2 chain).
    */
   @Bean
   @Order(1)
   SecurityFilterChain jwtSecurityFilterChain(final HttpSecurity http, final JwtService jwtService)
       throws Exception {
 
-    http.securityMatcher("/api/v1/loan-applications/**", "/api/v1/customer/**")
+    http.securityMatcher("/api/v1/customer/**")
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
         .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
-        .csrf(
-            csrf ->
-                csrf.ignoringRequestMatchers("/api/v1/loan-applications/**", "/api/v1/customer/**"))
+        .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/customer/**"))
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .httpBasic(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable);
@@ -70,14 +71,17 @@ public class SecurityConfig {
    * Staff (Order 2). Covers all remaining endpoints including admin, approval, disbursement, and
    * actuator routes.
    *
-   * <p>Authentication is delegated to Fineract: the backoffice UI forwards its Fineract Basic Auth
-   * credential to LOS, which validates it against Fineract's {@code /api/v1/authentication}
-   * endpoint via {@link FineractAuthenticationProvider}. No local staff user store exists in LOS.
+   * <p>Authentication supports both JWT tokens (from staff login) and Basic Auth (delegated to
+   * Fineract). JWT tokens are validated locally against the staff_credentials table. Basic Auth
+   * credentials are forwarded to Fineract's {@code /api/v1/authentication} endpoint via {@link
+   * FineractAuthenticationProvider} for backward compatibility.
    */
   @Bean
   @Order(2)
   SecurityFilterChain staffSecurityFilterChain(
-      final HttpSecurity http, final FineractAuthenticationProvider fineractAuthenticationProvider)
+      final HttpSecurity http,
+      final FineractAuthenticationProvider fineractAuthenticationProvider,
+      final JwtService jwtService)
       throws Exception {
 
     http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
@@ -85,6 +89,7 @@ public class SecurityConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authenticationProvider(fineractAuthenticationProvider)
+        .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
@@ -107,9 +112,13 @@ public class SecurityConfig {
   CorsConfigurationSource corsConfigurationSource() {
     final CorsConfiguration configuration = new CorsConfiguration();
     // localhost:4200 / 4201 = LOS customer Angular app
-    // localhost:60506 = Fineract Backoffice UI
+    // localhost:60506 / 49954 = Fineract Backoffice UI
     configuration.setAllowedOrigins(
-        List.of("http://localhost:4200", "http://localhost:4201", "http://localhost:60506"));
+        List.of(
+            "http://localhost:4200",
+            "http://localhost:4201",
+            "http://localhost:60506",
+            "http://localhost:49954"));
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true);
@@ -120,8 +129,9 @@ public class SecurityConfig {
   }
 
   /**
-   * Password encoder used for customer credential hashing only. Staff passwords are never stored in
-   * LOS — all staff auth is delegated to Fineract.
+   * Password encoder used for both customer and staff credential hashing. Staff passwords are
+   * stored locally in LOS. Fineract Basic Auth (for backward compatibility) still delegates to
+   * Fineract.
    */
   @Bean
   PasswordEncoder passwordEncoder() {

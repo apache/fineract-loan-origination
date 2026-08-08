@@ -19,6 +19,7 @@
 
 package org.apache.fineract.los.security;
 
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -28,9 +29,28 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "los.jwt")
 public class JwtProperties {
 
+  /**
+   * Known-insecure default secrets that must never reach a non-dev environment. Any value on this
+   * list causes a hard startup failure outside of dev/test profiles.
+   */
+  private static final Set<String> KNOWN_INSECURE_DEFAULTS =
+      Set.of(
+          "change-me-in-production-min-32-chars!!", "los-dev-secret-min-32-chars-change-in-prod!!");
+
   /** HMAC-SHA256 signing secret — must be at least 32 characters. */
   private String secret = "change-me-in-production-min-32-chars!!";
 
   /** Token validity in minutes. Defaults to 15. */
   private int expiryMinutes = 15;
+
+  /**
+   * Returns {@code true} if the configured secret is one of the known-insecure defaults shipped
+   * with the codebase.
+   *
+   * <p>Called from {@link JwtSecretValidator} at startup to fail fast when a default secret would
+   * otherwise silently reach a non-dev environment.
+   */
+  public boolean isKnownInsecureDefault() {
+    return KNOWN_INSECURE_DEFAULTS.contains(secret);
+  }
 }

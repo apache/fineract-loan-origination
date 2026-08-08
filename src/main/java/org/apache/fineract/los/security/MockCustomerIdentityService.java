@@ -20,6 +20,7 @@
 package org.apache.fineract.los.security;
 
 import java.util.Map;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
  * a dedicated login table) before this is used anywhere beyond local development.
  */
 @Service
+@Profile({"dev", "test"})
 public class MockCustomerIdentityService implements UserDetailsService {
 
   private final Map<String, CustomerRecord> customers;
