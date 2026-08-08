@@ -24,6 +24,8 @@ import { environment } from '../../../environments/environment';
 export interface CustomerProfile {
   clientId: number;
   displayName: string;
+  role?: string;
+  userType?: string;
 }
 
 interface LoginResponse {
@@ -31,15 +33,21 @@ interface LoginResponse {
   username: string;
   clientId: number;
   tenantId: string;
+  role: string;
+  userType: string;
   expiresInMinutes: number;
 }
+
+const TOKEN_KEY   = 'los-customer-token';
+const PROFILE_KEY = 'los-customer-profile';
+const TENANT_KEY  = 'los-customer-tenant';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly tokenSubject = new BehaviorSubject<string | null>(null);
-  private readonly profileSubject = new BehaviorSubject<CustomerProfile | null>(null);
-  private readonly tenantIdSubject = new BehaviorSubject<string>('default');
+  private readonly tokenSubject   = new BehaviorSubject<string | null>(this.loadToken());
+  private readonly profileSubject = new BehaviorSubject<CustomerProfile | null>(this.loadProfile());
+  private readonly tenantIdSubject = new BehaviorSubject<string>(this.loadTenantId());
 
   profile$ = this.profileSubject.asObservable();
   readonly tenantId$ = this.tenantIdSubject.asObservable();
@@ -53,9 +61,20 @@ export class AuthService {
       })
       .pipe(
         tap((res) => {
+          const profile: CustomerProfile = {
+            clientId: res.clientId,
+            displayName: res.username,
+            role: res.role,
+            userType: res.userType,
+          };
           this.tokenSubject.next(res.token);
-          this.profileSubject.next({ clientId: res.clientId, displayName: res.username });
+          this.profileSubject.next(profile);
           this.setTenantId(res.tenantId);
+          try {
+            sessionStorage.setItem(TOKEN_KEY,   res.token);
+            sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+            sessionStorage.setItem(TENANT_KEY,  res.tenantId);
+          } catch { /* storage unavailable */ }
         }),
         map(() => true),
         catchError(() => of(false)),
@@ -87,5 +106,27 @@ export class AuthService {
     this.tokenSubject.next(null);
     this.profileSubject.next(null);
     this.tenantIdSubject.next('default');
+    try {
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(PROFILE_KEY);
+      sessionStorage.removeItem(TENANT_KEY);
+    } catch { /* ignore */ }
+  }
+
+  // ── Session persistence ──────────────────────────────────────────────────
+
+  private loadToken(): string | null {
+    try { return sessionStorage.getItem(TOKEN_KEY); } catch { return null; }
+  }
+
+  private loadProfile(): CustomerProfile | null {
+    try {
+      const raw = sessionStorage.getItem(PROFILE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  private loadTenantId(): string {
+    try { return sessionStorage.getItem(TENANT_KEY) ?? environment.tenantId; } catch { return environment.tenantId; }
   }
 }
