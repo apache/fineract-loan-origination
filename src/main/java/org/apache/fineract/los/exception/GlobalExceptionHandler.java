@@ -89,6 +89,15 @@ public class GlobalExceptionHandler {
     return build(HttpStatus.BAD_REQUEST, ex.getMessage());
   }
 
+  @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+  public ResponseEntity<ErrorResponse> handleResponseStatus(
+      final org.springframework.web.server.ResponseStatusException ex) {
+    // Pass through the exact HTTP status — do NOT let these fall to the generic 500 handler
+    final HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+    final HttpStatus effective = status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR;
+    return build(effective, ex.getReason() != null ? ex.getReason() : effective.getReasonPhrase());
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleUnexpected(final Exception ex) {
     log.error("Unhandled exception", ex);

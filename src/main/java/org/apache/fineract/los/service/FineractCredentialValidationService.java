@@ -71,7 +71,7 @@ public class FineractCredentialValidationService {
           && response.getBody() != null
           && response.getBody().isAuthenticated()) {
 
-        log.debug("Fineract auth OK for user: {}", username);
+        log.info("Fineract auth OK for user={} roles={}", username, response.getBody().getRoles());
         return response.getBody();
       }
 

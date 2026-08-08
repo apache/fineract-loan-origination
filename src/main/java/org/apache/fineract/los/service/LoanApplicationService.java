@@ -63,6 +63,7 @@ public class LoanApplicationService {
   private final ApplicantProfileRepository applicantProfileRepository;
   private final LoanOriginationStateMachine stateMachine;
   private final CreditScoringService creditScoringService;
+  private final org.apache.fineract.los.repository.ApprovalStageRepository approvalStageRepository;
 
   /**
    * Creates a new loan application together with its linked applicant profile, in DRAFT status.
@@ -167,6 +168,87 @@ public class LoanApplicationService {
     creditScoringService.computeAndPersist(saved);
 
     return saved;
+  }
+
+  /**
+   * Assembles the full staff detail view for a single application.
+   *
+   * <p>Combines LoanApplication + ApplicantProfile + CreditScore + ApprovalStages into one {@link
+   * StaffApplicationDetailResponse} so the staff dashboard needs only one API call.
+   *
+   * @param applicationRef human-readable application reference
+   * @param tenantId institution identifier
+   * @return assembled detail response
+   */
+  @Transactional(readOnly = true)
+  public org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse getStaffDetail(
+      final String applicationRef, final String tenantId) {
+
+    final LoanApplication app = getApplicationOrThrow(applicationRef, tenantId);
+    final ApplicantProfile profile = getProfileOrThrow(app);
+
+    // Credit score — may be null if the application hasn't reached UNDER_REVIEW yet
+    final org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse.CreditScoreSummary
+        creditScoreSummary =
+            creditScoringService
+                .findExistingScore(app)
+                .map(
+                    cs ->
+                        org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse
+                            .CreditScoreSummary.builder()
+                            .score(cs.getScore())
+                            .riskRating(cs.getRiskCategory())
+                            .incomeRatioScore(cs.getIncomeRatioScore())
+                            .debtBurdenScore(cs.getDebtBurdenScore())
+                            .employmentScore(cs.getEmploymentScore())
+                            .repaymentHistoryScore(cs.getRepaymentHistoryScore())
+                            .loanPurposeScore(cs.getLoanPurposeScore())
+                            .scoredAt(cs.getScoredAt())
+                            .build())
+                .orElse(null);
+
+    // Approval history
+    final java.util.List<
+            org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse
+                .ApprovalStageSummary>
+        stages =
+            approvalStageRepository.findAllByApplicationOrderByCreatedAtAsc(app).stream()
+                .map(
+                    s ->
+                        org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse
+                            .ApprovalStageSummary.builder()
+                            .stage(s.getStageName())
+                            .decision(s.getDecision() != null ? s.getDecision().name() : null)
+                            .decidedBy(s.getAssignedOfficer())
+                            .decidedAt(s.getDecidedAt())
+                            .notes(s.getComments())
+                            .build())
+                .toList();
+
+    return org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse.builder()
+        .applicationRef(app.getApplicationRef())
+        .status(app.getStatus())
+        .requestedAmount(app.getRequestedAmount())
+        .currency(app.getCurrency())
+        .loanPurpose(app.getLoanPurpose())
+        .tenorMonths(app.getTenorMonths())
+        .submittedAt(app.getCreatedAt())
+        .updatedAt(app.getUpdatedAt())
+        .applicantName(profile.getFullName())
+        .nationalId(profile.getNationalId())
+        .fineractClientId(profile.getFineractClientId())
+        .monthlyIncome(profile.getMonthlyIncome())
+        .employmentStatus(profile.getEmploymentStatus())
+        .employmentDurationMonths(profile.getEmploymentDurationMonths())
+        .existingLoanObligations(profile.getExistingLoanObligations())
+        .creditScore(creditScoreSummary)
+        .approvalStages(stages)
+        .fineractLoanId(app.getFineractLoanId())
+        .disbursedAt(
+            app.getStatus() == org.apache.fineract.los.domain.enums.LoanApplicationStatus.DISBURSED
+                ? app.getUpdatedAt()
+                : null)
+        .build();
   }
 
   public List<LoanApplication> getApplicationsForFineractClient(

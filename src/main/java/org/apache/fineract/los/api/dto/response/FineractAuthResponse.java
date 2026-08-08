@@ -35,8 +35,23 @@ public class FineractAuthResponse {
   private boolean authenticated;
 
   /**
-   * Fineract returns permissions as an array of permission codes (strings), e.g. [ "CREATE_CLIENT",
-   * "READ_CLIENT", "FORCE_WITHDRAWAL_SAVINGSACCOUNT" ]
+   * Fineract role objects assigned to this user. Each role has an id, name (e.g. "loan_officer"),
+   * and description.
+   */
+  private List<FineractRole> roles;
+
+  /**
+   * Fineract raw permission codes (e.g. "CREATE_CLIENT"). These are action-level permissions, NOT
+   * role names — do not use for role mapping.
    */
   private List<String> permissions;
+
+  @Data
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class FineractRole {
+    private Long id;
+    private String name;
+    private String description;
+    private boolean disabled;
+  }
 }

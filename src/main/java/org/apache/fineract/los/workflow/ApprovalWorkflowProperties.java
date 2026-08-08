@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.fineract.los.workflow;
 
 import jakarta.annotation.PostConstruct;
@@ -34,7 +33,9 @@ import org.springframework.util.CollectionUtils;
 public class ApprovalWorkflowProperties {
 
   /** Ordered approval stages. */
-  private List<String> stages = List.of("LOAN_OFFICER", "BRANCH_MANAGER", "CREDIT_COMMITTEE");
+  private List<String> stages =
+      new java.util.ArrayList<>(
+          java.util.List.of("LOAN_OFFICER", "CREDIT_COMMITTEE", "BRANCH_MANAGER"));
 
   /**
    * Maps Fineract role names to LOS workflow stages.
@@ -43,7 +44,7 @@ public class ApprovalWorkflowProperties {
    *
    * <p>loan_officer -> LOAN_OFFICER
    */
-  private Map<String, String> roleMapping = Map.of();
+  private Map<String, String> roleMapping = new java.util.HashMap<>();
 
   @PostConstruct
   public void validateStagesNotEmpty() {

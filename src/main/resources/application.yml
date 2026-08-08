@@ -91,15 +91,15 @@ los:
       debt-burden-severe-threshold: 0.70
 
   workflow:
-  stages:
-    - LOAN_OFFICER
-    - CREDIT_COMMITTEE
-    - BRANCH_MANAGER
-  role-mapping:
-    loan_officer: LOAN_OFFICER
-    credit_committee: CREDIT_COMMITTEE
-    branch_manager: BRANCH_MANAGER
-  final-stage: BRANCH_MANAGER
+    stages:
+      - LOAN_OFFICER
+      - CREDIT_COMMITTEE
+      - BRANCH_MANAGER
+    role-mapping:
+      loan_officer: LOAN_OFFICER
+      credit_committee: CREDIT_COMMITTEE
+      branch_manager: BRANCH_MANAGER
+    final-stage: BRANCH_MANAGER
 
   fineract:
     base-url: ${FINERACT_BASE_URL:https://localhost:8443}

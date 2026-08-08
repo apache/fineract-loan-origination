@@ -27,10 +27,12 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @RequiredArgsConstructor
@@ -40,6 +42,9 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
   private static final String CLAIM_CLIENT_ID = "clientId";
   private static final String CLAIM_TENANT_ID = "tenantId";
   private static final String CLAIM_CORRELATION_ID = "correlationId";
+  private static final String CLAIM_ROLE = "role";
+  private static final String CLAIM_USER_TYPE = "userType";
+  private static final String USER_TYPE_STAFF = "STAFF";
 
   private final JwtService jwtService;
 
@@ -65,14 +70,27 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
       final Long clientId = clientIdNum != null ? clientIdNum.longValue() : null;
       final String tenantId = claims.get(CLAIM_TENANT_ID, String.class);
       final String correlationId = claims.get(CLAIM_CORRELATION_ID, String.class);
+      final String role = claims.get(CLAIM_ROLE, String.class);
+      final String userType = claims.get(CLAIM_USER_TYPE, String.class);
 
       MDC.put("correlationId", correlationId);
 
-      final CustomerPrincipal principal = new CustomerPrincipal(username, null, clientId, username);
+      final UsernamePasswordAuthenticationToken authentication;
 
-      final UsernamePasswordAuthenticationToken authentication =
-          UsernamePasswordAuthenticationToken.authenticated(
-              principal, null, principal.getAuthorities());
+      if (USER_TYPE_STAFF.equals(userType)) {
+        // Staff JWT: build a simple token with the role from the claim (e.g. ROLE_ADMIN)
+        final String effectiveRole = role != null ? role : "ROLE_STAFF";
+        authentication =
+            UsernamePasswordAuthenticationToken.authenticated(
+                username, null, List.of(new SimpleGrantedAuthority(effectiveRole)));
+      } else {
+        // Customer JWT: use CustomerPrincipal which always carries ROLE_CUSTOMER
+        final CustomerPrincipal principal =
+            new CustomerPrincipal(username, null, clientId, username);
+        authentication =
+            UsernamePasswordAuthenticationToken.authenticated(
+                principal, null, principal.getAuthorities());
+      }
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
 
