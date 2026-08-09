@@ -18,11 +18,14 @@ Feature: Multi-Stage Loan Approval Workflow
     Then the application "LOS-TEST-001" status is "UNDER_REVIEW"
 
   Scenario: Credit Committee approves — application stays UNDER_REVIEW
-    When the "CREDIT_COMMITTEE" officer "cc.officer" approves application "LOS-TEST-001"
+    When the "LOAN_OFFICER" officer "lo.officer" approves application "LOS-TEST-001"
+    And the "CREDIT_COMMITTEE" officer "cc.officer" approves application "LOS-TEST-001"
     Then the application "LOS-TEST-001" status is "UNDER_REVIEW"
 
   Scenario: Branch Manager approves final stage — application moves to APPROVED
-    When the "BRANCH_MANAGER" officer "bm.officer" approves application "LOS-TEST-001"
+    When the "LOAN_OFFICER" officer "lo.officer" approves application "LOS-TEST-001"
+    And the "CREDIT_COMMITTEE" officer "cc.officer" approves application "LOS-TEST-001"
+    And the "BRANCH_MANAGER" officer "bm.officer" approves application "LOS-TEST-001"
     Then the application "LOS-TEST-001" status is "APPROVED"
 
   Scenario: Any stage rejects — application moves to REJECTED
