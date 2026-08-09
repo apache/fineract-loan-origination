@@ -34,6 +34,8 @@ import org.apache.fineract.los.repository.ApprovalStageRepository;
 import org.apache.fineract.los.repository.LoanApplicationRepository;
 import org.apache.fineract.los.service.ApprovalWorkflowService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
 public class LoanApprovalSteps {
 
@@ -66,23 +68,22 @@ public class LoanApprovalSteps {
   public void officerApprovesApplication(String stage, String officer, String ref) {
     ApprovalDecisionRequest request =
         ApprovalDecisionRequest.builder()
-            .stageName(stage)
-            .assignedOfficer(officer)
             .decision(ApprovalDecision.APPROVE)
+            .comments("Approved")
             .build();
-    approvalWorkflowService.recordDecision(ref, "default", request);
+    approvalWorkflowService.recordDecision(
+        ref, "default", request, authenticationFor(stage, officer));
   }
 
   @When("the {string} officer {string} rejects application {string} with comment {string}")
   public void officerRejectsApplication(String stage, String officer, String ref, String comment) {
     ApprovalDecisionRequest request =
         ApprovalDecisionRequest.builder()
-            .stageName(stage)
-            .assignedOfficer(officer)
             .decision(ApprovalDecision.REJECT)
             .comments(comment)
             .build();
-    approvalWorkflowService.recordDecision(ref, "default", request);
+    approvalWorkflowService.recordDecision(
+        ref, "default", request, authenticationFor(stage, officer));
   }
 
   @Then("the application {string} status is {string}")
@@ -90,5 +91,15 @@ public class LoanApprovalSteps {
     LoanApplication app =
         loanApplicationRepository.findByApplicationRefAndTenantId(ref, "default").orElseThrow();
     assertThat(app.getStatus().name()).isEqualTo(expectedStatus);
+  }
+
+  /**
+   * Builds a test {@link Authentication} whose principal name is {@code officer} and whose sole
+   * granted authority is {@code ROLE_<stage>}, matching what {@link
+   * org.apache.fineract.los.security.LosRole#fromAuthorities} expects to resolve the caller's LOS
+   * workflow role.
+   */
+  private Authentication authenticationFor(String stage, String officer) {
+    return new TestingAuthenticationToken(officer, null, "ROLE_" + stage);
   }
 }
