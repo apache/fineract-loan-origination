@@ -23,12 +23,21 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { correlationIdInterceptor } from './core/interceptors/correlation-id.interceptor';
 import { tenantInterceptor } from './core/interceptors/tenant.interceptor';
+import { staffAuthInterceptor } from './core/interceptors/staff-auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideHttpClient(
-      withInterceptors([correlationIdInterceptor, tenantInterceptor, authInterceptor]),
+      // staffAuthInterceptor runs first: if a staff token is present it wins.
+      // authInterceptor handles customer JWT. tenantInterceptor sets a default
+      // tenant header for unauthenticated requests.
+      withInterceptors([
+        correlationIdInterceptor,
+        staffAuthInterceptor,
+        authInterceptor,
+        tenantInterceptor,
+      ]),
     ),
   ],
 };

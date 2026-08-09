@@ -42,3 +42,6 @@ frontend/tsconfig.spec.json
 frontend/eslint.config.js
 frontend/assets/**
 **/README.md
+postman/*.json
+scripts/*.ps1
+src/main/resources/db/seed/*.sql

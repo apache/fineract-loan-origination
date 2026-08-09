@@ -42,6 +42,10 @@ frontend/dist/
 frontend/.angular/
 frontend/coverage/
 *.tsbuildinfo
+frontend/package-lock.json
 
 memory.md
 rat-report.txt
+postman/
+scripts/
+src/main/resources/db/seed/

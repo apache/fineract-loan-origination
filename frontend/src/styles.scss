@@ -36,6 +36,9 @@
   --color-success-bg: #e7f6ee;
 
   --radius: 6px;
+
+  --skeleton-base: #e2e8e7;
+  --skeleton-highlight: #f0f4f3;
 }
 
 [data-theme='dark'] {
@@ -56,6 +59,9 @@
   --color-error-bg: #3a1c1a;
   --color-success: #59d9a0;
   --color-success-bg: #123326;
+
+  --skeleton-base: #1e2c2a;
+  --skeleton-highlight: #243230;
 }
 
 * {

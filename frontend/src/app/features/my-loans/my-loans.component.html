@@ -18,7 +18,7 @@
   under the License.
 
 -->
-<h1>My loans</h1>
+<h1>My Loans</h1>
 
 @if (loading) {
   <div class="loan-cards">
@@ -31,18 +31,21 @@
     }
   </div>
 } @else if (error) {
-  <p class="error">{{ error }}</p>
+  <div class="empty-state">
+    <p class="empty-title">Could not load loans</p>
+    <p class="empty-sub">{{ error }}</p>
+  </div>
 } @else if (loans.length === 0) {
-  <p>
-    You have no disbursed loans yet. Once an application is approved and disbursed, it'll show up
-    here.
-  </p>
+  <div class="empty-state">
+    <p class="empty-title">No disbursed loans yet</p>
+    <p class="empty-sub">Once an application is approved and disbursed it will appear here.</p>
+  </div>
 } @else {
   <div class="loan-cards">
     @for (loan of loans; track loan.applicationRef) {
       <a [routerLink]="['/loan-application', loan.applicationRef]" class="loan-card">
         <span class="loan-ref">{{ loan.applicationRef }}</span>
-        <span class="loan-amount">{{ loan.requestedAmount }} {{ loan.currency }}</span>
+        <span class="loan-amount">{{ loan.requestedAmount | number:'1.2-2' }} {{ loan.currency }}</span>
         <span class="loan-meta">{{ loan.tenorMonths }} months · {{ loan.loanPurpose }}</span>
       </a>
     }

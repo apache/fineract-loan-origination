@@ -16,29 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
+import { CanActivateFn, Router } from '@angular/router';
+import { StaffAuthService } from '../services/staff-auth.service';
 
-/** Attaches Bearer JWT token and the caller's tenant ID to every outgoing request. */
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const authHeader = authService.getAuthHeader();
+export const staffAuthGuard: CanActivateFn = () => {
+  const staffAuth = inject(StaffAuthService);
+  const router    = inject(Router);
 
-  if (!authHeader) return next(req);
+  if (staffAuth.isAuthenticated()) return true;
 
-  // Skip if another interceptor (e.g. staffAuthInterceptor) already set Authorization
-  if (req.headers.has('Authorization')) return next(req);
-
-  const tenantId = authService.getTenantId();
-
-  return next(
-    req.clone({
-      setHeaders: {
-        Authorization: authHeader,
-        'X-Fineract-Platform-TenantId': tenantId,
-      },
-    }),
-  );
+  router.navigate(['/staff/login']);
+  return false;
 };
