@@ -133,16 +133,4 @@ public class LoanApplicationController {
                         + applicationRef
                         + "] — call /start-review first."));
   }
-
-  @Operation(
-      summary =
-          "Staff-only: retrieve full application detail including applicant profile, "
-              + "credit score, and complete approval history in a single response")
-  @GetMapping("/{applicationRef}/staff-detail")
-  @PreAuthorize("hasRole('STAFF')")
-  public org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse getStaffDetail(
-      @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable final String applicationRef) {
-    return loanApplicationService.getStaffDetail(applicationRef, tenantId);
-  }
 }

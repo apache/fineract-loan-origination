@@ -16,23 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.fineract.los.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.domain.ApprovalStage;
 import org.apache.fineract.los.domain.LoanApplication;
-import org.apache.fineract.los.domain.LoanApplication;
 import org.apache.fineract.los.dto.request.ApprovalDecisionRequest;
 import org.apache.fineract.los.repository.ApprovalStageRepository;
-import org.apache.fineract.los.repository.ApprovalStageRepository;
 import org.apache.fineract.los.service.ApprovalWorkflowService;
-import org.apache.fineract.los.service.LoanApplicationService;
 import org.apache.fineract.los.service.LoanApplicationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,13 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
  * {@link ApprovalWorkflowService} from the authenticated {@link Authentication} principal and the
  * application's current position in the configured approval workflow.
  *
- * <p>The workflow stage and assigned officer are never read from the request. Both are derived by
- * {@link ApprovalWorkflowService} from the authenticated {@link Authentication} principal and the
- * application's current position in the configured approval workflow.
- *
  * <p>A single endpoint accepts APPROVE / REJECT / REFER via {@link
- * ApprovalDecisionRequest#getDecision()}, keeping all workflow validation and state transitions
- * inside {@link ApprovalWorkflowService}.
  * ApprovalDecisionRequest#getDecision()}, keeping all workflow validation and state transitions
  * inside {@link ApprovalWorkflowService}.
  */
@@ -75,8 +64,6 @@ public class ApprovalController {
   private static final String DEFAULT_TENANT = "default";
 
   private final ApprovalWorkflowService approvalWorkflowService;
-  private final ApprovalStageRepository approvalStageRepository;
-  private final LoanApplicationService loanApplicationService;
   private final ApprovalStageRepository approvalStageRepository;
   private final LoanApplicationService loanApplicationService;
 
@@ -104,12 +91,8 @@ public class ApprovalController {
       @PathVariable final String applicationRef,
       @Valid @RequestBody final ApprovalDecisionRequest request,
       final Authentication authentication) {
-      @Valid @RequestBody final ApprovalDecisionRequest request,
-      final Authentication authentication) {
 
     final ApprovalStage stage =
-        approvalWorkflowService.recordDecision(applicationRef, tenantId, request, authentication);
-
         approvalWorkflowService.recordDecision(applicationRef, tenantId, request, authentication);
 
     return ResponseEntity.status(HttpStatus.CREATED).body(stage);
