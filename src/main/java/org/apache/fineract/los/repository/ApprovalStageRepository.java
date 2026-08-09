@@ -100,11 +100,23 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
   /**
    * Counts total approval stages for an application.
    *
-   * <p>Used by the workflow engine to determine how many stages have been completed and whether the
-   * configured approval chain is complete.
+   * <p>Used for reporting and audit purposes.
    *
    * @param application the parent loan application
    * @return total number of approval stage records
    */
   long countByApplication(LoanApplication application);
+
+  /**
+   * Counts approval-stage records with a specific decision for an application.
+   *
+   * <p>Used by {@code ApprovalWorkflowService} to derive the application's current workflow stage —
+   * the number of APPROVE decisions recorded so far is the zero-based index into {@code
+   * ApprovalWorkflowProperties#getStages()} for the next stage awaiting a decision.
+   *
+   * @param application the parent loan application
+   * @param decision the decision to count
+   * @return count of stage records with the given decision
+   */
+  long countByApplicationAndDecision(LoanApplication application, ApprovalDecision decision);
 }

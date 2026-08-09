@@ -21,58 +21,49 @@ package org.apache.fineract.los.workflow;
 
 import jakarta.annotation.PostConstruct;
 import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.CollectionUtils;
 
-/**
- * Externalised configuration for the ordered list of multi-stage approval workflow stages.
- *
- * <p>Bound from {@code application.yml} under the prefix {@code los.workflow}. Order in the list is
- * significant — {@code ApprovalWorkflowService} treats it as the sequence an application must pass
- * through: LOAN_OFFICER → BRANCH_MANAGER → CREDIT_COMMITTEE by default. Institutions can add,
- * remove, or reorder stages purely via configuration, with no code change.
- */
+/** Externalised configuration for the ordered list of multi-stage approval workflow stages. */
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "los.workflow")
 public class ApprovalWorkflowProperties {
 
-  /** Ordered list of approval stage names. Defaults to the standard three-stage MFI workflow. */
+  /** Ordered approval stages. */
   private List<String> stages = List.of("LOAN_OFFICER", "BRANCH_MANAGER", "CREDIT_COMMITTEE");
 
   /**
-   * Validates that at least one stage is configured on startup — an empty stage list would make it
-   * impossible for any application to ever reach APPROVED.
+   * Maps Fineract role names to LOS workflow stages.
+   *
+   * <p>Example:
+   *
+   * <p>loan_officer -> LOAN_OFFICER
    */
+  private Map<String, String> roleMapping = Map.of();
+
   @PostConstruct
   public void validateStagesNotEmpty() {
     if (CollectionUtils.isEmpty(stages)) {
       throw new IllegalStateException(
-          "los.workflow.stages must contain at least one approval stage name.");
+          "los.workflow.stages must contain at least one approval stage.");
     }
   }
 
-  /**
-   * Returns the zero-based index of the given stage name in the configured sequence.
-   *
-   * @param stageName stage name to look up
-   * @return index in {@link #stages}, or -1 if not configured
-   */
   public int indexOf(final String stageName) {
     return stages.indexOf(stageName);
   }
 
-  /**
-   * Returns true if the given stage name is the final stage in the configured sequence — i.e. an
-   * APPROVE decision here completes the entire workflow.
-   *
-   * @param stageName stage name to check
-   * @return true if this is the last configured stage
-   */
   public boolean isFinalStage(final String stageName) {
     final int index = indexOf(stageName);
     return index >= 0 && index == stages.size() - 1;
+  }
+
+  /** Returns the configured workflow stage for a Fineract role. */
+  public String stageForFineractRole(final String fineractRoleName) {
+    return roleMapping.get(fineractRoleName);
   }
 }

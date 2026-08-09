@@ -61,6 +61,17 @@ public class GlobalExceptionHandler {
     return build(HttpStatus.CONFLICT, ex.getMessage());
   }
 
+  @ExceptionHandler(ApprovalStageMismatchException.class)
+  public ResponseEntity<ErrorResponse> handleStageMismatch(
+      final ApprovalStageMismatchException ex) {
+    return build(HttpStatus.FORBIDDEN, ex.getMessage());
+  }
+
+  @ExceptionHandler(LosRoleNotAssignedException.class)
+  public ResponseEntity<ErrorResponse> handleNoLosRole(final LosRoleNotAssignedException ex) {
+    return build(HttpStatus.FORBIDDEN, ex.getMessage());
+  }
+
   @ExceptionHandler(FineractIntegrationException.class)
   public ResponseEntity<ErrorResponse> handleFineractIntegration(
       final FineractIntegrationException ex) {

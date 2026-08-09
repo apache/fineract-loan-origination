@@ -69,6 +69,16 @@ public final class LosErrorConstants {
   /** Error code for an unrecognised approval workflow stage name. */
   public static final String ERR_UNKNOWN_STAGE = "los.error.approval.unknown-stage";
 
+  /** Error code for an officer acting on the wrong workflow stage. */
+  public static final String ERR_STAGE_MISMATCH = "los.error.approval.stage-mismatch";
+
+  /** Error code for a staff member with no configured LOS workflow role. */
+  public static final String ERR_NO_LOS_ROLE = "los.error.approval.no-los-role";
+
+  /** Message when approval comments are missing. */
+  public static final String MSG_APPROVAL_COMMENTS_REQUIRED =
+      "Comments are mandatory when recording an approval decision.";
+
   // ─────────────────────────────────────────────────────────
   // State Machine Messages
   // ─────────────────────────────────────────────────────────
@@ -153,4 +163,19 @@ public final class LosErrorConstants {
       "Cannot record an approval decision for application [%s] — current "
           + "status is [%s] but decisions may only be recorded while the "
           + "application is UNDER_REVIEW.";
+
+  /**
+   * Template for stage-mismatch error. Parameters: assignedOfficer, applicationRef, expectedStage.
+   */
+  public static final String MSG_STAGE_MISMATCH_TEMPLATE =
+      "Officer [%s] cannot record a decision on application [%s] — the application "
+          + "is currently awaiting a decision at stage [%s], which does not match "
+          + "this officer's assigned workflow role.";
+
+  /** Template for a staff member with no configured LOS workflow role. Parameters: username. */
+  public static final String MSG_NO_LOS_ROLE_TEMPLATE =
+      "User [%s] is authenticated but has no configured LOS workflow role. "
+          + "Configure los.workflow.role-mapping to map the user's Fineract role "
+          + "to one of the configured approval workflow stages before recording "
+          + "approval decisions.";
 }

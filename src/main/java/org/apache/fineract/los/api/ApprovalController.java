@@ -22,12 +22,18 @@ package org.apache.fineract.los.api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.domain.ApprovalStage;
+import org.apache.fineract.los.domain.LoanApplication;
 import org.apache.fineract.los.dto.request.ApprovalDecisionRequest;
+import org.apache.fineract.los.repository.ApprovalStageRepository;
 import org.apache.fineract.los.service.ApprovalWorkflowService;
+import org.apache.fineract.los.service.LoanApplicationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,10 +44,13 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST API for recording multi-stage approval decisions against a loan application.
  *
+ * <p>The workflow stage and assigned officer are never read from the request. Both are derived by
+ * {@link ApprovalWorkflowService} from the authenticated {@link Authentication} principal and the
+ * application's current position in the configured approval workflow.
+ *
  * <p>A single endpoint accepts APPROVE / REJECT / REFER via {@link
- * ApprovalDecisionRequest#getDecision()} rather than three separate endpoints — keeps the
- * state-transition logic entirely inside {@code ApprovalWorkflowService}, with the controller as a
- * thin pass-through.
+ * ApprovalDecisionRequest#getDecision()}, keeping all workflow validation and state transitions
+ * inside {@link ApprovalWorkflowService}.
  */
 @Tag(
     name = "Approval Workflow",
@@ -55,16 +64,35 @@ public class ApprovalController {
   private static final String DEFAULT_TENANT = "default";
 
   private final ApprovalWorkflowService approvalWorkflowService;
+  private final ApprovalStageRepository approvalStageRepository;
+  private final LoanApplicationService loanApplicationService;
 
-  @Operation(summary = "Record an APPROVE, REJECT, or REFER decision for the current stage")
+  @Operation(summary = "List approval history for an application")
+  @GetMapping
+  public List<ApprovalStage> getHistory(
+      @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
+      @PathVariable final String applicationRef) {
+
+    final LoanApplication application =
+        loanApplicationService.getApplicationOrThrow(applicationRef, tenantId);
+
+    return approvalStageRepository.findAllByApplicationOrderByCreatedAtAsc(application);
+  }
+
+  @Operation(
+      summary =
+          "Record an APPROVE, REJECT, or REFER decision for the application's current workflow "
+              + "stage as the authenticated staff member")
   @PostMapping
   public ResponseEntity<ApprovalStage> recordDecision(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
       @PathVariable final String applicationRef,
-      @Valid @RequestBody final ApprovalDecisionRequest request) {
+      @Valid @RequestBody final ApprovalDecisionRequest request,
+      final Authentication authentication) {
 
     final ApprovalStage stage =
-        approvalWorkflowService.recordDecision(applicationRef, tenantId, request);
+        approvalWorkflowService.recordDecision(applicationRef, tenantId, request, authentication);
+
     return ResponseEntity.status(HttpStatus.CREATED).body(stage);
   }
 }
