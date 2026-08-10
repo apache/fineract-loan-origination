@@ -32,7 +32,6 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="detail-page">
-
       <!-- Back -->
       <button class="back-btn" (click)="goBack()">← Back to Applications</button>
 
@@ -41,7 +40,6 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
       } @else if (error()) {
         <div class="error-banner" role="alert">{{ error() }}</div>
       } @else if (app) {
-
         <!-- Title row -->
         <div class="page-header">
           <div>
@@ -51,24 +49,43 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
         </div>
 
         <div class="detail-grid">
-
           <!-- Left column -->
           <div class="left-col">
-
             <!-- Application info -->
             <section class="card">
               <h2>Loan Details</h2>
               <dl class="detail-list">
-                <div><dt>Amount</dt><dd>{{ app.requestedAmount | number:'1.2-2' }} {{ app.currency }}</dd></div>
-                <div><dt>Purpose</dt><dd>{{ app.loanPurpose ?? '—' }}</dd></div>
-                <div><dt>Tenor</dt><dd>{{ app.tenorMonths ? app.tenorMonths + ' months' : '—' }}</dd></div>
-                <div><dt>Submitted</dt><dd>{{ app.submittedAt | date:'dd MMM yyyy, HH:mm' }}</dd></div>
-                <div><dt>Last Updated</dt><dd>{{ app.updatedAt | date:'dd MMM yyyy, HH:mm' }}</dd></div>
+                <div>
+                  <dt>Amount</dt>
+                  <dd>{{ app.requestedAmount | number: '1.2-2' }} {{ app.currency }}</dd>
+                </div>
+                <div>
+                  <dt>Purpose</dt>
+                  <dd>{{ app.loanPurpose ?? '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Tenor</dt>
+                  <dd>{{ app.tenorMonths ? app.tenorMonths + ' months' : '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Submitted</dt>
+                  <dd>{{ app.submittedAt | date: 'dd MMM yyyy, HH:mm' }}</dd>
+                </div>
+                <div>
+                  <dt>Last Updated</dt>
+                  <dd>{{ app.updatedAt | date: 'dd MMM yyyy, HH:mm' }}</dd>
+                </div>
                 @if (app.fineractLoanId) {
-                  <div><dt>Fineract Loan ID</dt><dd>{{ app.fineractLoanId }}</dd></div>
+                  <div>
+                    <dt>Fineract Loan ID</dt>
+                    <dd>{{ app.fineractLoanId }}</dd>
+                  </div>
                 }
                 @if (app.disbursedAt) {
-                  <div><dt>Disbursed At</dt><dd>{{ app.disbursedAt | date:'dd MMM yyyy, HH:mm' }}</dd></div>
+                  <div>
+                    <dt>Disbursed At</dt>
+                    <dd>{{ app.disbursedAt | date: 'dd MMM yyyy, HH:mm' }}</dd>
+                  </div>
                 }
               </dl>
             </section>
@@ -77,24 +94,48 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
             <section class="card">
               <h2>Applicant</h2>
               <dl class="detail-list">
-                <div><dt>Name</dt><dd>{{ app.applicantName }}</dd></div>
+                <div>
+                  <dt>Name</dt>
+                  <dd>{{ app.applicantName }}</dd>
+                </div>
                 @if (app.nationalId) {
-                  <div><dt>National ID</dt><dd>{{ app.nationalId }}</dd></div>
+                  <div>
+                    <dt>National ID</dt>
+                    <dd>{{ app.nationalId }}</dd>
+                  </div>
                 }
                 @if (app.fineractClientId) {
-                  <div><dt>Fineract Client ID</dt><dd>{{ app.fineractClientId }}</dd></div>
+                  <div>
+                    <dt>Fineract Client ID</dt>
+                    <dd>{{ app.fineractClientId }}</dd>
+                  </div>
                 }
-                @if (app.monthlyIncome != null) {
-                  <div><dt>Monthly Income</dt><dd>{{ app.monthlyIncome | number:'1.2-2' }} {{ app.currency }}</dd></div>
+                <!-- ✅ -->
+                @if (app.monthlyIncome !== null) {
+                  <div>
+                    <dt>Monthly Income</dt>
+                    <dd>{{ app.monthlyIncome | number: '1.2-2' }} {{ app.currency }}</dd>
+                  </div>
                 }
-                @if (app.employmentStatus) {
-                  <div><dt>Employment</dt><dd>{{ app.employmentStatus }}</dd></div>
+                @if (app.employmentDurationMonths !== null) {
+                  <div>
+                    <dt>Employment</dt>
+                    <dd>{{ app.employmentStatus }}</dd>
+                  </div>
                 }
-                @if (app.employmentDurationMonths != null) {
-                  <div><dt>Employment Duration</dt><dd>{{ app.employmentDurationMonths }} months</dd></div>
+                @if (app.employmentDurationMonths !== null) {
+                  <div>
+                    <dt>Employment Duration</dt>
+                    <dd>{{ app.employmentDurationMonths }} months</dd>
+                  </div>
                 }
-                @if (app.existingLoanObligations != null) {
-                  <div><dt>Existing Obligations</dt><dd>{{ app.existingLoanObligations | number:'1.2-2' }} {{ app.currency }}/mo</dd></div>
+                @if (app.existingLoanObligations !== null) {
+                  <div>
+                    <dt>Existing Obligations</dt>
+                    <dd>
+                      {{ app.existingLoanObligations | number: '1.2-2' }} {{ app.currency }}/mo
+                    </dd>
+                  </div>
                 }
               </dl>
             </section>
@@ -113,18 +154,37 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
                   </div>
                 </div>
                 <dl class="detail-list factors">
-                  <div><dt>Income Ratio</dt><dd>{{ app.creditScore.incomeRatioScore }}/30</dd></div>
-                  <div><dt>Debt Burden</dt><dd>{{ app.creditScore.debtBurdenScore }}/25</dd></div>
-                  <div><dt>Employment</dt><dd>{{ app.creditScore.employmentScore }}/20</dd></div>
-                  <div><dt>Repayment History</dt><dd>{{ app.creditScore.repaymentHistoryScore }}/15</dd></div>
-                  <div><dt>Loan Purpose</dt><dd>{{ app.creditScore.loanPurposeScore }}/10</dd></div>
+                  <div>
+                    <dt>Income Ratio</dt>
+                    <dd>{{ app.creditScore.incomeRatioScore }}/30</dd>
+                  </div>
+                  <div>
+                    <dt>Debt Burden</dt>
+                    <dd>{{ app.creditScore.debtBurdenScore }}/25</dd>
+                  </div>
+                  <div>
+                    <dt>Employment</dt>
+                    <dd>{{ app.creditScore.employmentScore }}/20</dd>
+                  </div>
+                  <div>
+                    <dt>Repayment History</dt>
+                    <dd>{{ app.creditScore.repaymentHistoryScore }}/15</dd>
+                  </div>
+                  <div>
+                    <dt>Loan Purpose</dt>
+                    <dd>{{ app.creditScore.loanPurposeScore }}/10</dd>
+                  </div>
                 </dl>
               </section>
             } @else if (app.status === 'SUBMITTED') {
               <section class="card">
                 <h2>Credit Score</h2>
                 <p class="muted">Not yet computed. Start review to trigger credit scoring.</p>
-                <button class="action-btn secondary" [disabled]="startingReview()" (click)="startReview()">
+                <button
+                  class="action-btn secondary"
+                  [disabled]="startingReview()"
+                  (click)="startReview()"
+                >
                   {{ startingReview() ? 'Starting…' : 'Start Review' }}
                 </button>
                 @if (reviewError()) {
@@ -132,18 +192,17 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
                 }
               </section>
             }
-
           </div>
 
           <!-- Right column -->
           <div class="right-col">
-
             <!-- Approval action panel -->
             @if (canDecide) {
               <section class="card action-card">
                 <h2>Record Decision</h2>
                 <p class="action-context">
-                  Acting as <strong>{{ displayRole }}</strong> at stage <strong>{{ currentStage }}</strong>
+                  Acting as <strong>{{ displayRole }}</strong> at stage
+                  <strong>{{ currentStage }}</strong>
                 </p>
 
                 <div class="decision-buttons">
@@ -151,17 +210,23 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
                     class="decision-btn approve"
                     [class.selected]="selectedDecision() === 'APPROVE'"
                     (click)="selectedDecision.set('APPROVE')"
-                  >✓ Approve</button>
+                  >
+                    ✓ Approve
+                  </button>
                   <button
                     class="decision-btn refer"
                     [class.selected]="selectedDecision() === 'REFER'"
                     (click)="selectedDecision.set('REFER')"
-                  >↩ Refer Back</button>
+                  >
+                    ↩ Refer Back
+                  </button>
                   <button
                     class="decision-btn reject"
                     [class.selected]="selectedDecision() === 'REJECT'"
                     (click)="selectedDecision.set('REJECT')"
-                  >✗ Reject</button>
+                  >
+                    ✗ Reject
+                  </button>
                 </div>
 
                 <div class="field">
@@ -213,8 +278,11 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
                           </span>
                         </div>
                         @if (stage.decidedBy) {
-                          <div class="timeline-meta">by {{ stage.decidedBy }}
-                            @if (stage.decidedAt) { · {{ stage.decidedAt | date:'dd MMM yyyy, HH:mm' }} }
+                          <div class="timeline-meta">
+                            by {{ stage.decidedBy }}
+                            @if (stage.decidedAt) {
+                              · {{ stage.decidedAt | date: 'dd MMM yyyy, HH:mm' }}
+                            }
                           </div>
                         }
                         @if (stage.notes) {
@@ -226,303 +294,493 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
                 </ol>
               }
             </section>
-
           </div>
         </div>
       }
     </div>
   `,
-  styles: [`
-    .detail-page { max-width: 1100px; }
+  styles: [
+    `
+      .detail-page {
+        max-width: 1100px;
+      }
 
-    .back-btn {
-      background: none;
-      border: none;
-      color: var(--color-primary);
-      cursor: pointer;
-      font-size: 0.875rem;
-      padding: 0;
-      margin-bottom: 1.25rem;
-    }
+      .back-btn {
+        background: none;
+        border: none;
+        color: var(--color-primary);
+        cursor: pointer;
+        font-size: 0.875rem;
+        padding: 0;
+        margin-bottom: 1.25rem;
+      }
 
-    .back-btn:hover { text-decoration: underline; }
+      .back-btn:hover {
+        text-decoration: underline;
+      }
 
-    .page-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-    }
+      .page-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+      }
 
-    h1 { font-size: 1.4rem; font-weight: 700; color: var(--color-text); margin: 0 0 0.4rem; }
+      h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--color-text);
+        margin: 0 0 0.4rem;
+      }
 
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 99px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
+      .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 99px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
 
-    .status-DRAFT        { background: #f3f4f6; color: #6b7280; }
-    .status-SUBMITTED    { background: #dbeafe; color: #1d4ed8; }
-    .status-UNDER_REVIEW { background: #fef9c3; color: #a16207; }
-    .status-APPROVED     { background: #dcfce7; color: #15803d; }
-    .status-REJECTED     { background: #fee2e2; color: #dc2626; }
-    .status-REFERRED     { background: #ede9fe; color: #7c3aed; }
-    .status-DISBURSED    { background: #d1fae5; color: #065f46; }
+      .status-DRAFT {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+      .status-SUBMITTED {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .status-UNDER_REVIEW {
+        background: #fef9c3;
+        color: #a16207;
+      }
+      .status-APPROVED {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .status-REJECTED {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+      .status-REFERRED {
+        background: #ede9fe;
+        color: #7c3aed;
+      }
+      .status-DISBURSED {
+        background: #d1fae5;
+        color: #065f46;
+      }
 
-    /* Grid */
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 1.25rem;
-      align-items: start;
-    }
+      /* Grid */
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 1.25rem;
+        align-items: start;
+      }
 
-    @media (max-width: 900px) {
-      .detail-grid { grid-template-columns: 1fr; }
-    }
+      @media (max-width: 900px) {
+        .detail-grid {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    /* Card */
-    .card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: 10px;
-      padding: 1.25rem;
-      margin-bottom: 1.25rem;
-    }
+      /* Card */
+      .card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+      }
 
-    .card h2 {
-      font-size: 0.9rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--color-text-muted);
-      margin: 0 0 1rem;
-    }
+      .card h2 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--color-text-muted);
+        margin: 0 0 1rem;
+      }
 
-    /* Detail list */
-    .detail-list { display: grid; gap: 0.5rem; }
-    .detail-list div { display: flex; gap: 0.5rem; }
-    .detail-list dt { font-size: 0.8rem; color: var(--color-text-muted); min-width: 140px; flex-shrink: 0; }
-    .detail-list dd { font-size: 0.875rem; color: var(--color-text); font-weight: 500; margin: 0; }
-    .detail-list.factors dt { min-width: 130px; }
+      /* Detail list */
+      .detail-list {
+        display: grid;
+        gap: 0.5rem;
+      }
+      .detail-list div {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .detail-list dt {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        min-width: 140px;
+        flex-shrink: 0;
+      }
+      .detail-list dd {
+        font-size: 0.875rem;
+        color: var(--color-text);
+        font-weight: 500;
+        margin: 0;
+      }
+      .detail-list.factors dt {
+        min-width: 130px;
+      }
 
-    /* Credit score */
-    .score-display { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1rem; }
+      /* Credit score */
+      .score-display {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-bottom: 1rem;
+      }
 
-    .score-circle {
-      width: 72px; height: 72px; border-radius: 50%;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      border: 3px solid;
-      flex-shrink: 0;
-    }
+      .score-circle {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid;
+        flex-shrink: 0;
+      }
 
-    .risk-LOW    { border-color: #16a34a; color: #16a34a; }
-    .risk-MEDIUM { border-color: #d97706; color: #d97706; }
-    .risk-HIGH   { border-color: #dc2626; color: #dc2626; }
+      .risk-LOW {
+        border-color: #16a34a;
+        color: #16a34a;
+      }
+      .risk-MEDIUM {
+        border-color: #d97706;
+        color: #d97706;
+      }
+      .risk-HIGH {
+        border-color: #dc2626;
+        color: #dc2626;
+      }
 
-    .score-number { font-size: 1.4rem; font-weight: 700; line-height: 1; }
-    .score-label  { font-size: 0.65rem; color: var(--color-text-muted); }
+      .score-number {
+        font-size: 1.4rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+      .score-label {
+        font-size: 0.65rem;
+        color: var(--color-text-muted);
+      }
 
-    .risk-label { font-size: 0.85rem; font-weight: 700; }
-    .risk-text-LOW    { color: #16a34a; }
-    .risk-text-MEDIUM { color: #d97706; }
-    .risk-text-HIGH   { color: #dc2626; }
+      .risk-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+      .risk-text-LOW {
+        color: #16a34a;
+      }
+      .risk-text-MEDIUM {
+        color: #d97706;
+      }
+      .risk-text-HIGH {
+        color: #dc2626;
+      }
 
-    /* Action card */
-    .action-card { border: 2px solid var(--color-primary); }
-    .action-context { font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 1rem; }
+      /* Action card */
+      .action-card {
+        border: 2px solid var(--color-primary);
+      }
+      .action-context {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        margin-bottom: 1rem;
+      }
 
-    .decision-buttons { display: flex; gap: 0.5rem; margin-bottom: 1.1rem; flex-wrap: wrap; }
+      .decision-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.1rem;
+        flex-wrap: wrap;
+      }
 
-    .decision-btn {
-      flex: 1;
-      padding: 0.55rem 0.5rem;
-      border-radius: 8px;
-      border: 2px solid var(--color-border);
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--color-surface);
-      color: var(--color-text-muted);
-      transition: all 0.12s;
-      min-width: 80px;
-    }
+      .decision-btn {
+        flex: 1;
+        padding: 0.55rem 0.5rem;
+        border-radius: 8px;
+        border: 2px solid var(--color-border);
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--color-surface);
+        color: var(--color-text-muted);
+        transition: all 0.12s;
+        min-width: 80px;
+      }
 
-    .decision-btn.approve.selected { background: #dcfce7; border-color: #16a34a; color: #15803d; }
-    .decision-btn.refer.selected   { background: #ede9fe; border-color: #7c3aed; color: #6d28d9; }
-    .decision-btn.reject.selected  { background: #fee2e2; border-color: #dc2626; color: #dc2626; }
+      .decision-btn.approve.selected {
+        background: #dcfce7;
+        border-color: #16a34a;
+        color: #15803d;
+      }
+      .decision-btn.refer.selected {
+        background: #ede9fe;
+        border-color: #7c3aed;
+        color: #6d28d9;
+      }
+      .decision-btn.reject.selected {
+        background: #fee2e2;
+        border-color: #dc2626;
+        color: #dc2626;
+      }
 
-    .decision-btn:hover { border-color: var(--color-primary); }
+      .decision-btn:hover {
+        border-color: var(--color-primary);
+      }
 
-    .field { margin-bottom: 0.85rem; }
-    .field label { display: block; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.3rem; color: var(--color-text); }
-    .required { color: var(--color-error); }
+      .field {
+        margin-bottom: 0.85rem;
+      }
+      .field label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+        color: var(--color-text);
+      }
+      .required {
+        color: var(--color-error);
+      }
 
-    textarea {
-      width: 100%;
-      padding: 0.55rem 0.75rem;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      background: var(--color-bg);
-      color: var(--color-text);
-      font-size: 0.875rem;
-      resize: vertical;
-      font-family: inherit;
-      box-sizing: border-box;
-    }
+      textarea {
+        width: 100%;
+        padding: 0.55rem 0.75rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-size: 0.875rem;
+        resize: vertical;
+        font-family: inherit;
+        box-sizing: border-box;
+      }
 
-    textarea:focus { outline: none; border-color: var(--color-primary); }
-    textarea.error { border-color: var(--color-error); }
-    .field-error { font-size: 0.78rem; color: var(--color-error); margin-top: 0.2rem; display: block; }
+      textarea:focus {
+        outline: none;
+        border-color: var(--color-primary);
+      }
+      textarea.error {
+        border-color: var(--color-error);
+      }
+      .field-error {
+        font-size: 0.78rem;
+        color: var(--color-error);
+        margin-top: 0.2rem;
+        display: block;
+      }
 
-    .submit-decision-btn {
-      width: 100%;
-      padding: 0.65rem;
-      background: var(--color-primary);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
+      .submit-decision-btn {
+        width: 100%;
+        padding: 0.65rem;
+        background: var(--color-primary);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
 
-    .submit-decision-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-    .submit-decision-btn:not(:disabled):hover { background: var(--color-primary-dark); }
+      .submit-decision-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .submit-decision-btn:not(:disabled):hover {
+        background: var(--color-primary-dark);
+      }
 
-    .action-btn {
-      padding: 0.5rem 1rem;
-      border-radius: var(--radius);
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-    }
+      .action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius);
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+      }
 
-    .action-btn.secondary {
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      color: var(--color-text);
-    }
+      .action-btn.secondary {
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+      }
 
-    /* Timeline */
-    .timeline { list-style: none; padding: 0; margin: 0; position: relative; }
-    .timeline::before {
-      content: '';
-      position: absolute;
-      left: 10px; top: 0; bottom: 0;
-      width: 2px;
-      background: var(--color-border);
-    }
+      /* Timeline */
+      .timeline {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        position: relative;
+      }
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--color-border);
+      }
 
-    .timeline-item {
-      display: flex;
-      gap: 0.85rem;
-      padding-bottom: 1.1rem;
-      position: relative;
-    }
+      .timeline-item {
+        display: flex;
+        gap: 0.85rem;
+        padding-bottom: 1.1rem;
+        position: relative;
+      }
 
-    .timeline-dot {
-      width: 20px; height: 20px; border-radius: 50%;
-      border: 2px solid var(--color-border);
-      background: var(--color-surface);
-      flex-shrink: 0;
-      z-index: 1;
-      margin-top: 0.15rem;
-    }
+      .timeline-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--color-border);
+        background: var(--color-surface);
+        flex-shrink: 0;
+        z-index: 1;
+        margin-top: 0.15rem;
+      }
 
-    .dot-APPROVE { border-color: #16a34a; background: #dcfce7; }
-    .dot-REJECT  { border-color: #dc2626; background: #fee2e2; }
-    .dot-REFER   { border-color: #7c3aed; background: #ede9fe; }
+      .dot-APPROVE {
+        border-color: #16a34a;
+        background: #dcfce7;
+      }
+      .dot-REJECT {
+        border-color: #dc2626;
+        background: #fee2e2;
+      }
+      .dot-REFER {
+        border-color: #7c3aed;
+        background: #ede9fe;
+      }
 
-    .timeline-body { flex: 1; }
+      .timeline-body {
+        flex: 1;
+      }
 
-    .timeline-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; }
+      .timeline-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.2rem;
+      }
 
-    .stage-name { font-size: 0.875rem; font-weight: 600; color: var(--color-text); }
+      .stage-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-text);
+      }
 
-    .decision-pill {
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 0.15rem 0.5rem;
-      border-radius: 99px;
-      text-transform: uppercase;
-    }
+      .decision-pill {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.15rem 0.5rem;
+        border-radius: 99px;
+        text-transform: uppercase;
+      }
 
-    .pill-APPROVE { background: #dcfce7; color: #15803d; }
-    .pill-REJECT  { background: #fee2e2; color: #dc2626; }
-    .pill-REFER   { background: #ede9fe; color: #7c3aed; }
-    .pill-null    { background: #f3f4f6; color: #6b7280; }
+      .pill-APPROVE {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .pill-REJECT {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+      .pill-REFER {
+        background: #ede9fe;
+        color: #7c3aed;
+      }
+      .pill-null {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
 
-    .timeline-meta { font-size: 0.78rem; color: var(--color-text-muted); margin-bottom: 0.3rem; }
+      .timeline-meta {
+        font-size: 0.78rem;
+        color: var(--color-text-muted);
+        margin-bottom: 0.3rem;
+      }
 
-    .timeline-notes {
-      font-size: 0.82rem;
-      color: var(--color-text);
-      font-style: italic;
-      background: var(--color-bg);
-      border-left: 3px solid var(--color-border);
-      padding: 0.35rem 0.65rem;
-      border-radius: 0 4px 4px 0;
-    }
+      .timeline-notes {
+        font-size: 0.82rem;
+        color: var(--color-text);
+        font-style: italic;
+        background: var(--color-bg);
+        border-left: 3px solid var(--color-border);
+        padding: 0.35rem 0.65rem;
+        border-radius: 0 4px 4px 0;
+      }
 
-    /* Feedback banners */
-    .error-banner {
-      background: var(--color-error-bg);
-      color: var(--color-error);
-      padding: 0.65rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      margin-bottom: 0.75rem;
-    }
+      /* Feedback banners */
+      .error-banner {
+        background: var(--color-error-bg);
+        color: var(--color-error);
+        padding: 0.65rem 0.85rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+      }
 
-    .error-banner.small { font-size: 0.8rem; }
+      .error-banner.small {
+        font-size: 0.8rem;
+      }
 
-    .success-banner {
-      background: #dcfce7;
-      color: #15803d;
-      padding: 0.65rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      margin-bottom: 0.75rem;
-    }
+      .success-banner {
+        background: #dcfce7;
+        color: #15803d;
+        padding: 0.65rem 0.85rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+      }
 
-    .loading {
-      padding: 3rem;
-      text-align: center;
-      color: var(--color-text-muted);
-    }
+      .loading {
+        padding: 3rem;
+        text-align: center;
+        color: var(--color-text-muted);
+      }
 
-    .muted { color: var(--color-text-muted); font-size: 0.875rem; }
-  `],
+      .muted {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+      }
+    `,
+  ],
 })
 export class StaffApplicationDetailComponent implements OnInit {
   private readonly staffAuth = inject(StaffAuthService);
-  private readonly staffSvc  = inject(StaffLoanApplicationService);
-  private readonly route     = inject(ActivatedRoute);
-  private readonly router    = inject(Router);
+  private readonly staffSvc = inject(StaffLoanApplicationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  readonly loading        = signal(true);
-  readonly error          = signal<string | null>(null);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
   readonly startingReview = signal(false);
-  readonly reviewError    = signal<string | null>(null);
-  readonly submitting     = signal(false);
-  readonly decisionError  = signal<string | null>(null);
+  readonly reviewError = signal<string | null>(null);
+  readonly submitting = signal(false);
+  readonly decisionError = signal<string | null>(null);
   readonly decisionSuccess = signal(false);
-  readonly commentsError  = signal(false);
+  readonly commentsError = signal(false);
   readonly selectedDecision = signal<ApprovalDecisionType | null>(null);
 
   app: StaffApplicationDetail | null = null;
   comments = '';
 
-  get displayRole(): string  { return this.staffAuth.getProfile()?.displayRole ?? ''; }
-  get losRole(): string      { return this.staffAuth.getProfile()?.losRole ?? ''; }
+  get displayRole(): string {
+    return this.staffAuth.getProfile()?.displayRole ?? '';
+  }
+  get losRole(): string {
+    return this.staffAuth.getProfile()?.losRole ?? '';
+  }
 
   /** The stage name this role is responsible for, e.g. LOAN_OFFICER */
   get currentStage(): string {
@@ -534,13 +792,13 @@ export class StaffApplicationDetailComponent implements OnInit {
     if (!this.app || this.app.status !== 'UNDER_REVIEW') return false;
     const username = this.staffAuth.getProfile()?.username;
     const alreadyDecided = this.app.approvalStages.some(
-      s => s.decidedBy === username && s.decision != null,
+      (s) => s.decidedBy === username && s.decision != null,
     );
     return !alreadyDecided;
   }
 
   stageName(stage: string): string {
-    return stage.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return stage.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
   ngOnInit(): void {
@@ -554,8 +812,8 @@ export class StaffApplicationDetailComponent implements OnInit {
       .getDetail(ref)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next:  (detail) => this.app = detail,
-        error: (err)    => this.error.set(err?.message ?? 'Could not load application.'),
+        next: (detail) => (this.app = detail),
+        error: (err) => this.error.set(err?.message ?? 'Could not load application.'),
       });
   }
 
@@ -563,10 +821,11 @@ export class StaffApplicationDetailComponent implements OnInit {
     if (!this.app) return;
     this.startingReview.set(true);
     this.reviewError.set(null);
-    this.staffSvc.startReview(this.app.applicationRef)
+    this.staffSvc
+      .startReview(this.app.applicationRef)
       .pipe(finalize(() => this.startingReview.set(false)))
       .subscribe({
-        next:  () => this.loadDetail(this.app!.applicationRef),
+        next: () => this.loadDetail(this.app!.applicationRef),
         error: (err) => this.reviewError.set(err?.error?.message ?? 'Could not start review.'),
       });
   }

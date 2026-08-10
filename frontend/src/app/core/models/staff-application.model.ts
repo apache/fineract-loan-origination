@@ -16,7 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ApprovalDecisionType, ApprovalStageName, LoanApplicationStatus, RiskCategory } from './enums';
+import {
+  ApprovalDecisionType,
+  ApprovalStageName,
+  LoanApplicationStatus,
+  RiskCategory,
+} from './enums';
 
 export interface StaffCreditScore {
   score: number;
