@@ -79,7 +79,7 @@ public class FineractUserDetailsService implements UserDetailsService {
         response.getDisplayName() != null ? response.getDisplayName() : username;
 
     return new CustomerPrincipal(
-        username, NoOpCredential.VALUE, response.getClientId(), displayName);
+        username, NoOpCredential.VALUE, response.getClientId(), "default", displayName);
   }
 
   private FineractAuthResponse callFineract(final String username, final String password) {

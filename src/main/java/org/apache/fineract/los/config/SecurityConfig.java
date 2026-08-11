@@ -62,7 +62,45 @@ public class SecurityConfig {
         .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/customer/**"))
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .httpBasic(AbstractHttpConfigurer::disable)
-        .formLogin(AbstractHttpConfigurer::disable);
+        .formLogin(AbstractHttpConfigurer::disable)
+        .headers(
+            headers ->
+                headers
+                    // Prevents MIME sniffing attacks
+                    .contentTypeOptions(contentType -> contentType.disable())
+                    // Prevents clickjacking by disallowing iframe embedding
+                    .frameOptions(frame -> frame.deny())
+                    // Enforces HTTPS (only in production with HTTPS enabled)
+                    .httpStrictTransportSecurity(
+                        hsts ->
+                            hsts.includeSubDomains(true)
+                                .maxAgeInSeconds(31536000) // 1 year
+                                .preload(true))
+                    // Content Security Policy - restricts resource loading
+                    .contentSecurityPolicy(
+                        csp ->
+                            csp.policyDirectives(
+                                "default-src 'self'; "
+                                    + "script-src 'self' 'unsafe-inline'; "
+                                    + "style-src 'self' 'unsafe-inline'; "
+                                    + "img-src 'self' data: https:; "
+                                    + "font-src 'self' data:; "
+                                    + "connect-src 'self'; "
+                                    + "frame-ancestors 'none'; "
+                                    + "base-uri 'self'; "
+                                    + "form-action 'self'"))
+                    // Referrer policy - controls referrer information
+                    .referrerPolicy(
+                        referrer ->
+                            referrer.policy(
+                                org.springframework.security.web.header.writers
+                                    .ReferrerPolicyHeaderWriter.ReferrerPolicy
+                                    .STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                    // Permissions policy - controls browser features
+                    .permissionsPolicy(
+                        permissions ->
+                            permissions.policy(
+                                "geolocation=(), microphone=(), camera=(), payment=()")));
 
     return http.build();
   }
@@ -103,7 +141,37 @@ public class SecurityConfig {
                     .anyRequest()
                     .authenticated())
         .httpBasic(basic -> basic.realmName("Fineract Loan Origination Service"))
-        .formLogin(AbstractHttpConfigurer::disable);
+        .formLogin(AbstractHttpConfigurer::disable)
+        .headers(
+            headers ->
+                headers
+                    .contentTypeOptions(contentType -> contentType.disable())
+                    .frameOptions(frame -> frame.deny())
+                    .httpStrictTransportSecurity(
+                        hsts ->
+                            hsts.includeSubDomains(true).maxAgeInSeconds(31536000).preload(true))
+                    .contentSecurityPolicy(
+                        csp ->
+                            csp.policyDirectives(
+                                "default-src 'self'; "
+                                    + "script-src 'self' 'unsafe-inline'; "
+                                    + "style-src 'self' 'unsafe-inline'; "
+                                    + "img-src 'self' data: https:; "
+                                    + "font-src 'self' data:; "
+                                    + "connect-src 'self'; "
+                                    + "frame-ancestors 'none'; "
+                                    + "base-uri 'self'; "
+                                    + "form-action 'self'"))
+                    .referrerPolicy(
+                        referrer ->
+                            referrer.policy(
+                                org.springframework.security.web.header.writers
+                                    .ReferrerPolicyHeaderWriter.ReferrerPolicy
+                                    .STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                    .permissionsPolicy(
+                        permissions ->
+                            permissions.policy(
+                                "geolocation=(), microphone=(), camera=(), payment=()")));
 
     return http.build();
   }

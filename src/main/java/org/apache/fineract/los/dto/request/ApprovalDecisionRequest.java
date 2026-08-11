@@ -21,6 +21,7 @@ package org.apache.fineract.los.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,12 +46,15 @@ import org.apache.fineract.los.domain.enums.ApprovalDecision;
 public class ApprovalDecisionRequest {
 
   /** Approval decision to record. */
-  @NotNull private ApprovalDecision decision;
+  @NotNull(message = "decision is required")
+  private ApprovalDecision decision;
 
   /**
    * Mandatory audit comments accompanying the approval decision.
    *
    * <p>Required for every workflow decision to provide a complete audit trail.
    */
-  @NotBlank private String comments;
+  @NotBlank(message = "comments are required for audit trail")
+  @Size(min = 10, max = 2000, message = "comments must be between 10 and 2000 characters")
+  private String comments;
 }

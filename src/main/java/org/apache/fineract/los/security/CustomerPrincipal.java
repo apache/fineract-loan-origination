@@ -33,6 +33,9 @@ import org.springframework.security.core.userdetails.UserDetails;
  *
  * <p>Carries {@code clientId} — the Fineract client identifier — which every customer-facing
  * endpoint uses to scope data access to only what that customer owns.
+ *
+ * <p>Also carries {@code tenantId} from the JWT claim, validated against the request header to
+ * prevent cross-tenant data access.
  */
 @Getter
 public class CustomerPrincipal implements UserDetails {
@@ -40,12 +43,15 @@ public class CustomerPrincipal implements UserDetails {
   private final String username;
   private final String password;
   private final Long clientId;
+  private final String tenantId;
   private final String displayName;
 
-  public CustomerPrincipal(String username, String password, Long clientId, String displayName) {
+  public CustomerPrincipal(
+      String username, String password, Long clientId, String tenantId, String displayName) {
     this.username = username;
     this.password = password;
     this.clientId = clientId;
+    this.tenantId = tenantId;
     this.displayName = displayName;
   }
 
