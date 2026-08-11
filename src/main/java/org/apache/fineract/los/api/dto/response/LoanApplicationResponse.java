@@ -44,6 +44,8 @@ public class LoanApplicationResponse {
   private final Integer tenorMonths;
   private final Long fineractLoanProductId;
   private final Long fineractLoanId;
+  private final Long fineractClientId;
+  private final String applicantName;
   private final LocalDateTime createdAt;
   private final LocalDateTime updatedAt;
 
@@ -57,6 +59,33 @@ public class LoanApplicationResponse {
         .tenorMonths(app.getTenorMonths())
         .fineractLoanProductId(app.getFineractLoanProductId())
         .fineractLoanId(app.getFineractLoanId())
+        .fineractClientId(app.getFineractClientId())
+        .applicantName(null)
+        .createdAt(app.getCreatedAt())
+        .updatedAt(app.getUpdatedAt())
+        .build();
+  }
+
+  /**
+   * Creates response with applicant name from profile.
+   *
+   * @param app the loan application
+   * @param applicantName the applicant's full name from ApplicantProfile
+   * @return response DTO
+   */
+  public static LoanApplicationResponse from(
+      final LoanApplication app, final String applicantName) {
+    return LoanApplicationResponse.builder()
+        .applicationRef(app.getApplicationRef())
+        .status(app.getStatus())
+        .requestedAmount(app.getRequestedAmount())
+        .currency(app.getCurrency())
+        .loanPurpose(app.getLoanPurpose())
+        .tenorMonths(app.getTenorMonths())
+        .fineractLoanProductId(app.getFineractLoanProductId())
+        .fineractLoanId(app.getFineractLoanId())
+        .fineractClientId(app.getFineractClientId())
+        .applicantName(applicantName)
         .createdAt(app.getCreatedAt())
         .updatedAt(app.getUpdatedAt())
         .build();

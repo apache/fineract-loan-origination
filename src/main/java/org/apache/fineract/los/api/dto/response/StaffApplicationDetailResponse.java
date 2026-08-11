@@ -24,31 +24,27 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
+import org.apache.fineract.los.domain.ApplicantProfile;
+import org.apache.fineract.los.domain.ApprovalStage;
+import org.apache.fineract.los.domain.LoanApplication;
 import org.apache.fineract.los.domain.enums.LoanApplicationStatus;
-import org.apache.fineract.los.domain.enums.RiskCategory;
 
-/**
- * Rich application detail response for staff dashboards.
- *
- * <p>Combines data from {@code LoanApplication}, {@code ApplicantProfile}, {@code CreditScore}, and
- * {@code ApprovalStage} into a single response so the frontend makes one request per detail page
- * instead of four.
- */
+/** Detailed staff view of a loan application including applicant profile and approval history. */
 @Getter
 @Builder
 public class StaffApplicationDetailResponse {
 
-  // ---- Application core ----
+  // Application fields
   private final String applicationRef;
   private final LoanApplicationStatus status;
   private final BigDecimal requestedAmount;
   private final String currency;
   private final String loanPurpose;
   private final Integer tenorMonths;
-  private final LocalDateTime submittedAt; // createdAt of the application (first saved)
+  private final LocalDateTime submittedAt;
   private final LocalDateTime updatedAt;
 
-  // ---- Applicant ----
+  // Applicant fields
   private final String applicantName;
   private final String nationalId;
   private final Long fineractClientId;
@@ -57,38 +53,57 @@ public class StaffApplicationDetailResponse {
   private final Integer employmentDurationMonths;
   private final BigDecimal existingLoanObligations;
 
-  // ---- Credit score (null until UNDER_REVIEW) ----
-  private final CreditScoreSummary creditScore;
-
-  // ---- Approval stages (chronological) ----
-  private final List<ApprovalStageSummary> approvalStages;
-
-  // ---- Fineract disbursement ----
+  // Related data
+  private final List<ApprovalStageDto> approvalStages;
   private final Long fineractLoanId;
   private final LocalDateTime disbursedAt;
 
-  // ---- Nested types ----
-
   @Getter
   @Builder
-  public static class CreditScoreSummary {
-    private final int score;
-    private final RiskCategory riskRating;
-    private final int incomeRatioScore;
-    private final int debtBurdenScore;
-    private final int employmentScore;
-    private final int repaymentHistoryScore;
-    private final int loanPurposeScore;
-    private final LocalDateTime scoredAt;
-  }
-
-  @Getter
-  @Builder
-  public static class ApprovalStageSummary {
+  public static class ApprovalStageDto {
     private final String stage;
     private final String decision;
     private final String decidedBy;
     private final LocalDateTime decidedAt;
     private final String notes;
+  }
+
+  public static StaffApplicationDetailResponse from(
+      final LoanApplication app,
+      final ApplicantProfile profile,
+      final List<ApprovalStage> approvalStages) {
+
+    return StaffApplicationDetailResponse.builder()
+        .applicationRef(app.getApplicationRef())
+        .status(app.getStatus())
+        .requestedAmount(app.getRequestedAmount())
+        .currency(app.getCurrency())
+        .loanPurpose(app.getLoanPurpose())
+        .tenorMonths(app.getTenorMonths())
+        .submittedAt(app.getCreatedAt())
+        .updatedAt(app.getUpdatedAt())
+        .applicantName(profile.getFullName())
+        .nationalId(profile.getNationalId())
+        .fineractClientId(profile.getFineractClientId())
+        .monthlyIncome(profile.getMonthlyIncome())
+        .employmentStatus(profile.getEmploymentStatus())
+        .employmentDurationMonths(profile.getEmploymentDurationMonths())
+        .existingLoanObligations(profile.getExistingLoanObligations())
+        .approvalStages(
+            approvalStages.stream()
+                .map(
+                    stage ->
+                        ApprovalStageDto.builder()
+                            .stage(stage.getStageName())
+                            .decision(
+                                stage.getDecision() != null ? stage.getDecision().name() : null)
+                            .decidedBy(stage.getAssignedOfficer())
+                            .decidedAt(stage.getDecidedAt())
+                            .notes(stage.getComments())
+                            .build())
+                .toList())
+        .fineractLoanId(app.getFineractLoanId())
+        .disbursedAt(null) // TODO: Add disbursement timestamp when implemented
+        .build();
   }
 }

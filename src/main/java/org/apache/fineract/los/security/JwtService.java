@@ -37,21 +37,20 @@ public class JwtService {
   private static final String CLAIM_CLIENT_ID = "clientId";
   private static final String CLAIM_TENANT_ID = "tenantId";
   private static final String CLAIM_CORRELATION_ID = "correlationId";
-  private static final String CLAIM_ROLE = "role";
   private static final String CLAIM_USER_TYPE = "userType";
+  private static final String CLAIM_LOS_ROLE = "losRole";
 
   private final JwtProperties jwtProperties;
 
+  /**
+   * Generate JWT token for customer users (linked to a Fineract client).
+   *
+   * @param username Customer username
+   * @param clientId Fineract client ID
+   * @param tenantId Tenant identifier
+   * @return JWT token string
+   */
   public String generateToken(final String username, final Long clientId, final String tenantId) {
-    return generateToken(username, clientId, tenantId, "ROLE_CUSTOMER", "CUSTOMER");
-  }
-
-  public String generateToken(
-      final String username,
-      final Long clientId,
-      final String tenantId,
-      final String role,
-      final String userType) {
 
     final Date now = new Date();
     final Date expiry =
@@ -61,8 +60,34 @@ public class JwtService {
         .subject(username)
         .claim(CLAIM_CLIENT_ID, clientId)
         .claim(CLAIM_TENANT_ID, tenantId)
-        .claim(CLAIM_ROLE, role)
-        .claim(CLAIM_USER_TYPE, userType)
+        .claim(CLAIM_USER_TYPE, "CUSTOMER")
+        .claim(CLAIM_CORRELATION_ID, UUID.randomUUID().toString())
+        .issuedAt(now)
+        .expiration(expiry)
+        .signWith(signingKey())
+        .compact();
+  }
+
+  /**
+   * Generate JWT token for staff users with LOS workflow role.
+   *
+   * @param username Staff username (Fineract user)
+   * @param tenantId Tenant identifier
+   * @param losRole LOS workflow role (e.g., LOAN_OFFICER, CREDIT_COMMITTEE, BRANCH_MANAGER)
+   * @return JWT token string
+   */
+  public String generateStaffToken(
+      final String username, final String tenantId, final String losRole) {
+
+    final Date now = new Date();
+    final Date expiry =
+        new Date(now.getTime() + (long) jwtProperties.getExpiryMinutes() * 60 * 1000);
+
+    return Jwts.builder()
+        .subject(username)
+        .claim(CLAIM_TENANT_ID, tenantId)
+        .claim(CLAIM_USER_TYPE, "STAFF")
+        .claim(CLAIM_LOS_ROLE, losRole)
         .claim(CLAIM_CORRELATION_ID, UUID.randomUUID().toString())
         .issuedAt(now)
         .expiration(expiry)

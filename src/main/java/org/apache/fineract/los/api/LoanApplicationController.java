@@ -26,8 +26,12 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.api.dto.response.CreditScoreResponse;
 import org.apache.fineract.los.api.dto.response.LoanApplicationResponse;
+import org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse;
+import org.apache.fineract.los.domain.ApplicantProfile;
+import org.apache.fineract.los.domain.ApprovalStage;
 import org.apache.fineract.los.domain.LoanApplication;
 import org.apache.fineract.los.dto.request.CreateLoanApplicationRequest;
+import org.apache.fineract.los.repository.ApprovalStageRepository;
 import org.apache.fineract.los.service.CreditScoringService;
 import org.apache.fineract.los.service.LoanApplicationService;
 import org.apache.fineract.los.validation.ValidApplicationRef;
@@ -60,6 +64,7 @@ public class LoanApplicationController {
 
   private final LoanApplicationService loanApplicationService;
   private final CreditScoringService creditScoringService;
+  private final ApprovalStageRepository approvalStageRepository;
 
   @Operation(summary = "Create a new loan application in DRAFT status")
   @PostMapping
@@ -78,7 +83,16 @@ public class LoanApplicationController {
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId) {
 
     return loanApplicationService.getAllApplications(tenantId).stream()
-        .map(LoanApplicationResponse::from)
+        .map(
+            app -> {
+              try {
+                final String applicantName =
+                    loanApplicationService.getProfileOrThrow(app).getFullName();
+                return LoanApplicationResponse.from(app, applicantName);
+              } catch (Exception e) {
+                return LoanApplicationResponse.from(app);
+              }
+            })
         .toList();
   }
 
@@ -90,6 +104,21 @@ public class LoanApplicationController {
 
     return LoanApplicationResponse.from(
         loanApplicationService.getApplicationOrThrow(applicationRef, tenantId));
+  }
+
+  @Operation(summary = "Retrieve detailed loan application for staff view")
+  @GetMapping("/{applicationRef}/staff-detail")
+  public StaffApplicationDetailResponse getStaffDetail(
+      @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
+      @PathVariable @ValidApplicationRef final String applicationRef) {
+
+    final LoanApplication app =
+        loanApplicationService.getApplicationOrThrow(applicationRef, tenantId);
+    final ApplicantProfile profile = loanApplicationService.getProfileOrThrow(app);
+    final List<ApprovalStage> approvalStages =
+        approvalStageRepository.findAllByApplicationOrderByCreatedAtAsc(app);
+
+    return StaffApplicationDetailResponse.from(app, profile, approvalStages);
   }
 
   @Operation(summary = "Submit a DRAFT application: DRAFT -> SUBMITTED")

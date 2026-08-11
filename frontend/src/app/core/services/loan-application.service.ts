@@ -32,7 +32,7 @@ export class LoanApplicationService {
   private readonly auth = inject(AuthService);
 
   private authHeaders(): Record<string, string> {
-    const token = this.auth.getAuthHeader();
+    const token    = this.auth.getAuthHeader();
     const tenantId = this.auth.getTenantId();
     return {
       ...(token ? { Authorization: token } : {}),

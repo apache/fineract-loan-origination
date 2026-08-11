@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.apache.fineract.los.infrastructure.fineract.FineractAuthResponse;
+import org.apache.fineract.los.api.dto.response.FineractAuthResponse;
 import org.apache.fineract.los.service.FineractCredentialValidationService;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;

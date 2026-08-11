@@ -66,15 +66,8 @@ import { StaffApplicationSummary } from '../../../core/models/staff-application.
           <h2>Applications</h2>
           <div class="filter-tabs">
             <button [class.active]="filter() === 'all'" (click)="filter.set('all')">All</button>
-            <button [class.active]="filter() === 'pending'" (click)="filter.set('pending')">
-              Pending my stage
-            </button>
-            <button
-              [class.active]="filter() === 'under_review'"
-              (click)="filter.set('under_review')"
-            >
-              Under Review
-            </button>
+            <button [class.active]="filter() === 'pending'" (click)="filter.set('pending')">Pending my stage</button>
+            <button [class.active]="filter() === 'under_review'" (click)="filter.set('under_review')">Under Review</button>
           </div>
         </div>
 
@@ -100,31 +93,14 @@ import { StaffApplicationSummary } from '../../../core/models/staff-application.
               </thead>
               <tbody>
                 @for (app of filteredApps(); track app.applicationRef) {
-                  <tr
-                    class="app-row"
-                    (click)="openDetail(app.applicationRef)"
-                    [attr.aria-label]="'Open ' + app.applicationRef"
-                  >
+                  <tr class="app-row" (click)="openDetail(app.applicationRef)" [attr.aria-label]="'Open ' + app.applicationRef">
                     <td class="ref-cell">{{ app.applicationRef }}</td>
-                    <td>—</td>
-                    <td class="amount-cell">
-                      {{ app.requestedAmount | number: '1.2-2' }} {{ app.currency }}
-                    </td>
+                    <td>{{ app.applicantName ?? (app.fineractClientId ? 'Client #' + app.fineractClientId : '—') }}</td>
+                    <td class="amount-cell">{{ app.requestedAmount | number:'1.2-2' }} {{ app.currency }}</td>
                     <td>{{ app.loanPurpose ?? '—' }}</td>
-                    <td>
-                      <span class="status-badge" [class]="statusClass(app.status)">{{
-                        app.status
-                      }}</span>
-                    </td>
-                    <td class="date-cell">{{ app.createdAt | date: 'dd MMM yyyy' }}</td>
-                    <td>
-                      <button
-                        class="view-btn"
-                        (click)="$event.stopPropagation(); openDetail(app.applicationRef)"
-                      >
-                        View →
-                      </button>
-                    </td>
+                    <td><span class="status-badge" [class]="statusClass(app.status)">{{ app.status }}</span></td>
+                    <td class="date-cell">{{ app.createdAt | date:'dd MMM yyyy' }}</td>
+                    <td><button class="view-btn" (click)="$event.stopPropagation(); openDetail(app.applicationRef)">View →</button></td>
                   </tr>
                 }
               </tbody>
@@ -134,290 +110,197 @@ import { StaffApplicationSummary } from '../../../core/models/staff-application.
       </div>
     </div>
   `,
-  styles: [
-    `
-      .staff-dashboard {
-        max-width: 1200px;
-      }
+  styles: [`
+    .staff-dashboard { max-width: 1200px; }
 
-      .page-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        margin-bottom: 1.5rem;
-      }
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
 
-      h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--color-text);
-        margin: 0 0 0.2rem;
-      }
-      .subtitle {
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-        margin: 0;
-      }
+    h1 { font-size: 1.5rem; font-weight: 700; color: var(--color-text); margin: 0 0 0.2rem; }
+    .subtitle { color: var(--color-text-muted); font-size: 0.9rem; margin: 0; }
 
-      /* Stats */
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.75rem;
-      }
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
 
-      .stat-card {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: 10px;
-        padding: 1.1rem 1.25rem;
-      }
+    .stat-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 1.1rem 1.25rem;
+    }
 
-      .stat-value {
-        font-size: 1.9rem;
-        font-weight: 700;
-        color: var(--color-text);
-      }
-      .stat-label {
-        font-size: 0.8rem;
-        color: var(--color-text-muted);
-        margin-top: 0.2rem;
-      }
+    .stat-value { font-size: 1.9rem; font-weight: 700; color: var(--color-text); }
+    .stat-label { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 0.2rem; }
 
-      .stat-card.pending .stat-value {
-        color: #d97706;
-      }
-      .stat-card.approved .stat-value {
-        color: #16a34a;
-      }
-      .stat-card.rejected .stat-value {
-        color: #dc2626;
-      }
+    .stat-card.pending  .stat-value { color: #d97706; }
+    .stat-card.approved .stat-value { color: #16a34a; }
+    .stat-card.rejected .stat-value { color: #dc2626; }
 
-      /* Section */
-      .section {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: 10px;
-        overflow: hidden;
-      }
+    /* Section */
+    .section {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
 
-      .section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1rem 1.25rem;
-        border-bottom: 1px solid var(--color-border);
-      }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--color-border);
+    }
 
-      h2 {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--color-text);
-        margin: 0;
-      }
+    h2 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0; }
 
-      .filter-tabs {
-        display: flex;
-        gap: 0.25rem;
-      }
+    .filter-tabs {
+      display: flex;
+      gap: 0.25rem;
+    }
 
-      .filter-tabs button {
-        background: none;
-        border: 1px solid var(--color-border);
-        border-radius: 6px;
-        padding: 0.3rem 0.75rem;
-        font-size: 0.8rem;
-        cursor: pointer;
-        color: var(--color-text-muted);
-      }
+    .filter-tabs button {
+      background: none;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: var(--color-text-muted);
+    }
 
-      .filter-tabs button.active {
-        background: var(--color-primary);
-        color: #fff;
-        border-color: var(--color-primary);
-      }
+    .filter-tabs button.active {
+      background: var(--color-primary);
+      color: #fff;
+      border-color: var(--color-primary);
+    }
 
-      /* Table */
-      .table-wrapper {
-        overflow-x: auto;
-      }
+    /* Table */
+    .table-wrapper { overflow-x: auto; }
 
-      .app-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-      }
+    .app-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
 
-      .app-table th {
-        text-align: left;
-        padding: 0.6rem 1rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--color-text-muted);
-        border-bottom: 1px solid var(--color-border);
-        white-space: nowrap;
-      }
+    .app-table th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted);
+      border-bottom: 1px solid var(--color-border);
+      white-space: nowrap;
+    }
 
-      .app-row {
-        cursor: pointer;
-        transition: background 0.1s;
-      }
+    .app-row {
+      cursor: pointer;
+      transition: background 0.1s;
+    }
 
-      .app-row:hover {
-        background: var(--color-bg);
-      }
-      .app-row td {
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid var(--color-border);
-        color: var(--color-text);
-      }
-      .app-row:last-child td {
-        border-bottom: none;
-      }
+    .app-row:hover { background: var(--color-bg); }
+    .app-row td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--color-border); color: var(--color-text); }
+    .app-row:last-child td { border-bottom: none; }
 
-      .ref-cell {
-        font-family: monospace;
-        font-size: 0.8rem;
-        font-weight: 600;
-      }
-      .amount-cell {
-        font-weight: 600;
-      }
-      .date-cell {
-        color: var(--color-text-muted);
-        font-size: 0.82rem;
-      }
+    .ref-cell { font-family: monospace; font-size: 0.8rem; font-weight: 600; }
+    .amount-cell { font-weight: 600; }
+    .date-cell { color: var(--color-text-muted); font-size: 0.82rem; }
 
-      .status-badge {
-        display: inline-block;
-        padding: 0.18rem 0.6rem;
-        border-radius: 99px;
-        font-size: 0.72rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-      }
+    .status-badge {
+      display: inline-block;
+      padding: 0.18rem 0.6rem;
+      border-radius: 99px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
 
-      .status-DRAFT {
-        background: #f3f4f6;
-        color: #6b7280;
-      }
-      .status-SUBMITTED {
-        background: #dbeafe;
-        color: #1d4ed8;
-      }
-      .status-UNDER_REVIEW {
-        background: #fef9c3;
-        color: #a16207;
-      }
-      .status-APPROVED {
-        background: #dcfce7;
-        color: #15803d;
-      }
-      .status-REJECTED {
-        background: #fee2e2;
-        color: #dc2626;
-      }
-      .status-REFERRED {
-        background: #ede9fe;
-        color: #7c3aed;
-      }
-      .status-DISBURSED {
-        background: #d1fae5;
-        color: #065f46;
-      }
+    .status-DRAFT       { background: #f3f4f6; color: #6b7280; }
+    .status-SUBMITTED   { background: #dbeafe; color: #1d4ed8; }
+    .status-UNDER_REVIEW{ background: #fef9c3; color: #a16207; }
+    .status-APPROVED    { background: #dcfce7; color: #15803d; }
+    .status-REJECTED    { background: #fee2e2; color: #dc2626; }
+    .status-REFERRED    { background: #ede9fe; color: #7c3aed; }
+    .status-DISBURSED   { background: #d1fae5; color: #065f46; }
 
-      .view-btn {
-        background: none;
-        border: 1px solid var(--color-border);
-        border-radius: 6px;
-        padding: 0.25rem 0.65rem;
-        font-size: 0.8rem;
-        cursor: pointer;
-        color: var(--color-primary);
-        white-space: nowrap;
-      }
+    .view-btn {
+      background: none;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 0.25rem 0.65rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: var(--color-primary);
+      white-space: nowrap;
+    }
 
-      .view-btn:hover {
-        background: var(--color-primary);
-        color: #fff;
-      }
+    .view-btn:hover { background: var(--color-primary); color: #fff; }
 
-      .loading-row,
-      .empty-state {
-        padding: 2.5rem;
-        text-align: center;
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-      }
+    .loading-row, .empty-state {
+      padding: 2.5rem;
+      text-align: center;
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+    }
 
-      .error-banner {
-        margin: 1rem;
-        background: var(--color-error-bg);
-        color: var(--color-error);
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-      }
-    `,
-  ],
+    .error-banner {
+      margin: 1rem;
+      background: var(--color-error-bg);
+      color: var(--color-error);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+    }
+  `],
 })
 export class StaffDashboardComponent implements OnInit {
-  private readonly staffAuth = inject(StaffAuthService);
-  private readonly staffSvc = inject(StaffLoanApplicationService);
-  private readonly router = inject(Router);
+  private readonly staffAuth   = inject(StaffAuthService);
+  private readonly staffSvc    = inject(StaffLoanApplicationService);
+  private readonly router      = inject(Router);
 
   readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
-  readonly filter = signal<'all' | 'pending' | 'under_review'>('all');
+  readonly error   = signal<string | null>(null);
+  readonly filter  = signal<'all' | 'pending' | 'under_review'>('pending');
 
   private readonly apps = signal<StaffApplicationSummary[]>([]);
 
-  get displayName(): string {
-    return this.staffAuth.getProfile()?.username ?? 'there';
-  }
-  get displayRole(): string {
-    return this.staffAuth.getProfile()?.displayRole ?? 'Staff';
-  }
-  get total(): number {
-    return this.apps().length;
-  }
-  get approved(): number {
-    return this.apps().filter((a) => a.status === 'APPROVED').length;
-  }
-  get rejected(): number {
-    return this.apps().filter((a) => a.status === 'REJECTED').length;
-  }
-  get pending(): number {
-    return this.apps().filter((a) => a.status === 'UNDER_REVIEW').length;
-  }
+  get displayName():  string { return this.staffAuth.getProfile()?.username ?? 'there'; }
+  get displayRole():  string { return this.staffAuth.getProfile()?.displayRole ?? 'Staff'; }
+  get total():    number { return this.apps().length; }
+  get approved(): number { return this.apps().filter(a => a.status === 'APPROVED').length; }
+  get rejected(): number { return this.apps().filter(a => a.status === 'REJECTED').length; }
+  get pending():  number { return this.apps().filter(a => a.status === 'UNDER_REVIEW').length; }
 
   filteredApps(): StaffApplicationSummary[] {
     const all = this.apps();
     switch (this.filter()) {
-      case 'pending':
-        return all.filter((a) => a.status === 'UNDER_REVIEW');
-      case 'under_review':
-        return all.filter((a) => a.status === 'UNDER_REVIEW');
-      default:
-        return all;
+      case 'pending':      return all.filter(a => a.status === 'UNDER_REVIEW');
+      case 'under_review': return all.filter(a => a.status === 'UNDER_REVIEW');
+      default:             return all;
     }
   }
 
-  statusClass(status: string): string {
-    return `status-badge status-${status}`;
-  }
+  statusClass(status: string): string { return `status-badge status-${status}`; }
 
   ngOnInit(): void {
     this.staffSvc
       .getAll()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (apps) => this.apps.set(apps),
-        error: (err) => this.error.set(err?.message ?? 'Could not load applications.'),
+        next:  (apps) => this.apps.set(apps),
+        error: (err)  => this.error.set(err?.message ?? 'Could not load applications.'),
       });
   }
 

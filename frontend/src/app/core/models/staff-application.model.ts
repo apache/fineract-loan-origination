@@ -76,6 +76,8 @@ export interface StaffApplicationSummary {
   createdAt: string;
   updatedAt: string;
   fineractLoanId: number | null;
+  applicantName: string | null;
+  fineractClientId: number | null;
 }
 
 export interface ApprovalDecisionRequest {
