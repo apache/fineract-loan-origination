@@ -32,10 +32,17 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST API exposing information about the currently authenticated staff member.
  *
- * <p>The returned LOS workflow role is derived from the authenticated Spring Security principal
- * after Fineract authorities have been mapped into LOS workflow roles. This endpoint is primarily
- * intended for frontend applications that need to determine which approval actions should be
- * available to the logged-in staff member.
+ * <p>Works for both authentication methods:
+ *
+ * <ul>
+ *   <li>JWT tokens issued by {@code POST /api/v1/auth/staff/login} (local staff DB)
+ *   <li>Fineract Basic Auth credentials (delegated to Fineract via {@link
+ *       org.apache.fineract.los.security.FineractAuthenticationProvider})
+ * </ul>
+ *
+ * <p>The returned LOS workflow role is derived from the authenticated Spring Security principal's
+ * granted authorities. This endpoint is primarily intended for frontend applications that need to
+ * determine which approval actions should be available to the logged-in staff member.
  */
 @Tag(name = "Staff", description = "Authenticated staff information")
 @RestController
@@ -47,15 +54,17 @@ public class StaffController {
   @GetMapping("/me")
   public StaffProfileResponse getCurrentStaff(final Authentication authentication) {
 
-    final String losRole =
+    // For JWT-authenticated staff the role is the primary authority (e.g. ROLE_ADMIN).
+    // For Fineract Basic Auth staff it is the first non-ROLE_STAFF authority, or ROLE_STAFF
+    // itself if no specific workflow role was mapped.
+    final String resolvedRole =
         authentication.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
-            .filter(
-                grantedAuthority ->
-                    grantedAuthority.startsWith("ROLE_") && !grantedAuthority.equals("ROLE_STAFF"))
-            .map(grantedAuthority -> grantedAuthority.substring("ROLE_".length()))
+            .filter(a -> a.startsWith("ROLE_"))
             .findFirst()
-            .orElse(null);
+            .orElse("ROLE_STAFF");
+
+    final String losRole = resolvedRole.substring("ROLE_".length());
 
     return StaffProfileResponse.builder()
         .username(authentication.getName())

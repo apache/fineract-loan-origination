@@ -37,10 +37,21 @@ public class JwtService {
   private static final String CLAIM_CLIENT_ID = "clientId";
   private static final String CLAIM_TENANT_ID = "tenantId";
   private static final String CLAIM_CORRELATION_ID = "correlationId";
+  private static final String CLAIM_ROLE = "role";
+  private static final String CLAIM_USER_TYPE = "userType";
 
   private final JwtProperties jwtProperties;
 
   public String generateToken(final String username, final Long clientId, final String tenantId) {
+    return generateToken(username, clientId, tenantId, "ROLE_CUSTOMER", "CUSTOMER");
+  }
+
+  public String generateToken(
+      final String username,
+      final Long clientId,
+      final String tenantId,
+      final String role,
+      final String userType) {
 
     final Date now = new Date();
     final Date expiry =
@@ -50,6 +61,8 @@ public class JwtService {
         .subject(username)
         .claim(CLAIM_CLIENT_ID, clientId)
         .claim(CLAIM_TENANT_ID, tenantId)
+        .claim(CLAIM_ROLE, role)
+        .claim(CLAIM_USER_TYPE, userType)
         .claim(CLAIM_CORRELATION_ID, UUID.randomUUID().toString())
         .issuedAt(now)
         .expiration(expiry)
