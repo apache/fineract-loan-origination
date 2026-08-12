@@ -77,144 +77,166 @@ import { StaffAuthService } from '../../../core/services/staff-auth.service';
       </div>
     </div>
   `,
-  styles: [`
-    .staff-login-page {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--color-bg);
-      padding: 1rem;
-    }
+  styles: [
+    `
+      .staff-login-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color-bg);
+        padding: 1rem;
+      }
 
-    .staff-login-card {
-      width: 100%;
-      max-width: 420px;
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: 12px;
-      padding: 2.5rem 2rem;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    }
+      .staff-login-card {
+        width: 100%;
+        max-width: 420px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      }
 
-    .login-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
+      .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
 
-    .logo {
-      height: 44px;
-      width: auto;
-      margin-bottom: 1rem;
-      object-fit: contain;
-    }
+      .logo {
+        height: 44px;
+        width: auto;
+        margin-bottom: 1rem;
+        object-fit: contain;
+      }
 
-    h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--color-text);
-      margin: 0 0 0.25rem;
-    }
+      h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--color-text);
+        margin: 0 0 0.25rem;
+      }
 
-    p {
-      color: var(--color-text-muted);
-      font-size: 0.875rem;
-      margin: 0 0 1rem;
-    }
+      p {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+        margin: 0 0 1rem;
+      }
 
-    .roles-hint {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 0.75rem;
-    }
+      .roles-hint {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 0.75rem;
+      }
 
-    .role-badge {
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 0.2rem 0.6rem;
-      border-radius: 99px;
-      letter-spacing: 0.02em;
-    }
+      .role-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 99px;
+        letter-spacing: 0.02em;
+      }
 
-    .loan-officer     { background: #dbeafe; color: #1d4ed8; }
-    .credit-committee { background: #fef9c3; color: #a16207; }
-    .branch-manager   { background: #dcfce7; color: #15803d; }
+      .loan-officer {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .credit-committee {
+        background: #fef9c3;
+        color: #a16207;
+      }
+      .branch-manager {
+        background: #dcfce7;
+        color: #15803d;
+      }
 
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-      margin-bottom: 1.1rem;
-    }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-bottom: 1.1rem;
+      }
 
-    label {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--color-text);
-    }
+      label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--color-text);
+      }
 
-    input {
-      padding: 0.6rem 0.85rem;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      background: var(--color-bg);
-      color: var(--color-text);
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.15s;
-    }
+      input {
+        padding: 0.6rem 0.85rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-size: 0.95rem;
+        outline: none;
+        transition: border-color 0.15s;
+      }
 
-    input:focus { border-color: var(--color-primary); }
-    input::placeholder { color: var(--color-text-faint); }
+      input:focus {
+        border-color: var(--color-primary);
+      }
+      input::placeholder {
+        color: var(--color-text-faint);
+      }
 
-    .error-banner {
-      background: var(--color-error-bg);
-      color: var(--color-error);
-      border-radius: var(--radius);
-      padding: 0.6rem 0.85rem;
-      font-size: 0.875rem;
-      margin-bottom: 1rem;
-    }
+      .error-banner {
+        background: var(--color-error-bg);
+        color: var(--color-error);
+        border-radius: var(--radius);
+        padding: 0.6rem 0.85rem;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+      }
 
-    .submit-btn {
-      width: 100%;
-      padding: 0.7rem;
-      background: var(--color-primary);
-      color: var(--color-primary-contrast);
-      border: none;
-      border-radius: var(--radius);
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
+      .submit-btn {
+        width: 100%;
+        padding: 0.7rem;
+        background: var(--color-primary);
+        color: var(--color-primary-contrast);
+        border: none;
+        border-radius: var(--radius);
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
 
-    .submit-btn:hover:not(:disabled) { background: var(--color-primary-dark); }
-    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+      .submit-btn:hover:not(:disabled) {
+        background: var(--color-primary-dark);
+      }
+      .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
 
-    .login-footer {
-      text-align: center;
-      margin-top: 1.5rem;
-      font-size: 0.85rem;
-    }
+      .login-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        font-size: 0.85rem;
+      }
 
-    .login-footer a {
-      color: var(--color-text-muted);
-      text-decoration: none;
-    }
+      .login-footer a {
+        color: var(--color-text-muted);
+        text-decoration: none;
+      }
 
-    .login-footer a:hover { color: var(--color-primary); }
-  `],
+      .login-footer a:hover {
+        color: var(--color-primary);
+      }
+    `,
+  ],
 })
 export class StaffLoginComponent {
-  private readonly fb          = inject(FormBuilder);
-  private readonly staffAuth   = inject(StaffAuthService);
-  private readonly router      = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly staffAuth = inject(StaffAuthService);
+  private readonly router = inject(Router);
 
   readonly submitting = signal(false);
-  readonly error      = signal<string | null>(null);
+  readonly error = signal<string | null>(null);
 
   readonly form = this.fb.group({
     username: this.fb.nonNullable.control('', Validators.required),
@@ -222,7 +244,10 @@ export class StaffLoginComponent {
   });
 
   submit(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     this.submitting.set(true);
     this.error.set(null);

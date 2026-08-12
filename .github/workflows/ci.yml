@@ -24,6 +24,37 @@ on:
     branches: [ main ]
 
 jobs:
+  frontend:
+    name: Frontend Lint and Format
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (ESLint + angular-eslint)
+        run: npm run lint
+
+      - name: Check formatting (Prettier)
+        run: npm run format:check
+
   build:
     name: Build and Verify
     runs-on: ubuntu-latest
@@ -75,3 +106,4 @@ jobs:
         with:
           name: sbom
           path: target/bom.json
+

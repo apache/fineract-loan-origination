@@ -43,22 +43,23 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   /**
-   * Customer-facing chain (Order 1). Covers all customer and loan-application endpoints.
-   * Authentication is handled via LOS-issued JWT tokens — credentials are validated locally against
-   * the {@code customer_credentials} table; Fineract is never consulted for customer login.
+   * Customer-facing chain (Order 1). Covers customer endpoints only. Authentication is handled via
+   * LOS-issued JWT tokens — credentials are validated locally against the {@code
+   * customer_credentials} table; Fineract is never consulted for customer login.
+   *
+   * <p>Note: `/api/v1/loan-applications/**` is intentionally EXCLUDED here so that staff can access
+   * these endpoints via Basic Auth (handled by Order 2 chain).
    */
   @Bean
   @Order(1)
   SecurityFilterChain jwtSecurityFilterChain(final HttpSecurity http, final JwtService jwtService)
       throws Exception {
 
-    http.securityMatcher("/api/v1/loan-applications/**", "/api/v1/customer/**")
+    http.securityMatcher("/api/v1/customer/**")
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
         .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
-        .csrf(
-            csrf ->
-                csrf.ignoringRequestMatchers("/api/v1/loan-applications/**", "/api/v1/customer/**"))
+        .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/customer/**"))
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .httpBasic(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable);
@@ -111,9 +112,13 @@ public class SecurityConfig {
   CorsConfigurationSource corsConfigurationSource() {
     final CorsConfiguration configuration = new CorsConfiguration();
     // localhost:4200 / 4201 = LOS customer Angular app
-    // localhost:60506 = Fineract Backoffice UI
+    // localhost:60506 / 49954 = Fineract Backoffice UI
     configuration.setAllowedOrigins(
-        List.of("http://localhost:4200", "http://localhost:4201", "http://localhost:60506"));
+        List.of(
+            "http://localhost:4200",
+            "http://localhost:4201",
+            "http://localhost:60506",
+            "http://localhost:49954"));
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true);

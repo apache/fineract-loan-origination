@@ -38,14 +38,14 @@ interface LoginResponse {
   expiresInMinutes: number;
 }
 
-const TOKEN_KEY   = 'los-customer-token';
+const TOKEN_KEY = 'los-customer-token';
 const PROFILE_KEY = 'los-customer-profile';
-const TENANT_KEY  = 'los-customer-tenant';
+const TENANT_KEY = 'los-customer-tenant';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly tokenSubject   = new BehaviorSubject<string | null>(this.loadToken());
+  private readonly tokenSubject = new BehaviorSubject<string | null>(this.loadToken());
   private readonly profileSubject = new BehaviorSubject<CustomerProfile | null>(this.loadProfile());
   private readonly tenantIdSubject = new BehaviorSubject<string>(this.loadTenantId());
 
@@ -71,10 +71,12 @@ export class AuthService {
           this.profileSubject.next(profile);
           this.setTenantId(res.tenantId);
           try {
-            sessionStorage.setItem(TOKEN_KEY,   res.token);
+            sessionStorage.setItem(TOKEN_KEY, res.token);
             sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-            sessionStorage.setItem(TENANT_KEY,  res.tenantId);
-          } catch { /* storage unavailable */ }
+            sessionStorage.setItem(TENANT_KEY, res.tenantId);
+          } catch {
+            /* storage unavailable */
+          }
         }),
         map(() => true),
         catchError(() => of(false)),
@@ -110,23 +112,35 @@ export class AuthService {
       sessionStorage.removeItem(TOKEN_KEY);
       sessionStorage.removeItem(PROFILE_KEY);
       sessionStorage.removeItem(TENANT_KEY);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   // ── Session persistence ──────────────────────────────────────────────────
 
   private loadToken(): string | null {
-    try { return sessionStorage.getItem(TOKEN_KEY); } catch { return null; }
+    try {
+      return sessionStorage.getItem(TOKEN_KEY);
+    } catch {
+      return null;
+    }
   }
 
   private loadProfile(): CustomerProfile | null {
     try {
       const raw = sessionStorage.getItem(PROFILE_KEY);
       return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 
   private loadTenantId(): string {
-    try { return sessionStorage.getItem(TENANT_KEY) ?? environment.tenantId; } catch { return environment.tenantId; }
+    try {
+      return sessionStorage.getItem(TENANT_KEY) ?? environment.tenantId;
+    } catch {
+      return environment.tenantId;
+    }
   }
 }

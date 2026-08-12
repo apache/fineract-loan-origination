@@ -31,8 +31,8 @@ export class CustomerLoanApplicationService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
 
-  private authHeaders(): { [header: string]: string } {
-    const token    = this.auth.getAuthHeader();
+  private authHeaders(): Record<string, string> {
+    const token = this.auth.getAuthHeader();
     const tenantId = this.auth.getTenantId();
     return {
       ...(token ? { Authorization: token } : {}),
@@ -58,17 +58,25 @@ export class CustomerLoanApplicationService {
 
   /** GET /api/v1/customer/loan-applications/{applicationRef} */
   getByRef(applicationRef: string): Observable<LoanApplication> {
-    return this.http.get<LoanApplication>(`${BASE_URL}/${applicationRef}`, { headers: this.authHeaders() }).pipe(
-      timeout(REQUEST_TIMEOUT_MS),
-      catchError(() => throwError(() => new Error('Could not load this application.'))),
-    );
+    return this.http
+      .get<LoanApplication>(`${BASE_URL}/${applicationRef}`, { headers: this.authHeaders() })
+      .pipe(
+        timeout(REQUEST_TIMEOUT_MS),
+        catchError(() => throwError(() => new Error('Could not load this application.'))),
+      );
   }
 
   /** POST /api/v1/customer/loan-applications/{applicationRef}/submit */
   submit(applicationRef: string): Observable<LoanApplication> {
-    return this.http.post<LoanApplication>(`${BASE_URL}/${applicationRef}/submit`, {}, { headers: this.authHeaders() }).pipe(
-      timeout(REQUEST_TIMEOUT_MS),
-      catchError(() => throwError(() => new Error('Could not submit your application.'))),
-    );
+    return this.http
+      .post<LoanApplication>(
+        `${BASE_URL}/${applicationRef}/submit`,
+        {},
+        { headers: this.authHeaders() },
+      )
+      .pipe(
+        timeout(REQUEST_TIMEOUT_MS),
+        catchError(() => throwError(() => new Error('Could not submit your application.'))),
+      );
   }
 }

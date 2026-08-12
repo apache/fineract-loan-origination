@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@Profile({"dev", "test", "default"})
+@Profile({"dev", "test"})
 public class MockFineractAdapter implements FineractIntegrationPort {
 
   private static final AtomicLong LOAN_ID_SEQUENCE = new AtomicLong(100001);

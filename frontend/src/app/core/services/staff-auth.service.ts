@@ -23,8 +23,8 @@ import { environment } from '../../../environments/environment';
 
 export interface StaffProfile {
   username: string;
-  losRole: string;       // e.g. ROLE_LOAN_OFFICER
-  displayRole: string;   // e.g. "Loan Officer"
+  losRole: string; // e.g. ROLE_LOAN_OFFICER
+  displayRole: string; // e.g. "Loan Officer"
   tenantId: string;
 }
 
@@ -38,14 +38,14 @@ interface StaffLoginResponse {
   expiresInMinutes: number;
 }
 
-const TOKEN_KEY   = 'los-staff-token';
+const TOKEN_KEY = 'los-staff-token';
 const PROFILE_KEY = 'los-staff-profile';
 
 @Injectable({ providedIn: 'root' })
 export class StaffAuthService {
   private readonly http = inject(HttpClient);
 
-  private readonly tokenSubject   = new BehaviorSubject<string | null>(this.loadToken());
+  private readonly tokenSubject = new BehaviorSubject<string | null>(this.loadToken());
   private readonly profileSubject = new BehaviorSubject<StaffProfile | null>(this.loadProfile());
 
   readonly profile$ = this.profileSubject.asObservable();
@@ -64,17 +64,19 @@ export class StaffAuthService {
       .pipe(
         tap((res) => {
           const profile: StaffProfile = {
-            username:    res.username,
-            losRole:     res.losRole,
+            username: res.username,
+            losRole: res.losRole,
             displayRole: res.displayRole,
-            tenantId:    res.tenantId,
+            tenantId: res.tenantId,
           };
           this.tokenSubject.next(res.token);
           this.profileSubject.next(profile);
           try {
-            sessionStorage.setItem(TOKEN_KEY,   res.token);
+            sessionStorage.setItem(TOKEN_KEY, res.token);
             sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-          } catch { /* storage unavailable */ }
+          } catch {
+            /* storage unavailable */
+          }
         }),
         map(() => true),
         catchError(() => of(false)),
@@ -87,7 +89,9 @@ export class StaffAuthService {
     try {
       sessionStorage.removeItem(TOKEN_KEY);
       sessionStorage.removeItem(PROFILE_KEY);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -129,22 +133,34 @@ export class StaffAuthService {
     return this.profileSubject.value?.losRole === role;
   }
 
-  isLoanOfficer():    boolean { return this.hasRole('ROLE_LOAN_OFFICER'); }
-  isCreditCommittee(): boolean { return this.hasRole('ROLE_CREDIT_COMMITTEE'); }
-  isBranchManager():  boolean { return this.hasRole('ROLE_BRANCH_MANAGER'); }
+  isLoanOfficer(): boolean {
+    return this.hasRole('ROLE_LOAN_OFFICER');
+  }
+  isCreditCommittee(): boolean {
+    return this.hasRole('ROLE_CREDIT_COMMITTEE');
+  }
+  isBranchManager(): boolean {
+    return this.hasRole('ROLE_BRANCH_MANAGER');
+  }
 
   // -------------------------------------------------------------------------
   // Session persistence
   // -------------------------------------------------------------------------
 
   private loadToken(): string | null {
-    try { return sessionStorage.getItem(TOKEN_KEY); } catch { return null; }
+    try {
+      return sessionStorage.getItem(TOKEN_KEY);
+    } catch {
+      return null;
+    }
   }
 
   private loadProfile(): StaffProfile | null {
     try {
       const raw = sessionStorage.getItem(PROFILE_KEY);
       return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 }

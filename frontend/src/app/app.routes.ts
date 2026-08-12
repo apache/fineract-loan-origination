@@ -24,7 +24,6 @@ import { authGuard } from './core/guards/auth.guard';
 import { staffAuthGuard } from './core/guards/staff-auth.guard';
 
 export const routes: Routes = [
-
   // -----------------------------------------------------------------------
   // Customer / client routes
   // -----------------------------------------------------------------------
@@ -39,48 +38,48 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
+          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
         path: 'apply',
         loadComponent: () =>
           import('./features/loan-application/loan-application-create.component').then(
-            m => m.LoanApplicationCreateComponent,
+            (m) => m.LoanApplicationCreateComponent,
           ),
       },
       {
         path: 'loan-application',
         loadComponent: () =>
           import('./features/loan-application/loan-application-list.component').then(
-            m => m.LoanApplicationListComponent,
+            (m) => m.LoanApplicationListComponent,
           ),
       },
       {
         path: 'loan-application/:applicationRef',
         loadComponent: () =>
           import('./features/loan-application/loan-application-detail.component').then(
-            m => m.LoanApplicationDetailComponent,
+            (m) => m.LoanApplicationDetailComponent,
           ),
       },
       {
         path: 'my-loans',
         loadComponent: () =>
-          import('./features/my-loans/my-loans.component').then(m => m.MyLoansComponent),
+          import('./features/my-loans/my-loans.component').then((m) => m.MyLoansComponent),
       },
       {
         path: 'profile',
         loadComponent: () =>
-          import('./features/profile/profile.component').then(m => m.ProfileComponent),
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
       },
       {
         path: 'support',
         loadComponent: () =>
-          import('./features/support/support.component').then(m => m.SupportComponent),
+          import('./features/support/support.component').then((m) => m.SupportComponent),
       },
       {
         path: 'settings',
         loadComponent: () =>
-          import('./features/settings/settings.component').then(m => m.SettingsComponent),
+          import('./features/settings/settings.component').then((m) => m.SettingsComponent),
       },
     ],
   },
@@ -91,7 +90,7 @@ export const routes: Routes = [
   {
     path: 'staff/login',
     loadComponent: () =>
-      import('./features/staff/login/staff-login.component').then(m => m.StaffLoginComponent),
+      import('./features/staff/login/staff-login.component').then((m) => m.StaffLoginComponent),
   },
 
   {
@@ -105,7 +104,7 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () =>
           import('./features/staff/dashboard/staff-dashboard.component').then(
-            m => m.StaffDashboardComponent,
+            (m) => m.StaffDashboardComponent,
           ),
       },
 
@@ -113,7 +112,7 @@ export const routes: Routes = [
         path: 'applications',
         loadComponent: () =>
           import('./features/staff/applications/staff-application-list.component').then(
-            m => m.StaffApplicationListComponent,
+            (m) => m.StaffApplicationListComponent,
           ),
       },
 
@@ -121,7 +120,7 @@ export const routes: Routes = [
         path: 'applications/:applicationRef',
         loadComponent: () =>
           import('./features/staff/applications/staff-application-detail.component').then(
-            m => m.StaffApplicationDetailComponent,
+            (m) => m.StaffApplicationDetailComponent,
           ),
       },
     ],

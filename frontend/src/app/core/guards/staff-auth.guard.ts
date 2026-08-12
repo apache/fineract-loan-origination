@@ -22,7 +22,7 @@ import { StaffAuthService } from '../services/staff-auth.service';
 
 export const staffAuthGuard: CanActivateFn = () => {
   const staffAuth = inject(StaffAuthService);
-  const router    = inject(Router);
+  const router = inject(Router);
 
   if (staffAuth.isAuthenticated()) return true;
 

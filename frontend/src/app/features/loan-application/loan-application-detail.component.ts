@@ -43,12 +43,12 @@ export class LoanApplicationDetailComponent implements OnInit {
   private readonly customerCreditScoringService = inject(CustomerCreditScoringService);
 
   /** Statuses for which a credit score is expected to exist and should be fetched. */
- /** Statuses for which a credit score is expected to exist and should be fetched. */
-private readonly scoredStatuses: readonly LoanApplication['status'][] = [
-  'UNDER_REVIEW',
-  'APPROVED',
-  'DISBURSED',
-];
+  /** Statuses for which a credit score is expected to exist and should be fetched. */
+  private readonly scoredStatuses: readonly LoanApplication['status'][] = [
+    'UNDER_REVIEW',
+    'APPROVED',
+    'DISBURSED',
+  ];
 
   loading = signal(true);
   application = signal<LoanApplication | null>(null);

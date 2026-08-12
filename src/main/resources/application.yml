@@ -18,12 +18,12 @@ spring:
   security:
     user:
       name: admin
-      password: somepassword
+      password: ${SPRING_SECURITY_USER_PASSWORD:somepassword}
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/los_db}
     username: postgres
-    password: sujan2003
+    password: ${DB_PASSWORD:sujan2003}
 
     hikari:
       pool-name: LOS-HikariPool

@@ -29,12 +29,12 @@ import { StaffAuthService } from './staff-auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class StaffLoanApplicationService {
-  private readonly http      = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly staffAuth = inject(StaffAuthService);
 
   /** Build auth headers directly — belt-and-suspenders alongside the interceptor. */
-  private authHeaders(): { [header: string]: string } {
-    const token    = this.staffAuth.getAuthHeader();
+  private authHeaders(): Record<string, string> {
+    const token = this.staffAuth.getAuthHeader();
     const tenantId = this.staffAuth.getTenantId();
     return {
       ...(token ? { Authorization: token } : {}),
@@ -44,10 +44,9 @@ export class StaffLoanApplicationService {
 
   /** GET /api/v1/loan-applications */
   getAll(): Observable<StaffApplicationSummary[]> {
-    return this.http.get<StaffApplicationSummary[]>(
-      `${environment.losApiUrl}/loan-applications`,
-      { headers: this.authHeaders() },
-    );
+    return this.http.get<StaffApplicationSummary[]>(`${environment.losApiUrl}/loan-applications`, {
+      headers: this.authHeaders(),
+    });
   }
 
   /** GET /api/v1/loan-applications/{ref}/staff-detail */
@@ -68,10 +67,7 @@ export class StaffLoanApplicationService {
   }
 
   /** POST /api/v1/loan-applications/{ref}/approval-decisions */
-  recordDecision(
-    applicationRef: string,
-    request: ApprovalDecisionRequest,
-  ): Observable<unknown> {
+  recordDecision(applicationRef: string, request: ApprovalDecisionRequest): Observable<unknown> {
     return this.http.post(
       `${environment.losApiUrl}/loan-applications/${applicationRef}/approval-decisions`,
       request,

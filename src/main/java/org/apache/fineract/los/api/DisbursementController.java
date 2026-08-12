@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.bridge.DisbursementBridgeService;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -49,6 +50,7 @@ public class DisbursementController {
 
   @Operation(summary = "Create the loan in Fineract and move the application to DISBURSED")
   @PostMapping
+  @PreAuthorize("hasRole('STAFF')")
   public FineractLoanCreateResponse disburse(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
       @PathVariable final String applicationRef) {
