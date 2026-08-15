@@ -34,6 +34,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -93,14 +95,13 @@ public class SecurityConfig {
                     .referrerPolicy(
                         referrer ->
                             referrer.policy(
-                                org.springframework.security.web.header.writers
-                                    .ReferrerPolicyHeaderWriter.ReferrerPolicy
+                                ReferrerPolicyHeaderWriter.ReferrerPolicy
                                     .STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                     // Permissions policy - controls browser features
-                    .permissionsPolicy(
-                        permissions ->
-                            permissions.policy(
-                                "geolocation=(), microphone=(), camera=(), payment=()")));
+                    .addHeaderWriter(
+                        new StaticHeadersWriter(
+                            "Permissions-Policy",
+                            "geolocation=(), microphone=(), camera=(), payment=()")));
 
     return http.build();
   }
@@ -165,13 +166,12 @@ public class SecurityConfig {
                     .referrerPolicy(
                         referrer ->
                             referrer.policy(
-                                org.springframework.security.web.header.writers
-                                    .ReferrerPolicyHeaderWriter.ReferrerPolicy
+                                ReferrerPolicyHeaderWriter.ReferrerPolicy
                                     .STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                    .permissionsPolicy(
-                        permissions ->
-                            permissions.policy(
-                                "geolocation=(), microphone=(), camera=(), payment=()")));
+                    .addHeaderWriter(
+                        new StaticHeadersWriter(
+                            "Permissions-Policy",
+                            "geolocation=(), microphone=(), camera=(), payment=()")));
 
     return http.build();
   }
