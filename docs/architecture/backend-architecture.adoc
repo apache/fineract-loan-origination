@@ -1,0 +1,250 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Backend Architecture
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+The backend is a Spring Boot 4.1 application (Java 21) structured in four layers with clear responsibility boundaries. The package root is `org.apache.fineract.los`.
+
+== Layer Structure
+
+[source]
+----
+org.apache.fineract.los
+├── api/          Controllers and request/response DTOs
+├── service/      Business logic and orchestration
+├── domain/       JPA entities and enums
+├── repository/   Spring Data JPA repositories
+├── statemachine/ State transition logic
+├── scoring/      Credit scoring engine
+├── workflow/     Approval workflow
+├── bridge/       Fineract integration port and adapters
+├── security/     Authentication filters and JWT utilities
+├── config/       Spring configuration classes
+├── exception/    Custom exceptions and global handler
+└── mapper/       Entity ↔ DTO mappers
+----
+
+== Layer Responsibilities
+
+=== API Layer
+
+Controllers receive HTTP requests and return responses. They do not contain business logic. Each controller delegates immediately to a service.
+
+Request DTOs carry Bean Validation annotations. Response DTOs are mapped from entities by the mapper layer. Entities are never exposed directly.
+
+=== Service Layer
+
+Services own business logic and orchestration. Each service has a single primary responsibility:
+
+[cols="2,4", options="header"]
+|===
+| Service | Responsibility
+
+| `LoanApplicationService`
+| Create, query, and transition applications; enforce customer data scope (customers see only their own)
+
+| `CreditScoringService`
+| Load applicant profile, invoke the scoring strategy, persist the result
+
+| `ApprovalWorkflowService`
+| Validate sequential stage ordering, enforce role-to-stage mapping, persist decisions, trigger state transitions
+
+| `DisbursementBridgeService`
+| Validate prerequisites, build the Fineract request, call the integration port, record the returned loan ID, transition to DISBURSED
+
+| `AuthService`
+| Issue JWTs for customers (BCrypt verification) and delegate to Fineract for staff credential validation
+|===
+
+All public service methods are `@Transactional`. State machine transitions and persistence happen within the same transaction — either fully committed or fully rolled back.
+
+=== Domain Layer
+
+The domain layer holds JPA entities and enums. It has no dependencies on Spring MVC or any HTTP concerns.
+
+==== Core Entities
+
+`LoanApplication` is the aggregate root. It holds the lifecycle status, requested loan details, and references to Fineract identifiers set after disbursement. All other entities reference it.
+
+`ApplicantProfile` stores personal and financial information used for credit scoring. It is in a one-to-one relationship with `LoanApplication` and loaded lazily.
+
+`ApprovalStage` records each individual approval decision (officer username, stage name, decision, comments, timestamp). One application has zero or more approval stages. Records are immutable once persisted.
+
+`CreditScore` stores the computed score, risk category, and a JSON breakdown of each factor's contribution. One-to-one with `LoanApplication`, loaded lazily.
+
+`CustomerCredentials` stores BCrypt-hashed customer passwords. Staff passwords are never stored in the LOS.
+
+==== Entity Relationships
+
+[source]
+----
+LoanApplication (aggregate root)
+  ├── (1:1) ApplicantProfile      [lazy]
+  ├── (1:1) CreditScore           [lazy]
+  └── (1:N) ApprovalStage         [lazy]
+----
+
+Every entity carries a `tenantId` field. Every repository query is filtered by `tenantId`. Cross-tenant queries are structurally impossible.
+
+==== Key Enums
+
+`LoanApplicationStatus` defines the six lifecycle states: `DRAFT`, `SUBMITTED`, `UNDER_REVIEW`, `APPROVED`, `REJECTED`, `DISBURSED`. Terminal states (`REJECTED`, `DISBURSED`) are identified by `isTerminal()`. Status is persisted as a string to survive future enum additions without migration.
+
+`ApprovalDecision` has three values: `APPROVE`, `REJECT`, `REFER`.
+
+`RiskCategory` maps from credit score ranges: `LOW` (80–100), `MODERATE` (60–79), `HIGH` (40–59), `VERY_HIGH` (0–39).
+
+=== Repository Layer
+
+All repositories extend `JpaRepository`. Every query method includes `tenantId` as a parameter. There are no queries that fetch across tenant boundaries.
+
+== State Machine
+
+Per link:../adr/ADR-002-state-machine-vs-bpmn.adoc[ADR-002], the LOS uses an explicit custom state machine rather than a BPMN engine.
+
+`LoanOriginationStateMachine` is the only component permitted to call `setStatus()` on a `LoanApplication`. It validates the transition through `LoanStateTransitionValidator`, rejects transitions from terminal states, and logs every transition for the audit trail.
+
+`LoanStateTransitionValidator` holds the single source of truth for permitted transitions:
+
+[cols="2,3", options="header"]
+|===
+| From | To
+
+| `DRAFT`
+| `SUBMITTED`
+
+| `SUBMITTED`
+| `UNDER_REVIEW`
+
+| `UNDER_REVIEW`
+| `APPROVED`, `REJECTED`, `REFERRED`
+
+| `REFERRED`
+| `UNDER_REVIEW`
+
+| `APPROVED`
+| `DISBURSED`
+
+| `REJECTED`, `DISBURSED`
+| (none — terminal)
+|===
+
+The state machine is stateless. All state lives in the `LoanApplication` entity. `@Version` on `LoanApplication` provides optimistic locking — if two staff members act on the same application concurrently, the second write raises an `OptimisticLockException` and rolls back.
+
+For the full workflow context, see link:../workflows/loan-origination.adoc[Loan Origination Workflow].
+
+== Credit Scoring
+
+Per link:../adr/ADR-003-pluggable-scoring.adoc[ADR-003], credit scoring is defined behind a `CreditScoringStrategy` interface.
+
+[source]
+----
+CreditScoringStrategy (interface)
+  └── DefaultCreditScoringStrategy
+        └── List<ScoringFactor> (Spring-discovered components)
+              ├── IncomeLoanRatioFactor       (30% weight)
+              ├── DebtBurdenFactor            (25% weight)
+              ├── EmploymentStabilityFactor   (20% weight)
+              ├── RepaymentHistoryFactor      (15% weight)
+              └── LoanPurposeRiskFactor       (10% weight)
+----
+
+`DefaultCreditScoringStrategy` iterates all injected `ScoringFactor` components, sums their contributions, and clamps the total to a 0–100 range. The score and factor breakdown are persisted on `CreditScore`.
+
+Scoring factor weights are configured in `application.yml`. A `@PostConstruct` validator ensures weights sum to 100 at startup. Custom factors are added by implementing `ScoringFactor`, annotating with `@Component`, and adding the weight to configuration — no changes to `DefaultCreditScoringStrategy` are required.
+
+For scoring factor details and configuration reference, see link:../workflows/credit-scoring.adoc[Credit Scoring].
+
+== Approval Workflow
+
+`ApprovalWorkflowService` enforces the sequential three-stage approval process.
+
+For each decision request:
+
+1. Resolve the current stage from the count of prior `APPROVE` decisions
+2. Validate the caller's role matches the current stage
+3. Validate the caller has not already decided on this application
+4. Persist the `ApprovalStage` record
+5. Apply the resulting state machine transition
+
+The stage sequence and role-to-stage mapping are configured in `application.yml`. Approval stages are strictly sequential — a later stage cannot act until all prior stages have approved.
+
+For approval workflow details, see link:../workflows/approval.adoc[Approval Workflow].
+
+== Integration Boundary
+
+The `bridge/` package contains the integration with Apache Fineract. Domain services depend on the `FineractIntegrationPort` interface. Two adapters implement it:
+
+* `RealFineractAdapter` — active in production; calls Fineract over HTTPS
+* `MockFineractAdapter` — active in `dev` and `test` profiles; returns a deterministic fake loan ID
+
+This boundary means domain logic has no HTTP dependencies and is fully testable without a running Fineract instance.
+
+For integration details, see link:integration.adoc[Integration Architecture].
+
+== Security
+
+The `security/` package contains JWT filter chains, BCrypt verification for customers, and role extraction from JWT claims. Staff credentials are never stored — they are validated against Fineract on each login.
+
+For authentication and authorization details, see link:../security/index.adoc[Security Documentation].
+
+== Exception Handling
+
+A `@RestControllerAdvice` global handler maps domain exceptions to HTTP responses:
+
+[cols="2,1,2", options="header"]
+|===
+| Exception | Status | Error Code
+
+| `ApplicationNotFoundException`
+| 404
+| `APPLICATION_NOT_FOUND`
+
+| `LoanStateTransitionException`
+| 409
+| `INVALID_STATE_TRANSITION`
+
+| `DuplicateApprovalException`
+| 409
+| `DUPLICATE_APPROVAL`
+
+| `MethodArgumentNotValidException`
+| 400
+| `VALIDATION_ERROR`
+
+| `FineractIntegrationException`
+| 502
+| `FINERACT_ERROR`
+|===
+
+All error responses follow a consistent structure with `code`, `message`, and `timestamp` fields. See link:../api/rest-api.adoc[REST API Reference] for full error response examples.
+
+== Further Reading
+
+* link:system-overview.adoc[System Overview] — component diagram and data flow
+* link:frontend-architecture.adoc[Frontend Architecture] — Angular application structure
+* link:integration.adoc[Integration Architecture] — Fineract bridge details
+* link:../workflows/index.adoc[Workflows] — state machine, scoring, and approval workflow detail
+* link:../api/rest-api.adoc[REST API Reference] — all endpoints

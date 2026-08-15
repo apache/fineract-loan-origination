@@ -1,0 +1,144 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Authentication
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+The LOS uses two authentication modes. Customers authenticate against credentials stored in the LOS database. Staff authenticate by delegating to Apache Fineract. Both modes produce a short-lived JWT used for all subsequent API requests.
+
+== Customer Authentication
+
+Customer credentials are stored in the `customer_credentials` table. Passwords are hashed with BCrypt (default strength, configured via `BCryptPasswordEncoder` bean in `SecurityConfig`). LOS never stores or logs plain-text passwords.
+
+The customer login endpoint (`POST /api/v1/auth/login`) accepts a username, password, and tenant identifier. On success it issues a JWT containing the customer identity and returns it to the caller. On failure it returns `401 Unauthorized`.
+
+Customer accounts are created by an admin via `POST /api/v1/admin/customers`. This is the only way a `customer_credentials` record is created.
+
+== Staff Authentication
+
+Staff credentials are **not stored in the LOS**. When a staff member logs in via `POST /api/v1/auth/staff/login`, the LOS forwards the credentials to Fineract's `/api/v1/authentication` endpoint using Basic Auth. If Fineract accepts the credentials, the LOS maps the returned Fineract role to a LOS workflow role and issues its own JWT.
+
+This delegation is implemented by `FineractAuthenticationProvider` and `FineractCredentialValidationService`. If Fineract is unavailable or rejects the credentials, the LOS returns `401 Unauthorized`.
+
+The staff filter chain also accepts HTTP Basic Auth directly (for backward compatibility with Fineract tooling), which goes through the same `FineractAuthenticationProvider`.
+
+=== Role Mapping
+
+Fineract role names are mapped to LOS workflow roles via `application.yml`:
+
+[source,yaml]
+----
+los:
+  workflow:
+    role-mapping:
+      loan_officer: LOAN_OFFICER
+      credit_committee: CREDIT_COMMITTEE
+      branch_manager: BRANCH_MANAGER
+----
+
+`FineractRoleResolver` resolves the first matching role from the list returned by Fineract. If no role matches the configured mapping, the login returns `401 Unauthorized`. The three roles (`LOAN_OFFICER`, `CREDIT_COMMITTEE`, `BRANCH_MANAGER`) are defined by the `LosRole` enum and must exactly match the stage names in `los.workflow.stages`.
+
+== JWT
+
+Both authentication modes issue a JWT signed with HMAC (key derived from `los.jwt.secret`). The JJWT library handles signing and verification.
+
+=== Claims
+
+[cols="2,3", options="header"]
+|===
+| Claim | Content
+
+| `sub`
+| Username
+
+| `role`
+| Spring Security role string (e.g. `ROLE_CUSTOMER`, `ROLE_LOAN_OFFICER`)
+
+| `userType`
+| `CUSTOMER` or `STAFF`
+
+| `clientId`
+| Fineract client ID (customer JWTs only)
+
+| `tenantId`
+| Tenant identifier
+
+| `correlationId`
+| UUID placed into MDC for request tracing
+
+| `iat` / `exp`
+| Issued-at and expiration timestamps
+|===
+
+=== Expiration
+
+Tokens expire after `los.jwt.expiry-minutes` (default 15 minutes). There is no refresh token mechanism — clients must re-authenticate after expiration.
+
+=== Configuration
+
+[source,yaml]
+----
+los:
+  jwt:
+    secret: ${JWT_SECRET:los-dev-secret-min-32-chars-change-in-prod!!}
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:15}
+----
+
+`JWT_SECRET` must be at least 32 characters. The default value is only safe for local development. Use `openssl rand -base64 32` to generate a production secret.
+
+== JWT Validation (JwtAuthFilter)
+
+`JwtAuthFilter` runs before the Spring Security authentication filter on every request. Its steps:
+
+1. Extract the `Bearer` token from the `Authorization` header. If absent, pass through (unauthenticated).
+2. Call `JwtService.validateAndExtract()` — verifies the HMAC signature and expiration. Throws `InvalidJwtException` on failure.
+3. Extract claims: `sub`, `clientId`, `tenantId`, `role`, `userType`, `correlationId`.
+4. Place `correlationId` (and `tenantId`, pending PR review — see below) into MDC.
+5. For staff JWTs: build a `UsernamePasswordAuthenticationToken` with the role authority from the claim.
+6. For customer JWTs: build a `CustomerPrincipal` (carries `clientId`) and set `ROLE_CUSTOMER` authority.
+7. Set the authentication on the `SecurityContextHolder`.
+
+On `InvalidJwtException`, the filter clears the context and returns `401 Unauthorized`. The downstream Spring Security chain then enforces authorization based on the populated context.
+
+=== Pending: Tenant Header Validation
+
+**In review (PR `feature/FINERACT-2442-updates-security`) — not yet merged into `main`.**
+
+The PR adds a tenant mismatch check to `JwtAuthFilter`: after extracting `tenantId` from the JWT, it compares it against the `X-Fineract-Platform-TenantId` request header. A mismatch returns `403 Forbidden` immediately. It also adds `tenantId` to the MDC alongside `correlationId`. Once merged, this closes the cross-tenant spoofing vector.
+
+== Filter Chains
+
+`SecurityConfig` defines two ordered filter chains:
+
+* **Order 1** — matches `/api/v1/customer/**`. JWT-only, no Basic Auth.
+* **Order 2** — matches all other paths. Accepts JWT or Basic Auth (via `FineractAuthenticationProvider`). Public paths (`/api/v1/auth/**`, `/actuator/health`, `/actuator/info`, Swagger) are permitted without authentication.
+
+Both chains are stateless (`STATELESS` session policy). CSRF is disabled for all `/api/**` paths since no session cookies are used.
+
+
+== Further Reading
+
+* link:authorization.adoc[Authorization] — how authenticated identities are granted access
+* link:security-architecture.adoc[Security Architecture] — defense-in-depth controls
+* link:../architecture/integration.adoc[Integration Architecture] — Fineract delegation detail

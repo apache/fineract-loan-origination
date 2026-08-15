@@ -1,0 +1,119 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Setup
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Prerequisites
+
+* **Java 21** — https://adoptium.net/
+* **Node.js 22** — https://nodejs.org/
+* **Docker and Docker Compose** — https://www.docker.com/products/docker-desktop
+
+The repository includes `./mvnw` (Maven wrapper). A separate Maven installation is not required.
+
+== Clone
+
+[source,bash]
+----
+git clone https://github.com/apache/fineract-loan-origination.git
+cd fineract-loan-origination
+----
+
+== Database
+
+Start PostgreSQL using the provided Docker Compose file:
+
+[source,bash]
+----
+docker compose -f docker/docker-compose.yml up -d
+----
+
+This starts PostgreSQL on port **5433** with:
+
+* Database: `los_db`
+* Username: `los_user`
+* Password: `los_password`
+
+== Backend
+
+[source,bash]
+----
+./mvnw spring-boot:run
+----
+
+The backend starts on **http://localhost:8082**.
+
+Verify it is running:
+
+[source,bash]
+----
+curl http://localhost:8082/actuator/health
+----
+
+== Frontend
+
+[source,bash]
+----
+cd frontend
+npm install
+npm start
+----
+
+The frontend starts on **http://localhost:4200** and proxies API requests to port 8082.
+
+== IDE Setup
+
+=== IntelliJ IDEA
+
+1. Open the project root directory as a Maven project.
+2. Set the Project SDK to Java 21 under **File → Project Structure**.
+3. Run `LoanOriginationApplication` directly from the IDE.
+4. Set the environment variable `JWT_SECRET` in the run configuration if the default in `application.yml` is not sufficient.
+
+=== VS Code
+
+Install the **Extension Pack for Java** (Microsoft) and **Spring Boot Extension Pack** (VMware). Open the project root and run `LoanOriginationApplication` from the Spring Boot Dashboard or via **Run and Debug**.
+
+For the frontend, open the `frontend/` folder in a terminal and run `npm start`.
+
+== Troubleshooting
+
+**Port 8082 already in use** — change `server.port` in `src/main/resources/application.yml`.
+
+**Database connection fails** — verify the container is running with `docker ps` and that `docker-compose.yml` maps port 5433.
+
+**npm install fails** — clear cache and retry:
+
+[source,bash]
+----
+npm cache clean --force
+rm -rf node_modules package-lock.json
+npm install
+----
+
+**Docker permission denied (Linux)** — add your user to the `docker` group and re-login:
+
+[source,bash]
+----
+sudo usermod -aG docker $USER
+----

@@ -1,0 +1,124 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Testing
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+The backend test suite uses JUnit 5, Mockito, and AssertJ for unit tests, Testcontainers for integration tests, and Cucumber for BDD scenario tests.
+
+Docker must be running for integration tests (Testcontainers spins up a PostgreSQL container automatically).
+
+== Running Tests
+
+[source,bash]
+----
+# Run all tests
+./mvnw clean verify
+
+# Run unit tests only
+./mvnw test
+
+# Run a specific test class
+./mvnw test -Dtest=LoanApplicationServiceTest
+
+# Run a specific test method
+./mvnw test -Dtest=LoanApplicationServiceTest#shouldCreateDraftApplication
+
+# Generate coverage report (output: target/site/jacoco/index.html)
+./mvnw clean verify jacoco:report
+----
+
+== Test Structure
+
+[source]
+----
+src/test/java/org/apache/fineract/los/
+├── controller/       Controller tests
+├── service/          Service unit tests
+├── repository/       Repository integration tests
+├── security/         Authentication and authorization tests
+├── workflow/         State machine and approval workflow tests
+└── bdd/
+    ├── steps/        Cucumber step definitions
+    └── CucumberTest.java
+
+src/test/resources/
+└── features/         Cucumber feature files (.feature)
+----
+
+== Unit Tests
+
+Unit tests cover individual services and components in isolation. Dependencies are mocked with Mockito. Place unit tests in the package that matches the class under test.
+
+Naming convention: `<ClassName>Test.java`
+
+== Integration Tests
+
+Integration tests use `@SpringBootTest` and Testcontainers. A base class `AbstractIntegrationTest` provides a shared PostgreSQL container and MockMvc setup — extend it for all integration tests.
+
+The PostgreSQL image version used is `postgres:15` (matches Docker Compose).
+
+== BDD Tests (Cucumber)
+
+Feature files in `src/test/resources/features/` describe scenarios in plain language. Step definitions in `bdd/steps/` implement each step against the real application stack.
+
+Run a specific feature file:
+
+[source,bash]
+----
+./mvnw verify -Dcucumber.features=src/test/resources/features/loan-application.feature
+----
+
+Run scenarios tagged `@smoke`:
+
+[source,bash]
+----
+./mvnw verify -Dcucumber.filter.tags="@smoke"
+----
+
+== Frontend Tests
+
+[source,bash]
+----
+cd frontend
+
+# Lint check
+npm run lint
+
+# Format check
+npm run format:check
+----
+
+Unit tests with Jasmine and Karma are in progress. E2E tests with Playwright are planned.
+
+== Testcontainers
+
+Testcontainers requires Docker to be running. If tests fail with a container startup error, verify Docker is available:
+
+[source,bash]
+----
+docker ps
+----
+
+Use `@Container static` fields in test classes to share a single container across all tests in the class rather than starting a new container per test.

@@ -1,0 +1,143 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= GPG Commit Signing
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Why
+
+Signed commits display a **Verified** badge on GitHub, confirming that the commit was made by the stated author. This project expects contributors to sign their commits.
+
+== Install GPG
+
+* **Linux:** `sudo apt install gnupg`
+* **macOS:** `brew install gnupg` or download https://gpgtools.org/[GPG Suite]
+* **Windows:** download https://www.gpg4win.org/[Gpg4win]
+
+Verify: `gpg --version`
+
+== Generate a Key
+
+[source,bash]
+----
+gpg --full-generate-key
+----
+
+When prompted:
+
+* Key type: `RSA and RSA` (default)
+* Key size: `4096`
+* Expiry: `2y` (recommended)
+* Name and email: must match your Git and GitHub account
+
+== Find Your Key ID
+
+[source,bash]
+----
+gpg --list-secret-keys --keyid-format=long
+----
+
+The key ID is the value after `rsa4096/` on the `sec` line, for example `ABCD1234EFGH5678`.
+
+== Configure Git
+
+[source,bash]
+----
+git config --global user.signingkey ABCD1234EFGH5678
+git config --global commit.gpgsign true
+----
+
+**Windows only** — tell Git where to find GPG:
+
+[source,bash]
+----
+git config --global gpg.program "C:\Program Files (x86)\GnuPG\bin\gpg.exe"
+----
+
+== Add Your Public Key to GitHub
+
+Export the public key:
+
+[source,bash]
+----
+gpg --armor --export ABCD1234EFGH5678
+----
+
+Copy the full output (including the `-----BEGIN PGP PUBLIC KEY BLOCK-----` header and footer), then add it at https://github.com/settings/gpg/new.
+
+The email on the GPG key must match a verified email on your GitHub account.
+
+== Verify a Signed Commit
+
+[source,bash]
+----
+git log --show-signature -1
+----
+
+A valid signature shows `gpg: Good signature from ...`. After pushing, commits will show a green **Verified** badge on GitHub.
+
+== Troubleshooting
+
+**`gpg: signing failed: Inappropriate ioctl for device`** (Linux/macOS)
+
+Add to your shell profile (`~/.bashrc` or `~/.zshrc`):
+
+[source,bash]
+----
+export GPG_TTY=$(tty)
+----
+
+**`gpg: signing failed: No secret key`**
+
+Check that the key ID in Git config matches your actual key:
+
+[source,bash]
+----
+gpg --list-secret-keys --keyid-format=long
+git config --global user.signingkey
+----
+
+**`error: gpg failed to sign the data`** (Windows)
+
+Confirm the `gpg.program` path is correct:
+
+[source,bash]
+----
+where gpg
+git config --global gpg.program "C:\correct\path\to\gpg.exe"
+----
+
+**GitHub shows Unverified**
+
+The most common cause is an email mismatch. The email in `git config user.email`, the GPG key UID, and a verified email on your GitHub account must all be the same.
+
+**Passphrase prompted on every commit**
+
+Cache the passphrase by adding to `~/.gnupg/gpg-agent.conf`:
+
+[source]
+----
+default-cache-ttl 3600
+max-cache-ttl 86400
+----
+
+Then reload: `gpg-connect-agent reloadagent /bye`

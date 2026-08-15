@@ -1,0 +1,131 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Integration Architecture
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+The LOS integrates with Apache Fineract at exactly two points:
+
+1. **Staff authentication** — staff credentials are validated against Fineract's `/api/v1/authentication` endpoint at login time
+2. **Loan disbursement** — once an application is `APPROVED`, the LOS creates a loan account in Fineract via `POST /api/v1/loans`
+
+Fineract is treated as an external system. The LOS does not share a database with it and does not depend on Fineract for any part of the origination workflow other than these two calls.
+
+== Ports and Adapters
+
+Both integration points follow the same architectural pattern. Domain logic depends on an interface (the port). Concrete HTTP communication lives in adapters that implement the interface. This keeps Fineract details out of the domain layer and makes the integration fully replaceable.
+
+[source]
+----
+DisbursementBridgeService
+  └── depends on FineractIntegrationPort (interface)
+            │
+     ┌──────┴──────┐
+     ▼             ▼
+RealFineractAdapter   MockFineractAdapter
+(production)          (dev / test profiles)
+     │
+     ▼
+Apache Fineract
+----
+
+`RealFineractAdapter` is active in production. `MockFineractAdapter` is active in `dev` and `test` profiles. The mock returns a deterministic fake loan ID without making any HTTP call, allowing local development and CI tests to run without a Fineract instance.
+
+The active adapter is selected via configuration (`los.fineract.mock-enabled`).
+
+== Staff Authentication Integration
+
+Staff credentials are never stored in the LOS. On each staff login request, `FineractCredentialValidationService` forwards the username and password to Fineract's authentication endpoint.
+
+[source]
+----
+Staff → POST /api/v1/auth/staff/login
+        ↓
+  FineractCredentialValidationService
+        ↓
+  POST {fineractBaseUrl}/api/v1/authentication
+  Headers: Authorization: Basic <base64(user:pass)>
+           X-Fineract-Platform-TenantId: {tenantId}
+        ↓
+  Fineract returns { authenticated: true, roles: [...] }
+        ↓
+  LOS maps Fineract role → LOS workflow role
+        ↓
+  LOS issues JWT with userType=STAFF and the mapped role
+----
+
+The role mapping is configured in `application.yml` and defines which Fineract role name maps to which LOS workflow stage (`LOAN_OFFICER`, `CREDIT_COMMITTEE`, `BRANCH_MANAGER`).
+
+If Fineract authentication fails (wrong credentials, Fineract unavailable), the LOS returns `401 Unauthorized`. The LOS does not fall back to a local credential store for staff.
+
+== Loan Disbursement Integration
+
+`DisbursementBridgeService` orchestrates the disbursement flow. It validates prerequisites before making any external call.
+
+[source]
+----
+Staff → POST /api/v1/loan-applications/{ref}/disburse
+        ↓
+  DisbursementBridgeService
+        ↓
+  Validate: status = APPROVED
+  Validate: fineractClientId present on ApplicantProfile
+  Validate: fineractLoanProductId present on LoanApplication
+        ↓
+  Build FineractLoanCreateRequest from application + profile data
+        ↓
+  FineractIntegrationPort.createLoan(request)
+        ↓ (RealFineractAdapter)
+  POST {fineractBaseUrl}/api/v1/loans
+        ↓
+  Fineract returns { loanId: <id> }
+        ↓
+  Record loanId on LoanApplication.fineractLoanId
+  Transition APPROVED → DISBURSED via state machine
+  Save application
+----
+
+The entire flow is transactional. If the Fineract call fails, no status change is committed. The application remains in `APPROVED` and the disbursement can be retried.
+
+=== Prerequisites for Disbursement
+
+Disbursement requires two Fineract identifiers to be present on the application before it can proceed:
+
+* `fineractClientId` — the Fineract client record that will own the loan account
+* `fineractLoanProductId` — the Fineract loan product to use for the loan account
+
+These are set during the application intake process and validated before the Fineract call is made.
+
+== Error Boundary
+
+All Fineract HTTP failures are caught and wrapped in `FineractIntegrationException`. The global exception handler maps this to `502 Bad Gateway` with error code `FINERACT_ERROR`.
+
+This keeps Fineract-specific error details (HTTP status codes, Fineract error responses) from leaking into the LOS API surface. The LOS API always returns its own consistent error format.
+
+== Further Reading
+
+* link:backend-architecture.adoc[Backend Architecture] — `DisbursementBridgeService` and service layer structure
+* link:system-overview.adoc[System Overview] — external system boundary diagram
+* link:../workflows/disbursement.adoc[Disbursement Workflow] — full disbursement flow with error handling
+* link:../security/authentication.adoc[Authentication] — staff login flow detail

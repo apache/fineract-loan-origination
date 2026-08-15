@@ -1,0 +1,170 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Configuration
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+All backend configuration lives in `src/main/resources/application.yml`. There is a single configuration file — environment-specific values are provided via environment variables with defaults for local development.
+
+The frontend API base URL is set in `frontend/src/environments/`.
+
+== Database
+
+[source,yaml]
+----
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/los_db}
+    username: postgres
+    password: ${DB_PASSWORD:sujan2003}
+----
+
+When using the provided Docker Compose setup, the database is on port **5433** and the container maps it to the internal port 5432. Override `DB_URL` if your PostgreSQL is on a different host or port.
+
+Database schema is managed by **Flyway**. Migrations run automatically on startup from `src/main/resources/db/migration/`.
+
+== Authentication
+
+[source,yaml]
+----
+los:
+  jwt:
+    secret: ${JWT_SECRET:los-dev-secret-min-32-chars-change-in-prod!!}
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:15}
+----
+
+`JWT_SECRET` must be at least 32 characters. The default value is only suitable for local development. Set a strong secret for any shared or deployed environment:
+
+[source,bash]
+----
+# Generate a secure secret
+openssl rand -base64 32
+----
+
+See link:../security/authentication.adoc[Authentication] for how the JWT is used.
+
+== Fineract Integration
+
+[source,yaml]
+----
+los:
+  fineract:
+    base-url: ${FINERACT_BASE_URL:https://localhost:8443}
+    tenant-id: ${FINERACT_TENANT_ID:default}
+    username: ${FINERACT_USERNAME:mifos}
+    password: ${FINERACT_PASSWORD:password}
+    mock-enabled: false
+----
+
+Set `mock-enabled: true` to use the mock Fineract adapter for local development without a running Fineract instance. This causes disbursement to generate a fake loan ID instead of calling Fineract.
+
+See link:../architecture/integration.adoc[Integration Architecture] for how these values are used.
+
+== Scoring Weights
+
+[source,yaml]
+----
+los:
+  scoring:
+    weights:
+      income-ratio: 30
+      debt-burden: 25
+      employment-stability: 20
+      repayment-history: 15
+      loan-purpose-risk: 10
+----
+
+Weights must sum to 100. The application validates this on startup and fails fast if they do not. See link:../workflows/credit-scoring.adoc[Credit Scoring] for factor details.
+
+== Approval Workflow
+
+[source,yaml]
+----
+los:
+  workflow:
+    stages:
+      - LOAN_OFFICER
+      - CREDIT_COMMITTEE
+      - BRANCH_MANAGER
+    role-mapping:
+      loan_officer: LOAN_OFFICER
+      credit_committee: CREDIT_COMMITTEE
+      branch_manager: BRANCH_MANAGER
+    final-stage: BRANCH_MANAGER
+----
+
+Stages are sequential. `final-stage` determines which stage triggers the transition to `APPROVED`. Role mapping connects Fineract role names to LOS workflow stage names.
+
+== Server Port
+
+The backend starts on port **8082** by default:
+
+[source,yaml]
+----
+server:
+  port: 8082
+----
+
+Change this if port 8082 is in use on your machine.
+
+== Environment Variables
+
+[cols="2,3,2", options="header"]
+|===
+| Variable | Purpose | Default
+
+| `DB_URL`
+| PostgreSQL JDBC URL
+| `jdbc:postgresql://localhost:5432/los_db`
+
+| `DB_PASSWORD`
+| Database password
+| `sujan2003`
+
+| `JWT_SECRET`
+| JWT signing key (min 32 chars)
+| dev default (unsafe for shared use)
+
+| `JWT_EXPIRY_MINUTES`
+| Token lifetime in minutes
+| `15`
+
+| `FINERACT_BASE_URL`
+| Fineract API base URL
+| `https://localhost:8443`
+
+| `FINERACT_TENANT_ID`
+| Fineract tenant identifier
+| `default`
+
+| `FINERACT_USERNAME`
+| Fineract API username
+| `mifos`
+
+| `FINERACT_PASSWORD`
+| Fineract API password
+| `password`
+|===
+
+Never commit real secrets to source control. Use environment variables or a secrets manager for any value that is not a safe local default.

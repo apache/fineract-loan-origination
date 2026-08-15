@@ -1,0 +1,141 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Credit Scoring
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+Credit scoring runs automatically when an application first enters `UNDER_REVIEW`. It produces a score from 0–100 and a risk category, both persisted as a `CreditScore` entity linked to the application. Staff use the score when making approval decisions.
+
+The scoring design is interface-based — see link:../adr/ADR-003-pluggable-scoring.adoc[ADR-003].
+
+== When Scoring Runs
+
+`LoanApplicationService.moveToUnderReview()` calls `CreditScoringService.computeAndPersist()` immediately after transitioning the application to `UNDER_REVIEW`. Scoring is idempotent: if a `CreditScore` record already exists for the application (e.g. after a REFER/resubmit cycle), the existing record is returned unchanged and scoring does not rerun.
+
+If scoring fails due to an exception, the failure is logged and the application remains in `UNDER_REVIEW` with a null credit score. Staff can continue with manual review.
+
+== Architecture
+
+[source]
+----
+CreditScoringService
+  └── CreditScoringStrategy (interface)
+        └── DefaultCreditScoringStrategy
+              └── List<ScoringFactor> (Spring component discovery)
+                    ├── IncomeLoanRatioFactor
+                    ├── DebtBurdenFactor
+                    ├── EmploymentStabilityFactor
+                    ├── RepaymentHistoryFactor
+                    └── LoanPurposeRiskFactor
+----
+
+`DefaultCreditScoringStrategy` iterates all discovered `ScoringFactor` beans, sums their awarded points, and clamps the result to 0–100. A custom factor is added by implementing `ScoringFactor`, annotating with `@Component`, and updating weights in configuration — no changes to `DefaultCreditScoringStrategy` are needed.
+
+== Scoring Factors
+
+[cols="3,1,3", options="header"]
+|===
+| Factor | Weight | Input used
+
+| `IncomeLoanRatioFactor`
+| 30%
+| `monthlyIncome / requestedAmount`
+
+| `DebtBurdenFactor`
+| 25%
+| `existingLoanObligations / monthlyIncome`
+
+| `EmploymentStabilityFactor`
+| 20%
+| `employmentDurationMonths`, `employmentStatus`
+
+| `RepaymentHistoryFactor`
+| 15%
+| `missedPaymentsCount` (defaults to 0 — no history integration yet)
+
+| `LoanPurposeRiskFactor`
+| 10%
+| `loanPurpose` enum value
+|===
+
+Weights are configured in `application.yml` and must sum to 100. `ScoringWeightsProperties` validates this at startup and fails fast if the constraint is violated.
+
+[source,yaml]
+----
+los:
+  scoring:
+    weights:
+      income-ratio: 30
+      debt-burden: 25
+      employment-stability: 20
+      repayment-history: 15
+      loan-purpose-risk: 10
+----
+
+Factor thresholds (e.g. the income-ratio boundaries that determine full/partial/zero points) are also configurable under `los.scoring.weights.*` and read by each factor implementation via `ScoringWeightsProperties`.
+
+== Risk Categories
+
+[cols="2,1", options="header"]
+|===
+| Score range | Risk category
+
+| 80–100
+| `LOW`
+
+| 60–79
+| `MODERATE`
+
+| 40–59
+| `HIGH`
+
+| 0–39
+| `VERY_HIGH`
+|===
+
+The category is computed by `DefaultCreditScoringStrategy` after summing factor points and stored on the `CreditScore` entity alongside the numeric score and a per-factor breakdown.
+
+== Persistence
+
+The result is stored as a `CreditScore` entity with a one-to-one relationship to `LoanApplication`. It records the total score, risk category, scored timestamp, and the individual score awarded by each factor. The entity is immutable after creation.
+
+The per-factor breakdown is accessible via `GET /api/v1/loan-applications/{ref}/credit-score` (staff) or the equivalent customer endpoint. See link:../api/rest-api.adoc[REST API Reference].
+
+== Adding a Custom Factor
+
+1. Create a `@Component` class implementing `ScoringFactor`.
+2. Implement `score(ApplicantScoringProfile)`, `maxPoints()`, and `factorName()`.
+3. Add the new weight key to `application.yml` under `los.scoring.weights.*` and adjust existing weights so the total remains 100.
+
+`DefaultCreditScoringStrategy` discovers and uses the new factor automatically.
+
+== Not Yet Implemented
+
+`RepaymentHistoryFactor` currently defaults `missedPaymentsCount` to 0 for all applicants because the LOS has no integration with external payment history or credit bureau data.
+
+== Further Reading
+
+* link:loan-origination.adoc[Loan Origination Lifecycle] — when scoring fits into the full lifecycle
+* link:approval.adoc[Approval Workflow] — how staff use the score during review
+* link:../adr/ADR-003-pluggable-scoring.adoc[ADR-003] — design rationale for the pluggable interface
