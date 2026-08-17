@@ -22,7 +22,7 @@ spring:
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/los_db}
-    username: postgres
+    username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:sujan2003}
 
     hikari:
@@ -107,8 +107,9 @@ los:
     username: ${FINERACT_USERNAME:mifos}
     password: ${FINERACT_PASSWORD:password}
 
-    # Use the real Fineract instance
-    mock-enabled: false
+    # Use the mock adapter by default — set mock-enabled=false and provide
+    # FINERACT_BASE_URL/USERNAME/PASSWORD env vars when a real Fineract instance is available
+    mock-enabled: ${FINERACT_MOCK_ENABLED:true}
 
     connect-timeout-ms: 5000
     read-timeout-ms: 10000

@@ -34,10 +34,8 @@ import org.apache.fineract.los.dto.request.CreateLoanApplicationRequest;
 import org.apache.fineract.los.repository.ApprovalStageRepository;
 import org.apache.fineract.los.service.CreditScoringService;
 import org.apache.fineract.los.service.LoanApplicationService;
-import org.apache.fineract.los.validation.ValidApplicationRef;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -100,7 +98,7 @@ public class LoanApplicationController {
   @GetMapping("/{applicationRef}")
   public LoanApplicationResponse getByRef(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable @ValidApplicationRef final String applicationRef) {
+      @PathVariable final String applicationRef) {
 
     return LoanApplicationResponse.from(
         loanApplicationService.getApplicationOrThrow(applicationRef, tenantId));
@@ -110,7 +108,7 @@ public class LoanApplicationController {
   @GetMapping("/{applicationRef}/staff-detail")
   public StaffApplicationDetailResponse getStaffDetail(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable @ValidApplicationRef final String applicationRef) {
+      @PathVariable final String applicationRef) {                          // ← removed @ValidApplicationRef
 
     final LoanApplication app =
         loanApplicationService.getApplicationOrThrow(applicationRef, tenantId);
@@ -125,7 +123,7 @@ public class LoanApplicationController {
   @PostMapping("/{applicationRef}/submit")
   public LoanApplicationResponse submit(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable @ValidApplicationRef final String applicationRef) {
+      @PathVariable final String applicationRef) {
 
     return LoanApplicationResponse.from(loanApplicationService.submit(applicationRef, tenantId));
   }
@@ -135,10 +133,9 @@ public class LoanApplicationController {
           "Move a SUBMITTED or REFERRED application into review: -> UNDER_REVIEW, "
               + "triggers credit scoring")
   @PostMapping("/{applicationRef}/start-review")
-  @PreAuthorize("hasRole('STAFF')")
   public LoanApplicationResponse startReview(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable @ValidApplicationRef final String applicationRef) {
+      @PathVariable final String applicationRef) {
 
     return LoanApplicationResponse.from(
         loanApplicationService.moveToUnderReview(applicationRef, tenantId));
@@ -148,7 +145,7 @@ public class LoanApplicationController {
   @GetMapping("/{applicationRef}/credit-score")
   public CreditScoreResponse getCreditScore(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable @ValidApplicationRef final String applicationRef) {
+      @PathVariable final String applicationRef) {
 
     final LoanApplication application =
         loanApplicationService.getApplicationOrThrow(applicationRef, tenantId);
@@ -162,16 +159,5 @@ public class LoanApplicationController {
                     "No credit score computed yet for application ["
                         + applicationRef
                         + "] — call /start-review first."));
-  }
-
-  @Operation(
-      summary =
-          "Staff-only: retrieve full application detail including applicant profile, "
-              + "credit score, and complete approval history in a single response")
-  @GetMapping("/{applicationRef}/staff-detail")
-  public org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse getStaffDetail(
-      @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable final String applicationRef) {
-    return loanApplicationService.getStaffDetail(applicationRef, tenantId);
   }
 }

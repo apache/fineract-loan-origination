@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.los.infrastructure.fineract;
+package org.apache.fineract.los.config;
 
 import javax.net.ssl.*;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
