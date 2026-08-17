@@ -19,6 +19,8 @@ under the License.
 
 # Apache Fineract Loan Origination System
 
+> **⚠️ Warning:** This is a proof-of-concept implementation developed as part of GSoC 2026. It is not production-ready and should not be used in production environments without significant additional security hardening, testing, and compliance validation.
+
 A standalone loan origination service for Apache Fineract. Manages the complete pre-disbursement workflow from customer application through credit assessment, multi-stage approval, and loan creation in Fineract.
 
 The project was started in May 2026 as part of the Google Summer of Code (GSoC) program under [FINERACT-2442](https://issues.apache.org/jira/browse/FINERACT-2442). It has two components:
