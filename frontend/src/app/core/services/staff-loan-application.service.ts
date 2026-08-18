@@ -34,7 +34,7 @@ export class StaffLoanApplicationService {
 
   /** Build auth headers directly — belt-and-suspenders alongside the interceptor. */
   private authHeaders(): Record<string, string> {
-    const token    = this.staffAuth.getAuthHeader();
+    const token = this.staffAuth.getAuthHeader();
     const tenantId = this.staffAuth.getTenantId();
     return {
       ...(token ? { Authorization: token } : {}),
