@@ -42,6 +42,7 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
   private static final String CLAIM_CLIENT_ID = "clientId";
   private static final String CLAIM_TENANT_ID = "tenantId";
   private static final String CLAIM_CORRELATION_ID = "correlationId";
+  private static final String TENANT_HEADER = "X-Fineract-Platform-TenantId";
   private static final String CLAIM_ROLE = "role";
   private static final String CLAIM_USER_TYPE = "userType";
   private static final String USER_TYPE_STAFF = "STAFF";
@@ -68,12 +69,30 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
       final String username = claims.getSubject();
       final Number clientIdNum = claims.get(CLAIM_CLIENT_ID, Number.class);
       final Long clientId = clientIdNum != null ? clientIdNum.longValue() : null;
-      final String tenantId = claims.get(CLAIM_TENANT_ID, String.class);
+      final String jwtTenantId = claims.get(CLAIM_TENANT_ID, String.class);
       final String correlationId = claims.get(CLAIM_CORRELATION_ID, String.class);
+
+      // SECURITY: Validate JWT tenantId matches request header to prevent cross-tenant access
+      final String headerTenantId = httpRequest.getHeader(TENANT_HEADER);
+      if (jwtTenantId != null && headerTenantId != null && !jwtTenantId.equals(headerTenantId)) {
+        SecurityContextHolder.clearContext();
+        ((HttpServletResponse) response)
+            .sendError(
+                HttpServletResponse.SC_FORBIDDEN,
+                "Tenant mismatch: JWT tenant ["
+                    + jwtTenantId
+                    + "] does not match request header ["
+                    + headerTenantId
+                    + "]");
+        return;
+      }
       final String role = claims.get(CLAIM_ROLE, String.class);
       final String userType = claims.get(CLAIM_USER_TYPE, String.class);
 
       MDC.put("correlationId", correlationId);
+      if (jwtTenantId != null) {
+        MDC.put("tenantId", jwtTenantId);
+      }
 
       final UsernamePasswordAuthenticationToken authentication;
 
@@ -86,7 +105,7 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
       } else {
         // Customer JWT: use CustomerPrincipal which always carries ROLE_CUSTOMER
         final CustomerPrincipal principal =
-            new CustomerPrincipal(username, null, clientId, username);
+            new CustomerPrincipal(username, null, clientId, jwtTenantId, username);
         authentication =
             UsernamePasswordAuthenticationToken.authenticated(
                 principal, null, principal.getAuthorities());
@@ -101,6 +120,7 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
           .sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
     } finally {
       MDC.remove("correlationId");
+      MDC.remove("tenantId");
     }
   }
 }

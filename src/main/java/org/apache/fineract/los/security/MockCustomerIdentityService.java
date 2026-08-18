@@ -57,7 +57,7 @@ public class MockCustomerIdentityService implements UserDetailsService {
       throw new UsernameNotFoundException("No customer found: " + username);
     }
     return new CustomerPrincipal(
-        username, record.encodedPassword(), record.clientId(), record.displayName());
+        username, record.encodedPassword(), record.clientId(), "default", record.displayName());
   }
 
   private record CustomerRecord(String encodedPassword, Long clientId, String displayName) {}

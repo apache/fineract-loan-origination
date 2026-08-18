@@ -29,6 +29,7 @@ import org.apache.fineract.los.dto.request.ApprovalDecisionRequest;
 import org.apache.fineract.los.repository.ApprovalStageRepository;
 import org.apache.fineract.los.service.ApprovalWorkflowService;
 import org.apache.fineract.los.service.LoanApplicationService;
+import org.apache.fineract.los.validation.ValidApplicationRef;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -72,7 +73,7 @@ public class ApprovalController {
   @PreAuthorize("hasRole('STAFF')")
   public List<ApprovalStage> getHistory(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable final String applicationRef) {
+      @PathVariable @ValidApplicationRef final String applicationRef) {
 
     final LoanApplication application =
         loanApplicationService.getApplicationOrThrow(applicationRef, tenantId);
@@ -88,7 +89,7 @@ public class ApprovalController {
   @PreAuthorize("hasRole('STAFF')")
   public ResponseEntity<ApprovalStage> recordDecision(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable final String applicationRef,
+      @PathVariable @ValidApplicationRef final String applicationRef,
       @Valid @RequestBody final ApprovalDecisionRequest request,
       final Authentication authentication) {
 
