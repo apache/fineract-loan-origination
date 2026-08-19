@@ -129,6 +129,13 @@ public class LoanApplication {
   private Long fineractLoanId;
 
   /**
+   * The Fineract {@code clientId} of the applicant. Populated when the application is created. Used
+   * to link the LOS application to the Fineract client record.
+   */
+  @Column(name = "fineract_client_id")
+  private Long fineractClientId;
+
+  /**
    * Tenant identifier — maps to the institution using this LOS. Extracted from
    * X-Fineract-Platform-TenantId header. Every repository query MUST filter by this field.
    */

@@ -17,29 +17,8 @@
  * under the License.
  */
 
-package org.apache.fineract.los.security;
+-- Add fineract_client_id to loan_application table for linking to Fineract client records
+ALTER TABLE loan_application
+ADD COLUMN fineract_client_id BIGINT;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.Setter;
-
-/**
- * DTO for POST /v1/authentication response from Fineract.
- *
- * <p>{@code clientId} is present only when the app user is linked to a client record. Staff users
- * (e.g. mifos) will have a null clientId.
- *
- * <p>{@code permissions} contains the Fineract role names assigned to the user.
- */
-@Getter
-@Setter
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class FineractAuthResponse {
-  private String username;
-  private Long userId;
-  private Long clientId;
-  private String displayName;
-  private boolean authenticated;
-  private String base64EncodedAuthenticationKey;
-  private java.util.List<String> permissions;
-}
+COMMENT ON COLUMN loan_application.fineract_client_id IS 'The Fineract clientId of the applicant. Links LOS application to Fineract client record.';

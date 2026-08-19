@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.fineract.los.infrastructure.fineract.FineractAuthResponse;
+import org.apache.fineract.los.api.dto.response.FineractAuthResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -77,11 +77,15 @@ public class FineractCredentialValidationService {
 
     } catch (HttpClientErrorException.Unauthorized e) {
 
-      log.debug("Fineract rejected credentials for user: {}", username);
+      log.warn(
+          "Fineract rejected credentials for user: {} - Status: {}, Response: {}",
+          username,
+          e.getStatusCode(),
+          e.getResponseBodyAsString());
 
     } catch (Exception e) {
 
-      log.error("Fineract auth call failed", e);
+      log.error("Fineract auth call failed for user: {} - Error: {}", username, e.getMessage(), e);
     }
 
     return null;

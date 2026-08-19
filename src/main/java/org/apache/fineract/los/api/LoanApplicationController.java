@@ -26,6 +26,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.api.dto.response.CreditScoreResponse;
 import org.apache.fineract.los.api.dto.response.LoanApplicationResponse;
+import org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse;
 import org.apache.fineract.los.domain.LoanApplication;
 import org.apache.fineract.los.dto.request.CreateLoanApplicationRequest;
 import org.apache.fineract.los.service.CreditScoringService;
@@ -78,7 +79,16 @@ public class LoanApplicationController {
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId) {
 
     return loanApplicationService.getAllApplications(tenantId).stream()
-        .map(LoanApplicationResponse::from)
+        .map(
+            app -> {
+              try {
+                final String applicantName =
+                    loanApplicationService.getProfileOrThrow(app).getFullName();
+                return LoanApplicationResponse.from(app, applicantName);
+              } catch (Exception e) {
+                return LoanApplicationResponse.from(app);
+              }
+            })
         .toList();
   }
 
@@ -90,6 +100,15 @@ public class LoanApplicationController {
 
     return LoanApplicationResponse.from(
         loanApplicationService.getApplicationOrThrow(applicationRef, tenantId));
+  }
+
+  @Operation(summary = "Retrieve detailed loan application for staff view")
+  @GetMapping("/{applicationRef}/staff-detail")
+  public StaffApplicationDetailResponse getStaffDetail(
+      @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
+      @PathVariable @ValidApplicationRef final String applicationRef) {
+
+    return loanApplicationService.getStaffDetail(applicationRef, tenantId);
   }
 
   @Operation(summary = "Submit a DRAFT application: DRAFT -> SUBMITTED")
@@ -133,16 +152,5 @@ public class LoanApplicationController {
                     "No credit score computed yet for application ["
                         + applicationRef
                         + "] — call /start-review first."));
-  }
-
-  @Operation(
-      summary =
-          "Staff-only: retrieve full application detail including applicant profile, "
-              + "credit score, and complete approval history in a single response")
-  @GetMapping("/{applicationRef}/staff-detail")
-  public org.apache.fineract.los.api.dto.response.StaffApplicationDetailResponse getStaffDetail(
-      @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
-      @PathVariable final String applicationRef) {
-    return loanApplicationService.getStaffDetail(applicationRef, tenantId);
   }
 }

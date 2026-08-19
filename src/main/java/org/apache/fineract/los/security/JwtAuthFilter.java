@@ -27,12 +27,10 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @RequiredArgsConstructor
@@ -42,10 +40,9 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
   private static final String CLAIM_CLIENT_ID = "clientId";
   private static final String CLAIM_TENANT_ID = "tenantId";
   private static final String CLAIM_CORRELATION_ID = "correlationId";
-  private static final String TENANT_HEADER = "X-Fineract-Platform-TenantId";
-  private static final String CLAIM_ROLE = "role";
   private static final String CLAIM_USER_TYPE = "userType";
-  private static final String USER_TYPE_STAFF = "STAFF";
+  private static final String CLAIM_LOS_ROLE = "losRole";
+  private static final String TENANT_HEADER = "X-Fineract-Platform-TenantId";
 
   private final JwtService jwtService;
 
@@ -67,10 +64,9 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
       final Claims claims = jwtService.validateAndExtract(token);
 
       final String username = claims.getSubject();
-      final Number clientIdNum = claims.get(CLAIM_CLIENT_ID, Number.class);
-      final Long clientId = clientIdNum != null ? clientIdNum.longValue() : null;
       final String jwtTenantId = claims.get(CLAIM_TENANT_ID, String.class);
       final String correlationId = claims.get(CLAIM_CORRELATION_ID, String.class);
+      final String userType = claims.get(CLAIM_USER_TYPE, String.class);
 
       // SECURITY: Validate JWT tenantId matches request header to prevent cross-tenant access
       final String headerTenantId = httpRequest.getHeader(TENANT_HEADER);
@@ -86,29 +82,40 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
                     + "]");
         return;
       }
-      final String role = claims.get(CLAIM_ROLE, String.class);
-      final String userType = claims.get(CLAIM_USER_TYPE, String.class);
 
-      MDC.put("correlationId", correlationId);
+      // Add correlation and tenant to MDC for logging
+      if (correlationId != null) {
+        MDC.put("correlationId", correlationId);
+      }
       if (jwtTenantId != null) {
         MDC.put("tenantId", jwtTenantId);
       }
 
       final UsernamePasswordAuthenticationToken authentication;
 
-      if (USER_TYPE_STAFF.equals(userType)) {
-        // Staff JWT: build a simple token with the role from the claim (e.g. ROLE_ADMIN)
-        final String effectiveRole = role != null ? role : "ROLE_STAFF";
+      // Create appropriate principal based on user type
+      if ("STAFF".equals(userType)) {
+        // Staff user - extract LOS role
+        final String losRole = claims.get(CLAIM_LOS_ROLE, String.class);
+        final StaffPrincipal staffPrincipal = new StaffPrincipal(username, jwtTenantId, losRole);
         authentication =
             UsernamePasswordAuthenticationToken.authenticated(
-                username, null, List.of(new SimpleGrantedAuthority(effectiveRole)));
+                staffPrincipal, null, staffPrincipal.getAuthorities());
+        MDC.put("userType", "STAFF");
+        MDC.put("losRole", losRole != null ? losRole : "UNKNOWN");
       } else {
-        // Customer JWT: use CustomerPrincipal which always carries ROLE_CUSTOMER
-        final CustomerPrincipal principal =
+        // Customer user - extract client ID
+        final Number clientIdNum = claims.get(CLAIM_CLIENT_ID, Number.class);
+        final Long clientId = clientIdNum != null ? clientIdNum.longValue() : null;
+        final CustomerPrincipal customerPrincipal =
             new CustomerPrincipal(username, null, clientId, jwtTenantId, username);
         authentication =
             UsernamePasswordAuthenticationToken.authenticated(
-                principal, null, principal.getAuthorities());
+                customerPrincipal, null, customerPrincipal.getAuthorities());
+        MDC.put("userType", "CUSTOMER");
+        if (clientId != null) {
+          MDC.put("clientId", String.valueOf(clientId));
+        }
       }
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -121,6 +128,9 @@ public class JwtAuthFilter implements jakarta.servlet.Filter {
     } finally {
       MDC.remove("correlationId");
       MDC.remove("tenantId");
+      MDC.remove("userType");
+      MDC.remove("losRole");
+      MDC.remove("clientId");
     }
   }
 }

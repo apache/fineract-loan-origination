@@ -106,7 +106,12 @@ import { StaffApplicationSummary } from '../../../core/models/staff-application.
                     [attr.aria-label]="'Open ' + app.applicationRef"
                   >
                     <td class="ref-cell">{{ app.applicationRef }}</td>
-                    <td>—</td>
+                    <td>
+                      {{
+                        app.applicantName ??
+                          (app.fineractClientId ? 'Client #' + app.fineractClientId : '—')
+                      }}
+                    </td>
                     <td class="amount-cell">
                       {{ app.requestedAmount | number: '1.2-2' }} {{ app.currency }}
                     </td>
@@ -372,7 +377,7 @@ export class StaffDashboardComponent implements OnInit {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
-  readonly filter = signal<'all' | 'pending' | 'under_review'>('all');
+  readonly filter = signal<'all' | 'pending' | 'under_review'>('pending');
 
   private readonly apps = signal<StaffApplicationSummary[]>([]);
 

@@ -27,28 +27,22 @@ import lombok.Getter;
 import org.apache.fineract.los.domain.enums.LoanApplicationStatus;
 import org.apache.fineract.los.domain.enums.RiskCategory;
 
-/**
- * Rich application detail response for staff dashboards.
- *
- * <p>Combines data from {@code LoanApplication}, {@code ApplicantProfile}, {@code CreditScore}, and
- * {@code ApprovalStage} into a single response so the frontend makes one request per detail page
- * instead of four.
- */
+/** Detailed staff view of a loan application including applicant profile and approval history. */
 @Getter
 @Builder
 public class StaffApplicationDetailResponse {
 
-  // ---- Application core ----
+  // Application fields
   private final String applicationRef;
   private final LoanApplicationStatus status;
   private final BigDecimal requestedAmount;
   private final String currency;
   private final String loanPurpose;
   private final Integer tenorMonths;
-  private final LocalDateTime submittedAt; // createdAt of the application (first saved)
+  private final LocalDateTime submittedAt;
   private final LocalDateTime updatedAt;
 
-  // ---- Applicant ----
+  // Applicant fields
   private final String applicantName;
   private final String nationalId;
   private final Long fineractClientId;

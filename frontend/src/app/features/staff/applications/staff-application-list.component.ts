@@ -64,6 +64,7 @@ import { LoanApplicationStatus } from '../../../core/models/enums';
             <thead>
               <tr>
                 <th>Reference</th>
+                <th>Applicant</th>
                 <th>Amount</th>
                 <th>Currency</th>
                 <th>Purpose</th>
@@ -78,6 +79,12 @@ import { LoanApplicationStatus } from '../../../core/models/enums';
               @for (app of filteredApps(); track app.applicationRef) {
                 <tr class="app-row" (click)="openDetail(app.applicationRef)">
                   <td class="ref-cell">{{ app.applicationRef }}</td>
+                  <td>
+                    {{
+                      app.applicantName ??
+                        (app.fineractClientId ? 'Client #' + app.fineractClientId : '—')
+                    }}
+                  </td>
                   <td class="amount-cell">{{ app.requestedAmount | number: '1.2-2' }}</td>
                   <td>{{ app.currency }}</td>
                   <td>{{ app.loanPurpose ?? '—' }}</td>

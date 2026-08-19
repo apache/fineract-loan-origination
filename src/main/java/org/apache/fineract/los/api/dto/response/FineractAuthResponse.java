@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.fineract.los.infrastructure.fineract;
+package org.apache.fineract.los.api.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
@@ -30,21 +30,20 @@ public class FineractAuthResponse {
 
   private String username;
 
+  private Long clientId;
+
   private String base64EncodedAuthenticationKey;
 
   private boolean authenticated;
 
   /**
-   * Fineract role objects assigned to this user. Each role has an id, name (e.g. "loan_officer"),
-   * and description.
-   */
-  private List<FineractRole> roles;
-
-  /**
-   * Fineract raw permission codes (e.g. "CREATE_CLIENT"). These are action-level permissions, NOT
-   * role names — do not use for role mapping.
+   * Fineract returns permissions as an array of permission codes (strings), e.g. [ "CREATE_CLIENT",
+   * "READ_CLIENT", "FORCE_WITHDRAWAL_SAVINGSACCOUNT" ]
    */
   private List<String> permissions;
+
+  /** Fineract role objects assigned to the user. */
+  private List<FineractRole> roles;
 
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,6 +51,5 @@ public class FineractAuthResponse {
     private Long id;
     private String name;
     private String description;
-    private boolean disabled;
   }
 }
