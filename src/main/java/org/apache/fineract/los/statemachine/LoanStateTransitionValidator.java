@@ -45,7 +45,8 @@ import org.springframework.stereotype.Component;
  * UNDER_REVIEW → APPROVED
  * UNDER_REVIEW → REJECTED
  * UNDER_REVIEW → REFERRED
- * REFERRED     → UNDER_REVIEW
+ * REFERRED     → SUBMITTED (customer corrects and resubmits)
+ * REFERRED     → UNDER_REVIEW (staff starts review directly)
  * APPROVED     → DISBURSED
  * </pre>
  *
@@ -116,7 +117,9 @@ public class LoanStateTransitionValidator {
             LoanApplicationStatus.REJECTED,
             LoanApplicationStatus.REFERRED));
 
-    map.put(LoanApplicationStatus.REFERRED, EnumSet.of(LoanApplicationStatus.UNDER_REVIEW));
+    map.put(
+        LoanApplicationStatus.REFERRED,
+        EnumSet.of(LoanApplicationStatus.SUBMITTED, LoanApplicationStatus.UNDER_REVIEW));
 
     map.put(LoanApplicationStatus.APPROVED, EnumSet.of(LoanApplicationStatus.DISBURSED));
 

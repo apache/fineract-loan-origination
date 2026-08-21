@@ -34,6 +34,7 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.fineract.los.domain.enums.FineractIntegrationStatus;
 import org.apache.fineract.los.domain.enums.LoanApplicationStatus;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -122,8 +123,8 @@ public class LoanApplication {
 
   /**
    * The Fineract {@code loanId} returned by {@code POST /loans} once the disbursement bridge has
-   * successfully created the loan. Null until the application reaches DISBURSED. Immutable once set
-   * — this is the audit link between the external LOS record and the Fineract core loan.
+   * successfully created the loan. Null until loan creation succeeds. Immutable once set — this is
+   * the audit link between the external LOS record and the Fineract core loan.
    */
   @Column(name = "fineract_loan_id")
   private Long fineractLoanId;
@@ -134,6 +135,15 @@ public class LoanApplication {
    */
   @Column(name = "fineract_client_id")
   private Long fineractClientId;
+
+  /**
+   * Tracks the current state of Fineract integration to prevent duplicate operations and enable
+   * proper orchestration of the create→approve→disburse lifecycle. Stored as STRING for enum
+   * evolution safety.
+   */
+  @Enumerated(EnumType.STRING)
+  @Column(name = "fineract_integration_status", length = 30)
+  private FineractIntegrationStatus fineractIntegrationStatus;
 
   /**
    * Tenant identifier — maps to the institution using this LOS. Extracted from

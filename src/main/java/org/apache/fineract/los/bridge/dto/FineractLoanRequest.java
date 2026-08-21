@@ -24,52 +24,44 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * Exact payload structure expected by Fineract's {@code POST /fineract-provider/api/v1/loans}
- * endpoint.
+ * Generic request payload for Fineract loan command operations.
  *
- * <p>Field names match Fineract's JSON contract exactly — do not rename without verifying against
- * the Fineract API.
+ * <p>Used for approve and disburse commands. Field names match Fineract's JSON contract exactly.
  */
 @Getter
 @Builder
 public class FineractLoanRequest {
 
-  /** Fineract client ID for the borrower. */
-  private final Long clientId;
+  // ── Approval fields ──
 
-  /** Fineract loan product ID. */
-  private final Long productId;
+  /** Approval date. Format: dd MMMM yyyy. Required for approve command. */
+  private final String approvedOnDate;
 
-  /** Loan amount — matches LoanApplication.requestedAmount. */
-  private final BigDecimal principal;
+  /** Optional override of approved loan amount. */
+  private final BigDecimal approvedLoanAmount;
 
-  /** Repayment frequency — e.g. 12 for 12 months. */
-  private final Integer loanTermFrequency;
-
-  /** Repayment frequency type. 0=days, 1=weeks, 2=months, 3=years. */
-  private final Integer loanTermFrequencyType;
-
-  /** Loan type — "individual" or "group". */
-  private final String loanType;
-
-  /** Interest rate per period. */
-  private final BigDecimal interestRatePerPeriod;
-
-  /** Amortization type. 1=equal installments. */
-  private final Integer amortizationType;
-
-  /** Number of repayments. */
-  private final Integer numberOfRepayments;
-
-  /** Repayment every N periods. */
-  private final Integer repaymentEvery;
-
-  /** Expected disbursement date. Format: dd MMMM yyyy. */
+  /** Optional override of expected disbursement date during approval. */
   private final String expectedDisbursementDate;
 
-  /** Submission date. Format: dd MMMM yyyy. */
-  private final String submittedOnDate;
+  // ── Disbursement fields ──
 
-  /** Loan purpose ID in Fineract. Optional. */
-  private final Long loanPurposeId;
+  /** Actual disbursement date. Format: dd MMMM yyyy. Required for disburse command. */
+  private final String actualDisbursementDate;
+
+  /** Optional override of transaction amount during disbursement. */
+  private final BigDecimal transactionAmount;
+
+  /** Optional fixed EMI amount. */
+  private final BigDecimal fixedEmiAmount;
+
+  // ── Common fields ──
+
+  /** Locale for date formatting. */
+  private final String locale;
+
+  /** Date format pattern. */
+  private final String dateFormat;
+
+  /** Optional notes/comments. */
+  private final String note;
 }

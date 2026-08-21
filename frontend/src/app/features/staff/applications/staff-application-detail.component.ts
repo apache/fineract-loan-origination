@@ -141,7 +141,22 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
             </section>
 
             <!-- Credit score -->
-            @if (app.creditScore) {
+            @if (app.status === 'SUBMITTED') {
+              <section class="card">
+                <h2>Credit Score</h2>
+                <p class="muted">Not yet computed. Start review to trigger credit scoring.</p>
+                <button
+                  class="action-btn secondary"
+                  [disabled]="startingReview()"
+                  (click)="startReview()"
+                >
+                  {{ startingReview() ? 'Starting…' : 'Start Review' }}
+                </button>
+                @if (reviewError()) {
+                  <div class="error-banner small" role="alert">{{ reviewError() }}</div>
+                }
+              </section>
+            } @else if (app.creditScore) {
               <section class="card">
                 <h2>Credit Score</h2>
                 <div class="score-display">
@@ -175,21 +190,6 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
                     <dd>{{ app.creditScore.loanPurposeScore }}/10</dd>
                   </div>
                 </dl>
-              </section>
-            } @else if (app.status === 'SUBMITTED') {
-              <section class="card">
-                <h2>Credit Score</h2>
-                <p class="muted">Not yet computed. Start review to trigger credit scoring.</p>
-                <button
-                  class="action-btn secondary"
-                  [disabled]="startingReview()"
-                  (click)="startReview()"
-                >
-                  {{ startingReview() ? 'Starting…' : 'Start Review' }}
-                </button>
-                @if (reviewError()) {
-                  <div class="error-banner small" role="alert">{{ reviewError() }}</div>
-                }
               </section>
             }
           </div>
@@ -294,6 +294,111 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
                 </ol>
               }
             </section>
+
+            <!--Integration -->
+            @if (app.status === 'APPROVED' || app.fineractLoanId || app.fineractIntegrationStatus) {
+              <section class="card fineract-card">
+                <h2>Integration</h2>
+
+                <div class="fineract-status">
+                  @if (app.status === 'APPROVED' && !app.fineractIntegrationStatus) {
+                    <div class="integration-pending">
+                      <p class="status-text">
+                        Loan approved in LOS. Ready for disbursement.
+                      </p>
+                      @if (disburseError()) {
+                        <div class="error-banner small" role="alert">{{ disburseError() }}</div>
+                      }
+                      @if (disburseSuccess()) {
+                        <div class="success-banner" role="status">
+                          ✓ Disbursement successful — Fineract loan #{{ disburseSuccess() }} created, approved, and disbursed.
+                        </div>
+                      }
+                      <button
+                        class="disburse-btn"
+                        [disabled]="disbursing()"
+                        (click)="triggerDisbursement()"
+                      >
+                        @if (disbursing()) {
+                          Disbursing…
+                        } @else {
+                          Create &amp; Disburse Loan
+                        }
+                      </button>
+                    </div>
+                  } @else if (app.fineractIntegrationStatus) {
+                    <dl class="detail-list">
+                      @if (app.fineractLoanId) {
+                        <div>
+                          <dt>Fineract Loan ID</dt>
+                          <dd class="loan-id">#{{ app.fineractLoanId }}</dd>
+                        </div>
+                      }
+                      <div>
+                        <dt>Integration Status</dt>
+                        <dd>
+                          <span
+                            class="integration-badge"
+                            [class]="'status-' + app.fineractIntegrationStatus"
+                          >
+                            {{ formatIntegrationStatus(app.fineractIntegrationStatus) }}
+                          </span>
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div class="lifecycle-steps">
+                      <div
+                        class="step"
+                        [class.complete]="
+                          app.fineractIntegrationStatus === 'LOAN_CREATED' ||
+                          app.fineractIntegrationStatus === 'LOAN_APPROVED' ||
+                          app.fineractIntegrationStatus === 'LOAN_DISBURSED'
+                        "
+                      >
+                        <div class="step-icon">1</div>
+                        <span class="step-label">Loan Created</span>
+                      </div>
+                      <div class="step-arrow">→</div>
+                      <div
+                        class="step"
+                        [class.complete]="
+                          app.fineractIntegrationStatus === 'LOAN_APPROVED' ||
+                          app.fineractIntegrationStatus === 'LOAN_DISBURSED'
+                        "
+                      >
+                        <div class="step-icon">2</div>
+                        <span class="step-label">Loan Approved</span>
+                      </div>
+                      <div class="step-arrow">→</div>
+                      <div
+                        class="step"
+                        [class.complete]="app.fineractIntegrationStatus === 'LOAN_DISBURSED'"
+                      >
+                        <div class="step-icon">3</div>
+                        <span class="step-label">Funds Disbursed</span>
+                      </div>
+                    </div>
+
+                    @if (app.fineractIntegrationStatus === 'FAILED') {
+                      <div class="error-banner small">
+                        Fineract integration failed. Retry below.
+                      </div>
+                      @if (disburseError()) {
+                        <div class="error-banner small" role="alert">{{ disburseError() }}</div>
+                      }
+                      <button
+                        class="retry-btn"
+                        [disabled]="disbursing()"
+                        (click)="triggerDisbursement()"
+                      >
+                        {{ disbursing() ? 'Retrying…' : 'Retry Disbursement' }}
+                      </button>
+                    }
+                  }
+                </div>
+              </section>
+            }
           </div>
         </div>
       }
@@ -753,6 +858,152 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
         color: var(--color-text-muted);
         font-size: 0.875rem;
       }
+
+      /* Fineract Integration */
+      .fineract-card {
+        border: 2px solid #3b82f6;
+      }
+
+      .integration-pending {
+        text-align: center;
+        padding: 1rem 0;
+      }
+
+      .status-text {
+        font-size: 0.9rem;
+        color: var(--color-text);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .status-icon {
+        font-size: 1.2rem;
+      }
+
+      .disburse-btn,
+      .retry-btn {
+        background: #3b82f6;
+        color: #fff;
+        border: none;
+        padding: 0.6rem 1.25rem;
+        border-radius: var(--radius);
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .disburse-btn:hover,
+      .retry-btn:hover {
+        background: #2563eb;
+      }
+
+      .disburse-btn:disabled,
+      .retry-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .retry-btn {
+        width: 100%;
+        margin-top: 0.75rem;
+      }
+
+      .integration-badge {
+        display: inline-block;
+        padding: 0.22rem 0.65rem;
+        border-radius: 99px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .status-LOAN_CREATED {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .status-LOAN_APPROVED {
+        background: #fef3c7;
+        color: #b45309;
+      }
+      .status-LOAN_DISBURSED {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .status-FAILED {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+
+      .loan-id {
+        font-family: 'Monaco', 'Courier New', monospace;
+        color: #3b82f6;
+        font-weight: 600;
+      }
+
+      .lifecycle-steps {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: var(--color-bg);
+        border-radius: 8px;
+      }
+
+      .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        opacity: 0.4;
+        transition: opacity 0.2s;
+      }
+
+      .step.complete {
+        opacity: 1;
+      }
+
+      .step-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--color-border);
+        color: var(--color-text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        transition: all 0.2s;
+      }
+
+      .step.complete .step-icon {
+        background: #3b82f6;
+        color: #fff;
+      }
+
+      .step-label {
+        font-size: 0.72rem;
+        color: var(--color-text-muted);
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .step.complete .step-label {
+        color: var(--color-text);
+        font-weight: 600;
+      }
+
+      .step-arrow {
+        color: var(--color-border);
+        font-size: 1.2rem;
+        padding: 0 0.25rem;
+      }
     `,
   ],
 })
@@ -771,6 +1022,9 @@ export class StaffApplicationDetailComponent implements OnInit {
   readonly decisionSuccess = signal(false);
   readonly commentsError = signal(false);
   readonly selectedDecision = signal<ApprovalDecisionType | null>(null);
+  readonly disbursing = signal(false);
+  readonly disburseError = signal<string | null>(null);
+  readonly disburseSuccess = signal<number | null>(null);
 
   app: StaffApplicationDetail | null = null;
   comments = '';
@@ -787,18 +1041,55 @@ export class StaffApplicationDetailComponent implements OnInit {
     return this.losRole.replace('ROLE_', '');
   }
 
-  /** True when the application is UNDER_REVIEW and this user hasn't decided yet */
+  /** True when the application is UNDER_REVIEW, it is this user's stage, and they haven't decided yet in the current cycle */
   get canDecide(): boolean {
     if (!this.app || this.app.status !== 'UNDER_REVIEW') return false;
+    // Check that the application's current stage matches this user's role
+    if (this.app.currentApprovalStage && this.app.currentApprovalStage !== this.currentStage) {
+      return false;
+    }
     const username = this.staffAuth.getProfile()?.username;
-    const alreadyDecided = this.app.approvalStages.some(
-      (s) => s.decidedBy === username && s.decision != null,
+    // Block only if officer has a non-REFER decision at the current stage.
+    // A REFER decision means they sent it back — after resubmission they can decide again.
+    const decidedInCurrentCycle = this.app.approvalStages.some(
+      (s) =>
+        s.decidedBy === username &&
+        s.stage === this.currentStage &&
+        s.decision != null &&
+        s.decision !== 'REFER',
     );
-    return !alreadyDecided;
+    return !decidedInCurrentCycle;
   }
 
   stageName(stage: string): string {
     return stage.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  formatIntegrationStatus(status: string): string {
+    return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  triggerDisbursement(): void {
+    if (!this.app || this.disbursing()) return;
+    this.disbursing.set(true);
+    this.disburseError.set(null);
+    this.disburseSuccess.set(null);
+    this.staffSvc
+      .disburse(this.app.applicationRef)
+      .pipe(finalize(() => this.disbursing.set(false)))
+      .subscribe({
+        next: (res) => {
+          this.disburseSuccess.set(res.loanId);
+          this.loadDetail(this.app!.applicationRef);
+        },
+        error: (err) => {
+          const msg =
+            err?.error?.message ??
+            err?.message ??
+            'Disbursement failed. Please check the Fineract connection and retry.';
+          this.disburseError.set(msg);
+        },
+      });
   }
 
   ngOnInit(): void {

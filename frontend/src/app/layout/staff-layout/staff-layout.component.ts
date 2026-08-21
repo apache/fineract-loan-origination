@@ -198,8 +198,9 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
         display: flex;
         flex-direction: column;
         padding: 1.25rem 0;
-        transition: width 0.2s ease;
+        transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         overflow: hidden;
+        position: relative;
 
         &.collapsed {
           width: 64px;
@@ -222,7 +223,12 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
               right: -11px;
               top: 0;
               background: var(--color-surface);
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
+          }
+
+          .role-pill {
+            display: none;
           }
 
           .nav {
@@ -236,9 +242,17 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
             gap: 0;
           }
 
+          .nav-label {
+            display: none;
+          }
+
           .sidebar-footer {
             padding: 1rem 0.75rem 0;
             align-items: center;
+          }
+
+          .profile-chip {
+            display: none;
           }
 
           .logout-button {
@@ -246,6 +260,10 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
             height: 40px;
             justify-content: center;
             padding: 0;
+
+            span {
+              display: none;
+            }
           }
         }
       }
@@ -273,6 +291,11 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
         color: var(--color-text);
         white-space: nowrap;
         overflow: hidden;
+        transition: opacity 0.15s ease;
+      }
+
+      .collapsed .brand-name {
+        opacity: 0;
       }
 
       .collapse-toggle {
@@ -370,6 +393,12 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        transition: opacity 0.15s ease;
+      }
+
+      .collapsed .nav-label {
+        opacity: 0;
+        width: 0;
       }
 
       /* ── Footer ── */
@@ -385,6 +414,13 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
       .profile-chip {
         display: flex;
         flex-direction: column;
+        transition: opacity 0.15s ease;
+      }
+
+      .collapsed .profile-chip {
+        opacity: 0;
+        height: 0;
+        overflow: hidden;
       }
 
       .profile-name {
@@ -412,11 +448,22 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
         color: var(--color-text-muted);
         font: inherit;
         font-size: 0.88rem;
+        transition: all 0.2s ease;
 
         &:hover {
           border-color: var(--color-primary);
           color: var(--color-primary-dark);
         }
+
+        span {
+          transition: opacity 0.15s ease;
+        }
+      }
+
+      .collapsed .logout-button span {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
       }
 
       /* ── Tooltips (match customer sidebar exactly) ── */
@@ -452,12 +499,31 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
         flex: 1;
         padding: 2rem;
         overflow-y: auto;
+        transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       @media (max-width: 768px) {
         .sidebar {
           width: 64px;
+
+          .brand-name,
+          .role-pill,
+          .nav-label,
+          .profile-chip,
+          .logout-button span {
+            display: none;
+          }
+
+          .nav-item,
+          .logout-button {
+            justify-content: center;
+          }
+
+          .collapse-toggle {
+            display: none; /* Hide toggle on mobile - sidebar always collapsed */
+          }
         }
+
         .content {
           padding: 1rem;
         }

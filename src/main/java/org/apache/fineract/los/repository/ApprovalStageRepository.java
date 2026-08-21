@@ -85,6 +85,22 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
       LoanApplication application, ApprovalDecision decision);
 
   /**
+   * Checks whether an approval stage exists for a specific officer on a specific application
+   * at a specific stage name.
+   *
+   * <p>Used to prevent the same officer from deciding twice on the same stage in the same
+   * review cycle — while allowing them to act again after a referral resubmission at a
+   * different cycle.
+   *
+   * @param application the parent loan application
+   * @param assignedOfficer officer identifier
+   * @param stageName the workflow stage name
+   * @return true if this officer has already decided at this stage
+   */
+  boolean existsByApplicationAndAssignedOfficerAndStageName(
+      LoanApplication application, String assignedOfficer, String stageName);
+
+  /**
    * Checks whether an approval stage exists for a specific officer on a specific application.
    *
    * <p>Used to prevent the same officer from approving multiple stages of the same application —

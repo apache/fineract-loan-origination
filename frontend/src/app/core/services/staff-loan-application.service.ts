@@ -74,4 +74,17 @@ export class StaffLoanApplicationService {
       { headers: this.authHeaders() },
     );
   }
+
+  /**
+   * POST /api/v1/loan-applications/{ref}/disburse
+   * Triggers the full Fineract lifecycle: create → approve → disburse.
+   * Returns the Fineract loan ID on success.
+   */
+  disburse(applicationRef: string): Observable<{ loanId: number }> {
+    return this.http.post<{ loanId: number }>(
+      `${environment.losApiUrl}/loan-applications/${applicationRef}/disburse`,
+      {},
+      { headers: this.authHeaders() },
+    );
+  }
 }

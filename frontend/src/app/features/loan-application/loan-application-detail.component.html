@@ -53,6 +53,34 @@
     </section>
   }
 
+  @if (application()!.status === 'REFERRED') {
+    <section class="referral-notice">
+      <h2 class="referral-title">⚠️ Changes Required</h2>
+      <p class="referral-explanation">
+        Your application has been referred back by our
+        <strong>{{ formatStageName(application()!.referralStage) }}</strong> for corrections or
+        additional information.
+      </p>
+
+      @if (application()!.referralComments) {
+        <div class="referral-comments">
+          <h3>Staff Comments:</h3>
+          <p class="comments-text">{{ application()!.referralComments }}</p>
+        </div>
+      }
+
+      <div class="referral-actions">
+        <p class="referral-help">Please make the necessary corrections and resubmit.</p>
+        <button class="resubmit-button" (click)="submitApplication()" [disabled]="actionInFlight()">
+          {{ actionInFlight() ? 'Resubmitting…' : 'Resubmit Application' }}
+        </button>
+        @if (actionError()) {
+          <p class="error">{{ actionError() }}</p>
+        }
+      </div>
+    </section>
+  }
+
   @if (
     application()!.status === 'UNDER_REVIEW' ||
     application()!.status === 'APPROVED' ||
@@ -83,7 +111,7 @@
     </section>
   }
 
-  @if (application()!.status === 'SUBMITTED' || application()!.status === 'REFERRED') {
+  @if (application()!.status === 'SUBMITTED') {
     <p class="note">
       This application is awaiting review — we'll update the status here once it moves forward.
     </p>

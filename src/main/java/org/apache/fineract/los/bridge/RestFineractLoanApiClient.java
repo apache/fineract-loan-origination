@@ -21,17 +21,28 @@ package org.apache.fineract.los.bridge;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import javax.net.ssl.SSLContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateRequest;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateResponse;
+import org.apache.fineract.los.bridge.dto.FineractLoanRequest;
+import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 /**
- * Real {@link FineractLoanApiClient} implementation — calls Apache Fineract's POST /loans endpoint.
+ * Real {@link FineractLoanApiClient} implementation — calls Apache Fineract's loan API endpoints.
+ * Uses a trust-all SSL context to support Fineract's self-signed certificate in development.
  */
 @Slf4j
 @Component
@@ -46,15 +57,40 @@ public class RestFineractLoanApiClient implements FineractLoanApiClient {
 
     this.restClient =
         RestClient.builder()
-            .baseUrl(properties.getBaseUrl())
+            .baseUrl(properties.getBaseUrl() + "/fineract-provider/api/v1")
+            .requestFactory(trustAllRequestFactory())
             .defaultHeader(HttpHeaders.AUTHORIZATION, basicAuthHeader(properties))
             .defaultHeader("X-Fineract-Platform-TenantId", properties.getTenantId())
             .build();
 
     log.info(
-        "RestFineractLoanApiClient initialised against baseUrl={} tenantId={}",
+        "RestFineractLoanApiClient initialised against baseUrl={}/fineract-provider/api/v1 tenantId={}",
         properties.getBaseUrl(),
         properties.getTenantId());
+  }
+
+  /** Trust-all SSL factory — mirrors FineractRestTemplateConfig for self-signed dev certs. */
+  private static HttpComponentsClientHttpRequestFactory trustAllRequestFactory() {
+    try {
+      final SSLContext sslContext =
+          SSLContextBuilder.create().loadTrustMaterial((chain, authType) -> true).build();
+
+      final SSLConnectionSocketFactory sslSocketFactory =
+          new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+
+      final CloseableHttpClient httpClient =
+          HttpClients.custom()
+              .setConnectionManager(
+                  PoolingHttpClientConnectionManagerBuilder.create()
+                      .setSSLSocketFactory(sslSocketFactory)
+                      .build())
+              .build();
+
+      return new HttpComponentsClientHttpRequestFactory(httpClient);
+    } catch (Exception ex) {
+      throw new IllegalStateException(
+          "Failed to create trust-all SSL context for Fineract RestClient", ex);
+    }
   }
 
   @Override
@@ -69,11 +105,54 @@ public class RestFineractLoanApiClient implements FineractLoanApiClient {
       return restClient
           .post()
           .uri("/loans")
+          .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
           .body(request)
           .retrieve()
           .body(FineractLoanCreateResponse.class);
     } catch (RestClientException ex) {
       log.error("Failed to call Fineract POST /loans", ex);
+      throw ex;
+    }
+  }
+
+  @Override
+  public FineractLoanResponse approveLoan(final Long loanId, final FineractLoanRequest request) {
+    log.info(
+        "Calling Fineract POST /loans/{}?command=approve: approvedOnDate={}",
+        loanId,
+        request.getApprovedOnDate());
+
+    try {
+      return restClient
+          .post()
+          .uri("/loans/{loanId}?command=approve", loanId)
+          .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+          .body(request)
+          .retrieve()
+          .body(FineractLoanResponse.class);
+    } catch (RestClientException ex) {
+      log.error("Failed to call Fineract POST /loans/{}?command=approve", loanId, ex);
+      throw ex;
+    }
+  }
+
+  @Override
+  public FineractLoanResponse disburseLoan(final Long loanId, final FineractLoanRequest request) {
+    log.info(
+        "Calling Fineract POST /loans/{}?command=disburse: actualDisbursementDate={}",
+        loanId,
+        request.getActualDisbursementDate());
+
+    try {
+      return restClient
+          .post()
+          .uri("/loans/{loanId}?command=disburse", loanId)
+          .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+          .body(request)
+          .retrieve()
+          .body(FineractLoanResponse.class);
+    } catch (RestClientException ex) {
+      log.error("Failed to call Fineract POST /loans/{}?command=disburse", loanId, ex);
       throw ex;
     }
   }

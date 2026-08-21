@@ -114,7 +114,7 @@ los:
     connect-timeout-ms: 5000
     read-timeout-ms: 10000
 
-    default-transaction-processing-strategy-code: "1"
+    default-transaction-processing-strategy-code: "mifos-standard-strategy"
     default-frequency-type: "2"
     default-repayment-every: 1
     default-interest-rate-per-period: "12"

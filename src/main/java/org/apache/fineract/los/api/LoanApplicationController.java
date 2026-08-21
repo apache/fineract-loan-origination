@@ -61,6 +61,7 @@ public class LoanApplicationController {
 
   private final LoanApplicationService loanApplicationService;
   private final CreditScoringService creditScoringService;
+  private final org.apache.fineract.los.service.ApprovalWorkflowService approvalWorkflowService;
 
   @Operation(summary = "Create a new loan application in DRAFT status")
   @PostMapping
@@ -84,7 +85,8 @@ public class LoanApplicationController {
               try {
                 final String applicantName =
                     loanApplicationService.getProfileOrThrow(app).getFullName();
-                return LoanApplicationResponse.from(app, applicantName);
+                final String currentStage = approvalWorkflowService.getCurrentStageOrNull(app);
+                return LoanApplicationResponse.from(app, applicantName, null, null, currentStage);
               } catch (Exception e) {
                 return LoanApplicationResponse.from(app);
               }

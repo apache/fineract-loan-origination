@@ -49,8 +49,8 @@ public class FineractLoanCreateRequest {
   /** Loan term expressed in {@link #loanTermFrequencyType} units. */
   private final Integer loanTermFrequency;
 
-  /** Fineract enum code for the loan term unit, e.g. "2" = Months. */
-  private final String loanTermFrequencyType;
+  /** Fineract enum code for the loan term unit. 2 = Months. */
+  private final Integer loanTermFrequencyType;
 
   /** Total number of repayment installments. */
   private final Integer numberOfRepayments;
@@ -58,11 +58,20 @@ public class FineractLoanCreateRequest {
   /** Number of {@link #repaymentFrequencyType} units between each repayment. */
   private final Integer repaymentEvery;
 
-  /** Fineract enum code for the repayment frequency unit, e.g. "2" = Months. */
-  private final String repaymentFrequencyType;
+  /** Fineract enum code for the repayment frequency unit. 2 = Months. */
+  private final Integer repaymentFrequencyType;
 
   /** Nominal interest rate per repayment period. */
-  private final String interestRatePerPeriod;
+  private final BigDecimal interestRatePerPeriod;
+
+  /** Fineract enum code for amortization type. 1=Equal installments, 0=Equal principal payments. */
+  private final Integer amortizationType;
+
+  /** Fineract enum code for interest type. 0=Declining Balance, 1=Flat. */
+  private final Integer interestType;
+
+  /** Fineract enum code for interest calculation period. 0=Daily, 1=Same as repayment period. */
+  private final Integer interestCalculationPeriodType;
 
   /** Fineract enum code identifying the repayment schedule processing strategy. */
   private final String transactionProcessingStrategyCode;

@@ -67,13 +67,13 @@ import { StaffApplicationSummary } from '../../../core/models/staff-application.
           <div class="filter-tabs">
             <button [class.active]="filter() === 'all'" (click)="filter.set('all')">All</button>
             <button [class.active]="filter() === 'pending'" (click)="filter.set('pending')">
-              Pending my stage
+              My Stage
             </button>
             <button
               [class.active]="filter() === 'under_review'"
               (click)="filter.set('under_review')"
             >
-              Under Review
+              All Under Review
             </button>
           </div>
         </div>
@@ -387,6 +387,9 @@ export class StaffDashboardComponent implements OnInit {
   get displayRole(): string {
     return this.staffAuth.getProfile()?.displayRole ?? 'Staff';
   }
+  get losRole(): string {
+    return this.staffAuth.getProfile()?.losRole ?? '';
+  }
   get total(): number {
     return this.apps().length;
   }
@@ -397,15 +400,28 @@ export class StaffDashboardComponent implements OnInit {
     return this.apps().filter((a) => a.status === 'REJECTED').length;
   }
   get pending(): number {
-    return this.apps().filter((a) => a.status === 'UNDER_REVIEW').length;
+    const myStage = this.losRole;
+    return this.apps().filter(
+      (a) =>
+        (a.status === 'UNDER_REVIEW' && a.currentApprovalStage === myStage) ||
+        a.status === 'SUBMITTED',
+    ).length;
   }
 
   filteredApps(): StaffApplicationSummary[] {
     const all = this.apps();
+    const myStage = this.losRole;
+
     switch (this.filter()) {
       case 'pending':
-        return all.filter((a) => a.status === 'UNDER_REVIEW');
+        // Show apps at MY stage (UNDER_REVIEW) + SUBMITTED apps waiting for Start Review
+        return all.filter(
+          (a) =>
+            (a.status === 'UNDER_REVIEW' && a.currentApprovalStage === myStage) ||
+            a.status === 'SUBMITTED',
+        );
       case 'under_review':
+        // Show all under review regardless of stage
         return all.filter((a) => a.status === 'UNDER_REVIEW');
       default:
         return all;

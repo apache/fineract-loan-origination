@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, throwError, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -24,7 +24,7 @@ import { CreateLoanApplicationRequest, LoanApplication } from '../models';
 import { AuthService } from './auth.service';
 
 const BASE_URL = `${environment.losApiUrl}/customer/loan-applications`;
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 8000;
 
 @Injectable({ providedIn: 'root' })
 export class CustomerLoanApplicationService {
@@ -40,11 +40,23 @@ export class CustomerLoanApplicationService {
     };
   }
 
+  private handleError(fallbackMessage: string) {
+    return (err: unknown): Observable<never> => {
+      if (err instanceof HttpErrorResponse) {
+        // Preserve the HttpErrorResponse so callers can inspect err.status
+        return throwError(() => err);
+      }
+      // Timeout or other non-HTTP error — wrap with status 0 so callers can detect it
+      const wrapped = new HttpErrorResponse({ status: 0, statusText: fallbackMessage });
+      return throwError(() => wrapped);
+    };
+  }
+
   /** POST /api/v1/customer/loan-applications */
   create(request: CreateLoanApplicationRequest): Observable<LoanApplication> {
     return this.http.post<LoanApplication>(BASE_URL, request, { headers: this.authHeaders() }).pipe(
       timeout(REQUEST_TIMEOUT_MS),
-      catchError(() => throwError(() => new Error('Could not create your application.'))),
+      catchError(this.handleError('Could not create your application.')),
     );
   }
 
@@ -52,7 +64,7 @@ export class CustomerLoanApplicationService {
   myApplications(): Observable<LoanApplication[]> {
     return this.http.get<LoanApplication[]>(BASE_URL, { headers: this.authHeaders() }).pipe(
       timeout(REQUEST_TIMEOUT_MS),
-      catchError(() => throwError(() => new Error('Could not load your applications.'))),
+      catchError(this.handleError('Could not load your applications.')),
     );
   }
 
@@ -62,7 +74,7 @@ export class CustomerLoanApplicationService {
       .get<LoanApplication>(`${BASE_URL}/${applicationRef}`, { headers: this.authHeaders() })
       .pipe(
         timeout(REQUEST_TIMEOUT_MS),
-        catchError(() => throwError(() => new Error('Could not load this application.'))),
+        catchError(this.handleError('Could not load this application.')),
       );
   }
 
@@ -76,7 +88,7 @@ export class CustomerLoanApplicationService {
       )
       .pipe(
         timeout(REQUEST_TIMEOUT_MS),
-        catchError(() => throwError(() => new Error('Could not submit your application.'))),
+        catchError(this.handleError('Could not submit your application.')),
       );
   }
 }

@@ -61,6 +61,7 @@ public class CustomerLoanApplicationController {
 
   private final LoanApplicationService loanApplicationService;
   private final CreditScoringService creditScoringService;
+  private final org.apache.fineract.los.repository.ApprovalStageRepository approvalStageRepository;
 
   /** Creates a new application, forcing the applicant's clientId to the caller's own identity. */
   @PostMapping
@@ -86,7 +87,7 @@ public class CustomerLoanApplicationController {
     return loanApplicationService
         .getApplicationsForFineractClient(principal.getClientId(), tenantId)
         .stream()
-        .map(LoanApplicationResponse::from)
+        .map(this::buildResponse)
         .toList();
   }
 
@@ -102,10 +103,10 @@ public class CustomerLoanApplicationController {
 
     assertOwnedByCaller(application, principal);
 
-    return LoanApplicationResponse.from(application);
+    return buildResponse(application);
   }
 
-  /** Submits the caller's own DRAFT application: DRAFT -> SUBMITTED. */
+  /** Submits the caller's own DRAFT or REFERRED application: DRAFT/REFERRED -> SUBMITTED. */
   @PostMapping("/{applicationRef}/submit")
   public LoanApplicationResponse submit(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
@@ -117,7 +118,7 @@ public class CustomerLoanApplicationController {
 
     assertOwnedByCaller(application, principal);
 
-    return LoanApplicationResponse.from(loanApplicationService.submit(applicationRef, tenantId));
+    return buildResponse(loanApplicationService.submit(applicationRef, tenantId));
   }
 
   @GetMapping("/{applicationRef}/credit-score")
@@ -147,5 +148,33 @@ public class CustomerLoanApplicationController {
     if (!ownerClientId.equals(principal.getClientId())) {
       throw new AccessDeniedException("Application does not belong to this customer");
     }
+  }
+
+  /**
+   * Builds customer-facing response with referral information if applicable.
+   *
+   * <p>If the application is REFERRED, fetches the most recent REFER decision and includes staff
+   * comments and stage name so the customer understands what needs to be corrected.
+   */
+  private LoanApplicationResponse buildResponse(final LoanApplication application) {
+    if (application.getStatus()
+        != org.apache.fineract.los.domain.enums.LoanApplicationStatus.REFERRED) {
+      return LoanApplicationResponse.from(application);
+    }
+
+    // Fetch most recent REFER decision
+    final var referralStage =
+        approvalStageRepository.findAllByApplicationOrderByCreatedAtAsc(application).stream()
+            .filter(
+                s -> s.getDecision() == org.apache.fineract.los.domain.enums.ApprovalDecision.REFER)
+            .reduce((first, second) -> second); // Get last REFER
+
+    if (referralStage.isEmpty()) {
+      return LoanApplicationResponse.from(application);
+    }
+
+    final var stage = referralStage.get();
+    return LoanApplicationResponse.from(
+        application, null, stage.getComments(), stage.getStageName());
   }
 }
