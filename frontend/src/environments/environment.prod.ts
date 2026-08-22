@@ -17,7 +17,10 @@
  * under the License.
  */
 export const environment = {
-  production: false,
-  apiBaseUrl: 'http://localhost:8082/api/v1',
+  production: true,
+  // In production, the LOS backend MUST be served over HTTPS.
+  // Replace these placeholders with the actual deployed API origin.
+  apiBaseUrl: 'https://localhost:8082/api/v1',
+  losApiUrl: 'https://localhost:8082/api/v1',
   tenantId: 'default',
 };

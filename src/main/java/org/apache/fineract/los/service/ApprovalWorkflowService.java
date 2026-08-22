@@ -257,9 +257,7 @@ public class ApprovalWorkflowService {
   }
 
   private void validateNoDuplicateOfficerDecision(
-      final LoanApplication application,
-      final String assignedOfficer,
-      final String currentStage) {
+      final LoanApplication application, final String assignedOfficer, final String currentStage) {
     // Block if this officer already has a non-REFER decision at the current stage.
     // A REFER decision does not count — it means the application was sent back to the customer,
     // and after resubmission the same officer must review it again at the same stage.

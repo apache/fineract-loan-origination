@@ -115,7 +115,7 @@ import { StaffApplicationSummary } from '../../../core/models/staff-application.
                     <td class="amount-cell">
                       {{ app.requestedAmount | number: '1.2-2' }} {{ app.currency }}
                     </td>
-                    <td>{{ app.loanPurpose ?? '—' }}</td>
+                    <td>{{ app.loanPurpose }}</td>
                     <td>
                       <span class="status-badge" [class]="statusClass(app.status)">{{
                         app.status

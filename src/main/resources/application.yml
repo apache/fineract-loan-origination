@@ -107,7 +107,8 @@ los:
     username: ${FINERACT_USERNAME:mifos}
     password: ${FINERACT_PASSWORD:password}
 
-    # Use the mock adapter by default — set mock-enabled=false and provide
+    # Use the mock adapter by default 
+    #set mock-enabled=false and provide
     # FINERACT_BASE_URL/USERNAME/PASSWORD env vars when a real Fineract instance is available
     mock-enabled: ${FINERACT_MOCK_ENABLED:true}
 

@@ -54,18 +54,22 @@ export class CustomerLoanApplicationService {
 
   /** POST /api/v1/customer/loan-applications */
   create(request: CreateLoanApplicationRequest): Observable<LoanApplication> {
-    return this.http.post<LoanApplication>(BASE_URL, request, { headers: this.authHeaders() }).pipe(
-      timeout(REQUEST_TIMEOUT_MS),
-      catchError(this.handleError('Could not create your application.')),
-    );
+    return this.http
+      .post<LoanApplication>(BASE_URL, request, { headers: this.authHeaders() })
+      .pipe(
+        timeout(REQUEST_TIMEOUT_MS),
+        catchError(this.handleError('Could not create your application.')),
+      );
   }
 
   /** GET /api/v1/customer/loan-applications */
   myApplications(): Observable<LoanApplication[]> {
-    return this.http.get<LoanApplication[]>(BASE_URL, { headers: this.authHeaders() }).pipe(
-      timeout(REQUEST_TIMEOUT_MS),
-      catchError(this.handleError('Could not load your applications.')),
-    );
+    return this.http
+      .get<LoanApplication[]>(BASE_URL, { headers: this.authHeaders() })
+      .pipe(
+        timeout(REQUEST_TIMEOUT_MS),
+        catchError(this.handleError('Could not load your applications.')),
+      );
   }
 
   /** GET /api/v1/customer/loan-applications/{applicationRef} */

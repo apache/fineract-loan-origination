@@ -61,7 +61,7 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
                 </div>
                 <div>
                   <dt>Purpose</dt>
-                  <dd>{{ app.loanPurpose ?? '—' }}</dd>
+                  <dd>{{ app.loanPurpose }}</dd>
                 </div>
                 <div>
                   <dt>Tenor</dt>
@@ -303,15 +303,14 @@ import { ApprovalDecisionType } from '../../../core/models/enums';
                 <div class="fineract-status">
                   @if (app.status === 'APPROVED' && !app.fineractIntegrationStatus) {
                     <div class="integration-pending">
-                      <p class="status-text">
-                        Loan approved in LOS. Ready for disbursement.
-                      </p>
+                      <p class="status-text">Loan approved in LOS. Ready for disbursement.</p>
                       @if (disburseError()) {
                         <div class="error-banner small" role="alert">{{ disburseError() }}</div>
                       }
                       @if (disburseSuccess()) {
                         <div class="success-banner" role="status">
-                          ✓ Disbursement successful — Fineract loan #{{ disburseSuccess() }} created, approved, and disbursed.
+                          ✓ Disbursement successful — Fineract loan #{{ disburseSuccess() }}
+                          created, approved, and disbursed.
                         </div>
                       }
                       <button

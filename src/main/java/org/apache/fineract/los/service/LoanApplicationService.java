@@ -277,8 +277,9 @@ public class LoanApplicationService {
 
   private String resolveCurrentStageForDetail(final LoanApplication app) {
     if (app.getStatus() != LoanApplicationStatus.UNDER_REVIEW) return null;
-    final long approveCount = approvalStageRepository.countByApplicationAndDecision(
-        app, org.apache.fineract.los.domain.enums.ApprovalDecision.APPROVE);
+    final long approveCount =
+        approvalStageRepository.countByApplicationAndDecision(
+            app, org.apache.fineract.los.domain.enums.ApprovalDecision.APPROVE);
     final java.util.List<String> stages = workflowProperties.getStages();
     final int index = (int) approveCount;
     return index < stages.size() ? stages.get(index) : null;

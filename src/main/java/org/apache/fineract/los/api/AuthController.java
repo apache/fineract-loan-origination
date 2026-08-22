@@ -31,6 +31,7 @@ import org.apache.fineract.los.repository.CustomerCredentialRepository;
 import org.apache.fineract.los.security.JwtService;
 import org.apache.fineract.los.service.FineractCredentialValidationService;
 import org.apache.fineract.los.workflow.ApprovalWorkflowProperties;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -124,13 +125,15 @@ public class AuthController {
         request.username(),
         credential.getFineractClientId());
 
-    return ResponseEntity.ok(
-        new LoginResponse(
-            token,
-            credential.getUsername(),
-            credential.getFineractClientId(),
-            credential.getTenantId(),
-            15));
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CACHE_CONTROL, "no-store")
+        .body(
+            new LoginResponse(
+                token,
+                credential.getUsername(),
+                credential.getFineractClientId(),
+                credential.getTenantId(),
+                15));
   }
 
   /**
@@ -233,9 +236,11 @@ public class AuthController {
 
     log.info("Staff login successful: user [{}], losRole [{}]", request.username(), losRole);
 
-    return ResponseEntity.ok(
-        new StaffLoginResponse(
-            token, request.username(), losRole, displayRole, request.tenantId(), "STAFF", 15));
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CACHE_CONTROL, "no-store")
+        .body(
+            new StaffLoginResponse(
+                token, request.username(), losRole, displayRole, request.tenantId(), "STAFF", 15));
   }
 
   /** Convert ROLE_LOAN_OFFICER to "Loan Officer" for display. */

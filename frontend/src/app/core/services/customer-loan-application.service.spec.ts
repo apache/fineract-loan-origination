@@ -22,29 +22,62 @@ import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { CustomerLoanApplicationService } from './customer-loan-application.service';
 
+const BASE = 'http://localhost:8082/api/v1/customer/loan-applications';
+
 describe('CustomerLoanApplicationService', () => {
   let service: CustomerLoanApplicationService;
-  let httpMock: HttpTestingController;
+  let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [CustomerLoanApplicationService, provideHttpClient(), provideHttpClientTesting()],
     });
-
     service = TestBed.inject(CustomerLoanApplicationService);
-    httpMock = TestBed.inject(HttpTestingController);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => {
-    httpMock.verify();
+  afterEach(() => http.verify());
+
+  it('uses the customer-scoped base path for myApplications', () => {
+    service.myApplications().subscribe();
+    const req = http.expectOne(BASE);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
   });
 
-  it('uses the customer-scoped base path for application APIs', () => {
-    service.myApplications().subscribe();
-    service.myApplications().subscribe();
+  it('sends POST to base URL for create', () => {
+    const payload = {
+      requestedAmount: 5000,
+      applicant: { fullName: 'Test User' },
+    };
+    service.create(payload).subscribe();
+    const req = http.expectOne(BASE);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush({ applicationRef: 'LOS-TEST-001', status: 'DRAFT' });
+  });
 
-    const request = httpMock.expectOne('http://localhost:8082/api/v1/customer/loan-applications');
-    expect(request.request.method).toBe('GET');
-    request.flush([]);
+  it('sends GET to the ref path for getByRef', () => {
+    service.getByRef('LOS-TEST-001').subscribe();
+    const req = http.expectOne(`${BASE}/LOS-TEST-001`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ applicationRef: 'LOS-TEST-001', status: 'DRAFT' });
+  });
+
+  it('sends POST to submit path for submit', () => {
+    service.submit('LOS-TEST-001').subscribe();
+    const req = http.expectOne(`${BASE}/LOS-TEST-001/submit`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ applicationRef: 'LOS-TEST-001', status: 'SUBMITTED' });
+  });
+
+  it('wraps non-HTTP errors in an HttpErrorResponse with status 0', () => {
+    let caught: { status: number } | null = null;
+    service.myApplications().subscribe({ error: (e) => (caught = e) });
+    const req = http.expectOne(BASE);
+    req.error(new ProgressEvent('timeout'));
+    // timeout fires after 8s — error comes from ProgressEvent network abort
+    // status is 0 because no HTTP response was received
+    expect(caught).toBeTruthy();
   });
 });

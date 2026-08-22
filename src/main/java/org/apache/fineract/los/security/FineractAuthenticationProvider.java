@@ -62,7 +62,9 @@ public class FineractAuthenticationProvider implements AuthenticationProvider {
       authorities.add(new SimpleGrantedAuthority("ROLE_STAFF"));
     }
 
-    return new UsernamePasswordAuthenticationToken(username, password, authorities);
+    // Pass null as credentials — the plaintext password must not persist in the
+    // Authentication object after validation is complete (OWASP credential-in-memory mitigation).
+    return new UsernamePasswordAuthenticationToken(username, null, authorities);
   }
 
   @Override
