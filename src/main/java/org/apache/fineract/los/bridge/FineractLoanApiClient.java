@@ -21,6 +21,8 @@ package org.apache.fineract.los.bridge;
 
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateRequest;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateResponse;
+import org.apache.fineract.los.bridge.dto.FineractLoanRequest;
+import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
 
 /**
  * Adapter boundary between the LOS disbursement bridge and Apache Fineract's core REST API.
@@ -29,22 +31,47 @@ import org.apache.fineract.los.bridge.dto.FineractLoanCreateResponse;
  * los.fineract.mock-enabled}:
  *
  * <ul>
- *   <li>{@link RestFineractLoanApiClient} — calls a real Fineract instance's {@code POST /loans}
- *   <li>{@link MockFineractLoanApiClient} — returns a simulated response, used while FINERACT-2418
- *       is unresolved so the full origination flow remains demonstrable
+ *   <li>{@link RestFineractLoanApiClient} — calls a real Fineract instance's loan APIs
+ *   <li>{@link MockFineractLoanApiClient} — returns simulated responses for the full loan lifecycle
  * </ul>
  *
  * <p>{@code DisbursementBridgeService} depends only on this interface — swapping implementations
  * requires no change to calling code, satisfying the "bridge isolated behind an interface" risk
  * mitigation in the proposal.
+ *
+ * <p>Fineract loan lifecycle operations:
+ *
+ * <ol>
+ *   <li>{@link #createLoan} — POST /loans — creates the loan, returns loanId
+ *   <li>{@link #approveLoan} — POST /loans/{loanId}?command=approve — approves the loan
+ *   <li>{@link #disburseLoan} — POST /loans/{loanId}?command=disburse — disburses funds
+ * </ol>
  */
 public interface FineractLoanApiClient {
 
   /**
-   * Creates a loan in Fineract for an approved application.
+   * Creates a loan in Fineract for an approved LOS application.
    *
    * @param request the loan creation payload
    * @return the Fineract response identifying the created loan
    */
   FineractLoanCreateResponse createLoan(FineractLoanCreateRequest request);
+
+  /**
+   * Approves a Fineract loan that was previously created.
+   *
+   * @param loanId the Fineract loan identifier
+   * @param request the approval payload containing approval date and optional parameters
+   * @return the Fineract response confirming approval
+   */
+  FineractLoanResponse approveLoan(Long loanId, FineractLoanRequest request);
+
+  /**
+   * Disburses a Fineract loan that was previously approved.
+   *
+   * @param loanId the Fineract loan identifier
+   * @param request the disbursement payload containing disbursement date and optional parameters
+   * @return the Fineract response confirming disbursement
+   */
+  FineractLoanResponse disburseLoan(Long loanId, FineractLoanRequest request);
 }

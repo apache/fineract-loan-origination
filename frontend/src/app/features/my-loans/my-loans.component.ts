@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { finalize, take } from 'rxjs';
@@ -32,6 +32,7 @@ import { LoanApplication } from '../../core/models';
 })
 export class MyLoansComponent implements OnInit {
   private readonly customerLoanApplicationService = inject(CustomerLoanApplicationService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   loading = true;
   error: string | null = null;
@@ -42,14 +43,24 @@ export class MyLoansComponent implements OnInit {
       .myApplications()
       .pipe(
         take(1),
-        finalize(() => (this.loading = false)),
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        }),
       )
       .subscribe({
         next: (apps) => {
           this.loans = apps.filter((a) => a.status === 'DISBURSED');
         },
         error: (err) => {
-          this.error = err?.message ?? 'Could not load your loans.';
+          const statusCode = err?.status;
+          if (statusCode === 401) {
+            this.error = 'Session expired. Please log in again.';
+          } else if (statusCode === 0) {
+            this.error = 'Cannot connect to server. Please check that the backend is running.';
+          } else {
+            this.error = err?.error?.message ?? err?.message ?? 'Could not load your loans.';
+          }
         },
       });
   }

@@ -19,6 +19,7 @@
 
 package org.apache.fineract.los.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -44,6 +45,7 @@ public class CustomerCredential {
   @Column(nullable = false, unique = true, length = 100)
   private String username;
 
+  @JsonIgnore
   @Column(name = "password_hash", nullable = false)
   private String passwordHash;
 

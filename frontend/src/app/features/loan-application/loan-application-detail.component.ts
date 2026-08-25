@@ -102,8 +102,21 @@ export class LoanApplicationDetailComponent implements OnInit {
       },
       error: (err) => {
         this.actionInFlight.set(false);
-        this.actionError.set(err?.message ?? 'Could not submit application.');
+        const msg =
+          err?.error?.message ??
+          err?.error?.defaultUserMessage ??
+          err?.message ??
+          'Could not submit application. Please try again.';
+        this.actionError.set(msg);
       },
     });
+  }
+
+  formatStageName(stageName: string | null | undefined): string {
+    if (!stageName) return 'Review Team';
+    return stageName
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   }
 }

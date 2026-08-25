@@ -23,19 +23,21 @@ import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateRequest;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateResponse;
+import org.apache.fineract.los.bridge.dto.FineractLoanRequest;
+import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * Mock {@link FineractLoanApiClient} implementation — simulates {@code POST /loans} without calling
- * a real Fineract instance.
+ * Mock {@link FineractLoanApiClient} implementation — simulates the complete Fineract loan
+ * lifecycle without calling a real Fineract instance.
  *
  * <p>Active by default ({@code los.fineract.mock-enabled=true}), per the proposal's risk mitigation
  * for FINERACT-2418 being unavailable during the coding period: "the integration layer will use
  * mocked or simulated Fineract responses so that all origination flows can be fully demonstrated
  * without dependency on unreleased APIs."
  *
- * <p>Generates a monotonically increasing fake {@code loanId} per JVM instance — sufficient for
+ * <p>Generates monotonically increasing fake {@code loanId} per JVM instance — sufficient for
  * demonstrating the end-to-end DRAFT → ... → DISBURSED flow in local development, integration
  * tests, and CI, without a running Fineract dependency.
  */
@@ -58,8 +60,7 @@ public class MockFineractLoanApiClient implements FineractLoanApiClient {
     final long fakeLoanId = sequence.incrementAndGet();
 
     log.warn(
-        "FINERACT-2418 not available — returning MOCK Fineract loan creation "
-            + "response. clientId={} productId={} principal={} mockLoanId={}",
+        "MOCK Fineract loan creation response. clientId={} productId={} principal={} mockLoanId={}",
         request.getClientId(),
         request.getProductId(),
         request.getPrincipal(),
@@ -71,5 +72,25 @@ public class MockFineractLoanApiClient implements FineractLoanApiClient {
         .loanId(fakeLoanId)
         .resourceId(fakeLoanId)
         .build();
+  }
+
+  @Override
+  public FineractLoanResponse approveLoan(final Long loanId, final FineractLoanRequest request) {
+    log.warn(
+        "MOCK Fineract loan approval response. loanId={} approvedOnDate={}",
+        loanId,
+        request.getApprovedOnDate());
+
+    return FineractLoanResponse.builder().loanId(loanId).resourceId(loanId).build();
+  }
+
+  @Override
+  public FineractLoanResponse disburseLoan(final Long loanId, final FineractLoanRequest request) {
+    log.warn(
+        "MOCK Fineract loan disbursement response. loanId={} actualDisbursementDate={}",
+        loanId,
+        request.getActualDisbursementDate());
+
+    return FineractLoanResponse.builder().loanId(loanId).resourceId(loanId).build();
   }
 }

@@ -123,3 +123,65 @@ button {
   background: #dcfce7;
   color: #15803d;
 }
+
+// ── Referral section ──
+.referral-notice {
+  border: 2px solid #d97706;
+  background: #fffbeb;
+  max-width: 600px;
+}
+
+.referral-title {
+  color: #92400e;
+  font-size: 1.15rem;
+  margin-bottom: 0.75rem;
+}
+
+.referral-explanation {
+  color: #78350f;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.referral-comments {
+  background: #fff;
+  border: 1px solid #fbbf24;
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+
+  h3 {
+    font-size: 0.85rem;
+    color: #92400e;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 0 0 0.5rem;
+    font-weight: 700;
+  }
+
+  .comments-text {
+    color: #1f2937;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    font-style: italic;
+  }
+}
+
+.referral-actions {
+  .referral-help {
+    color: #78350f;
+    font-size: 0.88rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .resubmit-button {
+    background: #d97706;
+    font-size: 0.95rem;
+
+    &:hover:not(:disabled) {
+      background: #b45309;
+    }
+  }
+}

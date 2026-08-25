@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.bridge.DisbursementBridgeService;
-import org.apache.fineract.los.bridge.dto.FineractLoanCreateResponse;
 import org.apache.fineract.los.validation.ValidApplicationRef;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,12 +32,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST API for triggering the disbursement bridge — calls Fineract's {@code POST /loans} (real or
- * mocked, per {@code los.fineract.mock-enabled}) once an application is APPROVED.
+ * REST API for triggering the disbursement bridge — orchestrates the complete Fineract loan
+ * lifecycle (create→approve→disburse) once an application is APPROVED.
  */
 @Tag(
     name = "Disbursement",
-    description = "Bridge an APPROVED application into a real Fineract loan")
+    description = "Bridge an APPROVED application into a disbursed Fineract loan")
 @RestController
 @RequestMapping("/api/v1/loan-applications/{applicationRef}/disburse")
 @RequiredArgsConstructor
@@ -49,13 +48,16 @@ public class DisbursementController {
 
   private final DisbursementBridgeService disbursementBridgeService;
 
-  @Operation(summary = "Create the loan in Fineract and move the application to DISBURSED")
+  @Operation(
+      summary =
+          "Execute full Fineract disbursement: create loan, approve loan, disburse loan, "
+              + "then transition LOS application to DISBURSED")
   @PostMapping
   @PreAuthorize("hasRole('STAFF')")
-  public FineractLoanCreateResponse disburse(
+  public Long disburse(
       @RequestHeader(value = TENANT_HEADER, defaultValue = DEFAULT_TENANT) final String tenantId,
       @PathVariable @ValidApplicationRef final String applicationRef) {
 
-    return disbursementBridgeService.disburse(applicationRef, tenantId);
+    return disbursementBridgeService.executeFullDisbursement(applicationRef, tenantId);
   }
 }

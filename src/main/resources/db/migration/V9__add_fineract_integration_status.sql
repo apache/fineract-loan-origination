@@ -16,27 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { App } from './app';
 
-describe('App', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [App],
-      providers: [provideRouter([])],
-    }).compileComponents();
-  });
+-- Add Fineract integration status tracking for idempotent disbursement orchestration
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    expect(fixture.componentInstance).toBeTruthy();
-  });
+ALTER TABLE loan_application
+ADD COLUMN fineract_integration_status VARCHAR(30);
 
-  it('should contain a router-outlet', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('router-outlet')).toBeTruthy();
-  });
-});
+COMMENT ON COLUMN loan_application.fineract_integration_status IS
+  'Tracks Fineract loan lifecycle state: LOAN_CREATED, LOAN_APPROVED, LOAN_DISBURSED, FAILED. Null until integration starts.';

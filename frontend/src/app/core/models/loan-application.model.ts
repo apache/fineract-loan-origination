@@ -48,4 +48,7 @@ export interface LoanApplication {
   fineractLoanId: number | null;
   createdAt: string;
   updatedAt: string;
+  referralComments?: string | null;
+  referralStage?: string | null;
+  currentApprovalStage?: string | null;
 }

@@ -30,7 +30,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -43,6 +45,23 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+
+  /**
+   * The Angular frontend runs on localhost:4200 and calls the backend on localhost:8082.
+   * connect-src must allow both 'self' (same-origin requests) and the LOS backend origin. In
+   * production, replace the localhost backend URL with the deployed API origin.
+   */
+  private static final String CSP_POLICY =
+      "default-src 'self'; "
+          + "script-src 'self' 'unsafe-inline'; "
+          + "style-src 'self' 'unsafe-inline'; "
+          + "img-src 'self' data: https:; "
+          + "font-src 'self' data:; "
+          + "connect-src 'self' http://localhost:8082 https://localhost:8082; "
+          + "object-src 'none'; "
+          + "frame-ancestors 'none'; "
+          + "base-uri 'self'; "
+          + "form-action 'self'";
 
   /**
    * Customer-facing chain (Order 1). Covers customer endpoints only. Authentication is handled via
@@ -68,36 +87,23 @@ public class SecurityConfig {
         .headers(
             headers ->
                 headers
-                    // Prevents MIME sniffing attacks
-                    .contentTypeOptions(contentType -> contentType.disable())
-                    // Prevents clickjacking by disallowing iframe embedding
+                    // X-Content-Type-Options: nosniff — prevents MIME-sniffing attacks
+                    .contentTypeOptions(contentType -> {})
+                    // X-Frame-Options: DENY — prevents clickjacking
                     .frameOptions(frame -> frame.deny())
-                    // Enforces HTTPS (only in production with HTTPS enabled)
+                    // HSTS — only effective when the application is deployed behind HTTPS/TLS
                     .httpStrictTransportSecurity(
                         hsts ->
-                            hsts.includeSubDomains(true)
-                                .maxAgeInSeconds(31536000) // 1 year
-                                .preload(true))
-                    // Content Security Policy - restricts resource loading
-                    .contentSecurityPolicy(
-                        csp ->
-                            csp.policyDirectives(
-                                "default-src 'self'; "
-                                    + "script-src 'self' 'unsafe-inline'; "
-                                    + "style-src 'self' 'unsafe-inline'; "
-                                    + "img-src 'self' data: https:; "
-                                    + "font-src 'self' data:; "
-                                    + "connect-src 'self'; "
-                                    + "frame-ancestors 'none'; "
-                                    + "base-uri 'self'; "
-                                    + "form-action 'self'"))
-                    // Referrer policy - controls referrer information
+                            hsts.includeSubDomains(true).maxAgeInSeconds(31536000).preload(true))
+                    // Content Security Policy
+                    .contentSecurityPolicy(csp -> csp.policyDirectives(CSP_POLICY))
+                    // Referrer-Policy
                     .referrerPolicy(
                         referrer ->
                             referrer.policy(
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy
                                     .STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                    // Permissions policy - controls browser features
+                    // Permissions-Policy
                     .addHeaderWriter(
                         new StaticHeadersWriter(
                             "Permissions-Policy",
@@ -146,23 +152,13 @@ public class SecurityConfig {
         .headers(
             headers ->
                 headers
-                    .contentTypeOptions(contentType -> contentType.disable())
+                    // X-Content-Type-Options: nosniff
+                    .contentTypeOptions(contentType -> {})
                     .frameOptions(frame -> frame.deny())
                     .httpStrictTransportSecurity(
                         hsts ->
                             hsts.includeSubDomains(true).maxAgeInSeconds(31536000).preload(true))
-                    .contentSecurityPolicy(
-                        csp ->
-                            csp.policyDirectives(
-                                "default-src 'self'; "
-                                    + "script-src 'self' 'unsafe-inline'; "
-                                    + "style-src 'self' 'unsafe-inline'; "
-                                    + "img-src 'self' data: https:; "
-                                    + "font-src 'self' data:; "
-                                    + "connect-src 'self'; "
-                                    + "frame-ancestors 'none'; "
-                                    + "base-uri 'self'; "
-                                    + "form-action 'self'"))
+                    .contentSecurityPolicy(csp -> csp.policyDirectives(CSP_POLICY))
                     .referrerPolicy(
                         referrer ->
                             referrer.policy(
@@ -179,7 +175,7 @@ public class SecurityConfig {
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
     final CorsConfiguration configuration = new CorsConfiguration();
-    // localhost:4200 / 4201 = LOS customer Angular app
+    // localhost:4200 / 4201 = LOS Angular frontend
     // localhost:60506 / 49954 = Fineract Backoffice UI
     configuration.setAllowedOrigins(
         List.of(
@@ -197,12 +193,21 @@ public class SecurityConfig {
   }
 
   /**
-   * Password encoder used for both customer and staff credential hashing. Staff passwords are
-   * stored locally in LOS. Fineract Basic Auth (for backward compatibility) still delegates to
-   * Fineract.
+   * DelegatingPasswordEncoder with Argon2id as the default for new hashes.
+   *
+   * <p>Existing BCrypt hashes (prefixed {bcrypt}) continue to verify correctly — no re-hashing or
+   * data migration required. New passwords (e.g. via AdminCustomerController) are stored as
+   * Argon2id. This is the standard Spring Security migration path when upgrading hash algorithms.
    */
   @Bean
   PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
+    final java.util.Map<String, PasswordEncoder> encoders = new java.util.HashMap<>();
+    encoders.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+    encoders.put("bcrypt", new BCryptPasswordEncoder());
+
+    final DelegatingPasswordEncoder delegating = new DelegatingPasswordEncoder("argon2", encoders);
+    // Hashes already stored without an {id} prefix (raw BCrypt $2a$...) are treated as BCrypt.
+    delegating.setDefaultPasswordEncoderForMatches(new BCryptPasswordEncoder());
+    return delegating;
   }
 }

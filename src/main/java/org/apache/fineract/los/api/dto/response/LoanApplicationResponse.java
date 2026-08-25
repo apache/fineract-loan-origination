@@ -49,6 +49,17 @@ public class LoanApplicationResponse {
   private final LocalDateTime createdAt;
   private final LocalDateTime updatedAt;
 
+  // ── Referral information ──
+  /** Most recent referral comments from staff, if status is REFERRED. Null otherwise. */
+  private final String referralComments;
+
+  /** Most recent referral stage name, if status is REFERRED. Null otherwise. */
+  private final String referralStage;
+
+  // ── Current approval stage (for staff filtering) ──
+  /** Current approval stage awaiting decision, if status is UNDER_REVIEW. Null otherwise. */
+  private final String currentApprovalStage;
+
   public static LoanApplicationResponse from(final LoanApplication app) {
     return LoanApplicationResponse.builder()
         .applicationRef(app.getApplicationRef())
@@ -63,6 +74,9 @@ public class LoanApplicationResponse {
         .applicantName(null)
         .createdAt(app.getCreatedAt())
         .updatedAt(app.getUpdatedAt())
+        .referralComments(null)
+        .referralStage(null)
+        .currentApprovalStage(null)
         .build();
   }
 
@@ -88,6 +102,77 @@ public class LoanApplicationResponse {
         .applicantName(applicantName)
         .createdAt(app.getCreatedAt())
         .updatedAt(app.getUpdatedAt())
+        .referralComments(null)
+        .referralStage(null)
+        .currentApprovalStage(null)
+        .build();
+  }
+
+  /**
+   * Creates response with applicant name and referral information.
+   *
+   * @param app the loan application
+   * @param applicantName the applicant's full name from ApplicantProfile
+   * @param referralComments staff comments explaining referral, null if not referred
+   * @param referralStage workflow stage that referred the application, null if not referred
+   * @return response DTO
+   */
+  public static LoanApplicationResponse from(
+      final LoanApplication app,
+      final String applicantName,
+      final String referralComments,
+      final String referralStage) {
+    return LoanApplicationResponse.builder()
+        .applicationRef(app.getApplicationRef())
+        .status(app.getStatus())
+        .requestedAmount(app.getRequestedAmount())
+        .currency(app.getCurrency())
+        .loanPurpose(app.getLoanPurpose())
+        .tenorMonths(app.getTenorMonths())
+        .fineractLoanProductId(app.getFineractLoanProductId())
+        .fineractLoanId(app.getFineractLoanId())
+        .fineractClientId(app.getFineractClientId())
+        .applicantName(applicantName)
+        .createdAt(app.getCreatedAt())
+        .updatedAt(app.getUpdatedAt())
+        .referralComments(referralComments)
+        .referralStage(referralStage)
+        .currentApprovalStage(null)
+        .build();
+  }
+
+  /**
+   * Creates response with all information including current approval stage for staff filtering.
+   *
+   * @param app the loan application
+   * @param applicantName the applicant's full name from ApplicantProfile
+   * @param referralComments staff comments explaining referral, null if not referred
+   * @param referralStage workflow stage that referred the application, null if not referred
+   * @param currentApprovalStage current stage awaiting decision, null if not UNDER_REVIEW
+   * @return response DTO
+   */
+  public static LoanApplicationResponse from(
+      final LoanApplication app,
+      final String applicantName,
+      final String referralComments,
+      final String referralStage,
+      final String currentApprovalStage) {
+    return LoanApplicationResponse.builder()
+        .applicationRef(app.getApplicationRef())
+        .status(app.getStatus())
+        .requestedAmount(app.getRequestedAmount())
+        .currency(app.getCurrency())
+        .loanPurpose(app.getLoanPurpose())
+        .tenorMonths(app.getTenorMonths())
+        .fineractLoanProductId(app.getFineractLoanProductId())
+        .fineractLoanId(app.getFineractLoanId())
+        .fineractClientId(app.getFineractClientId())
+        .applicantName(applicantName)
+        .createdAt(app.getCreatedAt())
+        .updatedAt(app.getUpdatedAt())
+        .referralComments(referralComments)
+        .referralStage(referralStage)
+        .currentApprovalStage(currentApprovalStage)
         .build();
   }
 }

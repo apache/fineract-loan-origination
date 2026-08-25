@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { finalize, take } from 'rxjs';
@@ -34,6 +34,7 @@ import { LoanApplication } from '../../core/models';
 export class DashboardComponent implements OnInit {
   private readonly customerLoanApplicationService = inject(CustomerLoanApplicationService);
   private readonly authService = inject(AuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   loading = true;
   error: string | null = null;
@@ -57,14 +58,29 @@ export class DashboardComponent implements OnInit {
       .myApplications()
       .pipe(
         take(1),
-        finalize(() => (this.loading = false)),
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        }),
       )
       .subscribe({
         next: (apps) => {
           this.applications = apps;
         },
         error: (err) => {
-          this.error = err?.message ?? 'Could not load your applications.';
+          console.error('[Dashboard] Failed to load applications:', err);
+          const statusCode = err?.status;
+
+          if (statusCode === 401) {
+            this.error = 'Session expired. Please log in again.';
+          } else if (statusCode === 403) {
+            this.error = 'Access denied. Please check your permissions.';
+          } else if (statusCode === 0) {
+            this.error = 'Cannot connect to server. Please check that the backend is running.';
+          } else {
+            const msg = err?.error?.message ?? err?.message;
+            this.error = msg ?? 'Could not load your applications. Please try refreshing.';
+          }
         },
       });
   }

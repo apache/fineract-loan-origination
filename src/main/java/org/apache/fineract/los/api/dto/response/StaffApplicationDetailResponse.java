@@ -57,8 +57,12 @@ public class StaffApplicationDetailResponse {
   // ---- Approval stages (chronological) ----
   private final List<ApprovalStageSummary> approvalStages;
 
+  // ---- Current stage (null when not UNDER_REVIEW) ----
+  private final String currentApprovalStage;
+
   // ---- Fineract disbursement ----
   private final Long fineractLoanId;
+  private final String fineractIntegrationStatus;
   private final LocalDateTime disbursedAt;
 
   // ---- Nested types ----

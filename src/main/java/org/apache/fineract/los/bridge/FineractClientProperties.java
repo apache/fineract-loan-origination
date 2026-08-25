@@ -19,6 +19,7 @@
 
 package org.apache.fineract.los.bridge;
 
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -39,8 +40,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "los.fineract")
 public class FineractClientProperties {
 
-  /** Base URL of the Fineract core instance, e.g. https://localhost/fineract-provider/api/v1. */
-  private String baseUrl = "https://localhost/fineract-provider/api/v1";
+  /** Base URL of the Fineract core instance, e.g. https://localhost:8443. */
+  private String baseUrl = "https://localhost:8443";
 
   /** Fineract tenant identifier sent via the X-Fineract-Platform-TenantId header. */
   private String tenantId = "default";
@@ -65,16 +66,25 @@ public class FineractClientProperties {
   private int readTimeoutMs = 10000;
 
   /** Default transactionProcessingStrategyCode sent on loan creation. */
-  private String defaultTransactionProcessingStrategyCode = "1";
+  private String defaultTransactionProcessingStrategyCode = "mifos-standard-strategy";
 
   /** Default loanTermFrequencyType / repaymentFrequencyType (Fineract enum: 2 = Months). */
-  private String defaultFrequencyType = "2";
+  private Integer defaultFrequencyType = 2;
 
   /** Default number of repayment periods between each repayment. */
   private int defaultRepaymentEvery = 1;
 
   /** Default nominal interest rate per repayment period, applied when none is configured. */
-  private String defaultInterestRatePerPeriod = "12";
+  private BigDecimal defaultInterestRatePerPeriod = new java.math.BigDecimal("12");
+
+  /** Default amortization type. 1=Equal installments (most common). */
+  private Integer defaultAmortizationType = 1;
+
+  /** Default interest type. 0=Declining Balance (recommended). */
+  private Integer defaultInterestType = 0;
+
+  /** Default interest calculation period type. 1=Same as repayment period (most common). */
+  private Integer defaultInterestCalculationPeriodType = 1;
 
   /** Fineract locale parameter required on most write endpoints. */
   private String locale = "en";

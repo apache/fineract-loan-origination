@@ -53,6 +53,7 @@ class LoanStateTransitionValidatorTest {
     "UNDER_REVIEW, APPROVED,     true",
     "UNDER_REVIEW, REJECTED,     true",
     "UNDER_REVIEW, REFERRED,     true",
+    "REFERRED,     SUBMITTED,    true",
     "REFERRED,     UNDER_REVIEW, true",
     "APPROVED,     DISBURSED,    true",
     // Invalid transitions — skip states

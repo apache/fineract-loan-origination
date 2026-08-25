@@ -62,7 +62,9 @@ export interface StaffApplicationDetail {
   // Related
   creditScore: StaffCreditScore | null;
   approvalStages: StaffApprovalStage[];
+  currentApprovalStage: string | null;
   fineractLoanId: number | null;
+  fineractIntegrationStatus: string | null;
   disbursedAt: string | null;
 }
 
@@ -78,6 +80,7 @@ export interface StaffApplicationSummary {
   fineractLoanId: number | null;
   applicantName: string | null;
   fineractClientId: number | null;
+  currentApprovalStage?: string | null;
 }
 
 export interface ApprovalDecisionRequest {

@@ -87,7 +87,7 @@ import { LoanApplicationStatus } from '../../../core/models/enums';
                   </td>
                   <td class="amount-cell">{{ app.requestedAmount | number: '1.2-2' }}</td>
                   <td>{{ app.currency }}</td>
-                  <td>{{ app.loanPurpose ?? '—' }}</td>
+                  <td>{{ app.loanPurpose }}</td>
                   <td>{{ app.tenorMonths ? app.tenorMonths + ' mo' : '—' }}</td>
                   <td>
                     <span class="status-badge" [class]="'status-' + app.status">{{

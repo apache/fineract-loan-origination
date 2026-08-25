@@ -33,7 +33,6 @@ import org.apache.fineract.los.domain.enums.ApprovalDecision;
 import org.apache.fineract.los.domain.enums.LoanApplicationStatus;
 import org.apache.fineract.los.dto.request.ApprovalDecisionRequest;
 import org.apache.fineract.los.exception.ApprovalStageMismatchException;
-import org.apache.fineract.los.exception.DuplicateApprovalException;
 import org.apache.fineract.los.exception.LosRoleNotAssignedException;
 import org.apache.fineract.los.repository.ApprovalStageRepository;
 import org.apache.fineract.los.repository.LoanApplicationRepository;
@@ -174,6 +173,7 @@ class ApprovalWorkflowServiceTest {
             .decision(ApprovalDecision.APPROVE)
             .comments("Attempted approval")
             .build();
+
     assertThatThrownBy(
             () ->
                 service.recordDecision(
@@ -283,34 +283,24 @@ class ApprovalWorkflowServiceTest {
   }
 
   @Test
-  @DisplayName("same officer acting twice on the same application throws")
-  void duplicateOfficerThrows() {
-
+  @DisplayName("officer can act again after refer back")
+  void officerCanActAgainAfterRefer() {
     final LoanApplication app = underReviewApp();
 
     when(loanApplicationRepository.findByApplicationRefAndTenantId(
             app.getApplicationRef(), app.getTenantId()))
         .thenReturn(Optional.of(app));
 
-    when(approvalStageRepository.countByApplicationAndDecision(app, ApprovalDecision.APPROVE))
-        .thenReturn(0L);
-
-    when(approvalStageRepository.existsByApplicationAndAssignedOfficer(app, "officer1"))
-        .thenReturn(true);
-
     final ApprovalDecisionRequest request =
         ApprovalDecisionRequest.builder()
             .decision(ApprovalDecision.APPROVE)
-            .comments("Duplicate approval attempt")
+            .comments("Reviewed again after refer back")
             .build();
 
-    assertThatThrownBy(
-            () ->
-                service.recordDecision(
-                    app.getApplicationRef(),
-                    app.getTenantId(),
-                    request,
-                    authAs("officer1", "LOAN_OFFICER")))
-        .isInstanceOf(DuplicateApprovalException.class);
+    service.recordDecision(
+        app.getApplicationRef(), app.getTenantId(), request, authAs("officer1", "LOAN_OFFICER"));
+
+    verify(approvalStageRepository).save(any(ApprovalStage.class));
+    verify(loanApplicationRepository).save(app);
   }
 }

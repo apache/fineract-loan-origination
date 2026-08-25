@@ -78,10 +78,7 @@ public class FineractCredentialValidationService {
     } catch (HttpClientErrorException.Unauthorized e) {
 
       log.warn(
-          "Fineract rejected credentials for user: {} - Status: {}, Response: {}",
-          username,
-          e.getStatusCode(),
-          e.getResponseBodyAsString());
+          "Fineract rejected credentials for user: {} - Status: {}", username, e.getStatusCode());
 
     } catch (Exception e) {
 

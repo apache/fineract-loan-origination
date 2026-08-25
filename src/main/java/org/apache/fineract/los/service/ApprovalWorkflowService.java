@@ -108,7 +108,7 @@ public class ApprovalWorkflowService {
     final LosRole callerRole = resolveCallerRole(authentication, assignedOfficer);
 
     validateStageMatchesRole(application, currentStage, callerRole, assignedOfficer);
-    validateNoDuplicateOfficerDecision(application, assignedOfficer);
+    validateNoDuplicateOfficerDecision(application, assignedOfficer, currentStage);
 
     final ApprovalStage stage = new ApprovalStage();
     stage.setApplication(application);
@@ -166,6 +166,19 @@ public class ApprovalWorkflowService {
     }
 
     return stages.get(index);
+  }
+
+  /**
+   * Public accessor for current approval stage - used for staff filtering.
+   *
+   * @param application the loan application
+   * @return current stage name if UNDER_REVIEW, null otherwise
+   */
+  public String getCurrentStageOrNull(final LoanApplication application) {
+    if (application.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+      return null;
+    }
+    return resolveCurrentStage(application);
   }
 
   /**
@@ -244,9 +257,17 @@ public class ApprovalWorkflowService {
   }
 
   private void validateNoDuplicateOfficerDecision(
-      final LoanApplication application, final String assignedOfficer) {
-    if (approvalStageRepository.existsByApplicationAndAssignedOfficer(
-        application, assignedOfficer)) {
+      final LoanApplication application, final String assignedOfficer, final String currentStage) {
+    // Block if this officer already has a non-REFER decision at the current stage.
+    // A REFER decision does not count — it means the application was sent back to the customer,
+    // and after resubmission the same officer must review it again at the same stage.
+    final boolean decidedInCurrentCycle =
+        approvalStageRepository.findAllByApplicationAndStageName(application, currentStage).stream()
+            .anyMatch(
+                s ->
+                    s.getAssignedOfficer().equals(assignedOfficer)
+                        && s.getDecision() != ApprovalDecision.REFER);
+    if (decidedInCurrentCycle) {
       throw new DuplicateApprovalException(application.getApplicationRef(), assignedOfficer);
     }
   }

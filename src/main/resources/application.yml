@@ -107,14 +107,15 @@ los:
     username: ${FINERACT_USERNAME:mifos}
     password: ${FINERACT_PASSWORD:password}
 
-    # Use the mock adapter by default — set mock-enabled=false and provide
+    # Use the mock adapter by default 
+    #set mock-enabled=false and provide
     # FINERACT_BASE_URL/USERNAME/PASSWORD env vars when a real Fineract instance is available
     mock-enabled: ${FINERACT_MOCK_ENABLED:true}
 
     connect-timeout-ms: 5000
     read-timeout-ms: 10000
 
-    default-transaction-processing-strategy-code: "1"
+    default-transaction-processing-strategy-code: "mifos-standard-strategy"
     default-frequency-type: "2"
     default-repayment-every: 1
     default-interest-rate-per-period: "12"

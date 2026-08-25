@@ -64,6 +64,7 @@ public class LoanApplicationService {
   private final LoanOriginationStateMachine stateMachine;
   private final CreditScoringService creditScoringService;
   private final org.apache.fineract.los.repository.ApprovalStageRepository approvalStageRepository;
+  private final org.apache.fineract.los.workflow.ApprovalWorkflowProperties workflowProperties;
 
   /**
    * Creates a new loan application together with its linked applicant profile, in DRAFT status.
@@ -122,7 +123,12 @@ public class LoanApplicationService {
   }
 
   /**
-   * Submits a DRAFT application — transitions it to SUBMITTED via the state machine.
+   * Submits a DRAFT or REFERRED application — transitions it to SUBMITTED via the state machine.
+   *
+   * <p>When a REFERRED application is resubmitted, it returns to SUBMITTED status and will progress
+   * back to UNDER_REVIEW when staff calls moveToUnderReview. The approval stage is preserved — the
+   * application resumes at the same workflow stage it was referred from (e.g., if CREDIT_COMMITTEE
+   * referred it, CREDIT_COMMITTEE reviews it again after resubmission).
    *
    * @param applicationRef human-readable application reference
    * @param tenantId institution identifier
@@ -243,7 +249,12 @@ public class LoanApplicationService {
         .existingLoanObligations(profile.getExistingLoanObligations())
         .creditScore(creditScoreSummary)
         .approvalStages(stages)
+        .currentApprovalStage(resolveCurrentStageForDetail(app))
         .fineractLoanId(app.getFineractLoanId())
+        .fineractIntegrationStatus(
+            app.getFineractIntegrationStatus() != null
+                ? app.getFineractIntegrationStatus().name()
+                : null)
         .disbursedAt(
             app.getStatus() == org.apache.fineract.los.domain.enums.LoanApplicationStatus.DISBURSED
                 ? app.getUpdatedAt()
@@ -262,6 +273,16 @@ public class LoanApplicationService {
 
   public Long getFineractClientIdOrThrow(LoanApplication application) {
     return getProfileOrThrow(application).getFineractClientId();
+  }
+
+  private String resolveCurrentStageForDetail(final LoanApplication app) {
+    if (app.getStatus() != LoanApplicationStatus.UNDER_REVIEW) return null;
+    final long approveCount =
+        approvalStageRepository.countByApplicationAndDecision(
+            app, org.apache.fineract.los.domain.enums.ApprovalDecision.APPROVE);
+    final java.util.List<String> stages = workflowProperties.getStages();
+    final int index = (int) approveCount;
+    return index < stages.size() ? stages.get(index) : null;
   }
 
   /**
