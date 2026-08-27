@@ -1,0 +1,135 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Approval Workflow
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+Applications in `UNDER_REVIEW` progress through a configurable sequence of approval stages. Each stage is associated with a staff role. Stages are enforced sequentially — a later stage cannot act until all earlier stages have approved. The workflow is configured in `application.yml` and requires no code changes to modify.
+
+== Default Stages
+
+[cols="1,2,2", options="header"]
+|===
+| Order | Stage name | Required role
+
+| 1
+| `LOAN_OFFICER`
+| `ROLE_LOAN_OFFICER`
+
+| 2
+| `CREDIT_COMMITTEE`
+| `ROLE_CREDIT_COMMITTEE`
+
+| 3
+| `BRANCH_MANAGER`
+| `ROLE_BRANCH_MANAGER`
+|===
+
+[source,yaml]
+----
+los:
+  workflow:
+    stages:
+      - LOAN_OFFICER
+      - CREDIT_COMMITTEE
+      - BRANCH_MANAGER
+    role-mapping:
+      loan_officer: LOAN_OFFICER
+      credit_committee: CREDIT_COMMITTEE
+      branch_manager: BRANCH_MANAGER
+    final-stage: BRANCH_MANAGER
+----
+
+The number and names of stages are fully configurable. `final-stage` determines which stage triggers the `UNDER_REVIEW → APPROVED` transition on approval.
+
+== Decisions
+
+Each stage records one decision:
+
+[cols="2,4", options="header"]
+|===
+| Decision | Effect
+
+| `APPROVE`
+| On a non-final stage: application remains `UNDER_REVIEW`, next stage becomes active. +
+On the final stage: application transitions to `APPROVED`.
+
+| `REJECT`
+| Application transitions to `REJECTED` (terminal). No further action possible.
+
+| `REFER`
+| Application transitions to `REFERRED`. Customer is expected to provide additional information and resubmit. Workflow resumes at the same stage when the application re-enters `UNDER_REVIEW`.
+|===
+
+== Stage Resolution
+
+The current active stage is derived at runtime from the count of prior `APPROVE` decisions on the application, used as an index into the configured stages list. It is never stored as a separate field.
+
+This means:
+* A `REFER` decision does not advance the stage — when the customer resubmits, the same stage acts again.
+* A `REJECT` at any stage terminates the workflow immediately.
+* The audit trail (the list of recorded `ApprovalStage` records) is the single source of truth.
+
+== Sequential Enforcement
+
+`ApprovalWorkflowService` enforces two rules before persisting any decision:
+
+**Role-stage match:** The caller's `LosRole` (resolved from JWT authorities) must equal the name of the current active stage. A `BRANCH_MANAGER` officer attempting to act while the application is still at `LOAN_OFFICER` stage receives `403 Forbidden` (`APPROVAL_STAGE_MISMATCH`).
+
+**Duplicate prevention:** Each officer can record at most one decision per application. A second attempt from the same officer returns `409 Conflict` (`DUPLICATE_APPROVAL`).
+
+Both are enforced server-side. The caller cannot supply a stage name or claim a different role in the request body — the stage is derived from the approval history and the role comes from the JWT.
+
+== Referral Flow
+
+[source]
+----
+Stage 2 (CREDIT_COMMITTEE): REFER
+   → application enters REFERRED
+
+Customer resubmits
+   → application re-enters UNDER_REVIEW (scoring already exists — not recomputed)
+   → stage 2 (CREDIT_COMMITTEE) is active again
+   → stage 1 approval is preserved in the audit trail
+----
+
+== Audit Trail
+
+Every decision is persisted as an immutable `ApprovalStage` record containing: stage name, officer username, decision, comments, and timestamp. Records are never modified after creation. The full history is returned by `GET /api/v1/loan-applications/{ref}/approval-decisions`.
+
+Comments are mandatory on every decision — validated by `ApprovalWorkflowService` before persistence.
+
+== Implementation
+
+`ApprovalWorkflowService.recordDecision()` owns the complete decision flow: load application, validate UNDER_REVIEW, resolve current stage, validate role match, validate no duplicate, persist `ApprovalStage`, apply state machine transition, save application.
+
+`ApprovalWorkflowProperties` (loaded from `los.workflow.*`) provides the ordered stage list and the `isFinalStage()` check used by `applyTransition()`.
+
+The state machine transition is the last step in the transaction. If any earlier validation fails, nothing is persisted.
+
+== Further Reading
+
+* link:loan-origination.adoc[Loan Origination Lifecycle] — full state machine and lifecycle context
+* link:disbursement.adoc[Disbursement] — what happens after final approval
+* link:../security/authorization.adoc[Authorization] — how staff roles are assigned and enforced

@@ -1,0 +1,107 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Disbursement
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+Disbursement is the final step in the origination lifecycle. It converts an `APPROVED` application into a loan account in Apache Fineract, records the returned Fineract loan ID, and transitions the application to `DISBURSED` (terminal state). After disbursement, all loan servicing operations happen in Fineract — the LOS origination record is read-only.
+
+For integration architecture details see link:../architecture/integration.adoc[Integration Architecture].
+
+== Flow
+
+[source]
+----
+Staff → POST /api/v1/loan-applications/{ref}/disburse
+          │
+          ▼
+DisbursementBridgeService.disburse()
+          │
+  1. Load application, validate status = APPROVED
+  2. Load ApplicantProfile, validate fineractClientId is present
+  3. Validate fineractLoanProductId is present on LoanApplication
+  4. Build FineractLoanCreateRequest from origination data
+          │
+          ▼
+FineractLoanApiClient.createLoan(request)
+          │
+  5. POST {fineractBaseUrl}/api/v1/loans
+          │
+  6. Record returned loanId → application.fineractLoanId
+  7. Transition APPROVED → DISBURSED via state machine
+  8. Save application
+----
+
+The entire flow is `@Transactional`. If the Fineract call throws a `RestClientException`, the transaction rolls back: status remains `APPROVED`, no `fineractLoanId` is recorded, and the disbursement can be retried.
+
+== Prerequisites
+
+Two Fineract identifiers must be set on the application before disbursement is attempted:
+
+[cols="2,3", options="header"]
+|===
+| Field | Purpose
+
+| `ApplicantProfile.fineractClientId`
+| Identifies the Fineract client record that will own the loan account
+
+| `LoanApplication.fineractLoanProductId`
+| Identifies the Fineract loan product to use for the loan account
+|===
+
+Missing either field results in `400 Bad Request` with code `DISBURSEMENT_NOT_ALLOWED` before any call to Fineract is made.
+
+== Real vs Mock Adapter
+
+`DisbursementBridgeService` depends on `FineractLoanApiClient` (an interface). Two implementations exist:
+
+* **Real adapter** — calls the Fineract REST API over HTTPS using Basic Auth credentials from configuration. Active when `los.fineract.mock-enabled=false`.
+* **Mock adapter** — returns an incrementing fake loan ID without making any HTTP call. Active when `los.fineract.mock-enabled=true`. Used for local development and tests.
+
+[source,yaml]
+----
+los:
+  fineract:
+    base-url: ${FINERACT_BASE_URL:https://localhost:8443}
+    tenant-id: ${FINERACT_TENANT_ID:default}
+    username: ${FINERACT_USERNAME:mifos}
+    password: ${FINERACT_PASSWORD:password}
+    mock-enabled: false
+----
+
+== Failures
+
+A `RestClientException` from the Fineract call is caught, logged at ERROR level, and re-thrown as `FineractIntegrationException`, which maps to `502 Bad Gateway`. The transaction rollback ensures the application stays in `APPROVED` and the operation is safely retryable.
+
+Attempting to disburse an application that is not in `APPROVED` state returns `400 Bad Request` immediately, before any Fineract call is made.
+
+== Terminal State
+
+`DISBURSED` has no outgoing transitions in the state machine. Once an application is disbursed, it cannot be modified through the LOS. The `fineractLoanId` field records the reference to the downstream Fineract loan account.
+
+== Further Reading
+
+* link:loan-origination.adoc[Loan Origination Lifecycle] — full state machine context
+* link:../architecture/integration.adoc[Integration Architecture] — adapter pattern, Fineract bridge details
+* link:../api/rest-api.adoc[REST API Reference] — disbursement endpoint

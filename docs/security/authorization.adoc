@@ -1,0 +1,112 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Authorization
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+Authorization is role-based. Each authenticated user has exactly one role, extracted from their JWT and placed into the Spring Security context by `JwtAuthFilter`. Access control is enforced at two levels: endpoint authorization (Spring Security filter chain and `@PreAuthorize`) and data-level isolation (tenant filtering in repositories, customer ownership checks in services).
+
+== Roles
+
+[cols="2,2,3", options="header"]
+|===
+| Role | User type | Access
+
+| `ROLE_CUSTOMER`
+| Customer
+| Own applications only — create, view, submit, view credit score
+
+| `ROLE_LOAN_OFFICER`
+| Staff
+| All tenant applications; record decisions at LOAN_OFFICER stage
+
+| `ROLE_CREDIT_COMMITTEE`
+| Staff
+| All tenant applications; record decisions at CREDIT_COMMITTEE stage
+
+| `ROLE_BRANCH_MANAGER`
+| Staff
+| All tenant applications; record decisions at BRANCH_MANAGER stage; trigger disbursement
+
+| `ROLE_ADMIN`
+| Staff
+| All of the above plus customer credential management
+|===
+
+Staff roles are derived from Fineract role names at login time (see link:authentication.adoc[Authentication]).
+
+`ROLE_STAFF` is additionally granted to all staff principals by `FineractAuthenticationProvider` as a broad authority, allowing the security filter chain to match staff endpoints with a single rule.
+
+== Endpoint Access
+
+=== Customer endpoints (`/api/v1/customer/**`)
+
+Protected by the Order 1 filter chain — any authenticated request to this prefix requires a valid JWT. Services additionally enforce that all data operations are scoped to the `clientId` carried in the customer's JWT. A customer cannot read or modify another customer's application regardless of how the request is formed.
+
+=== Staff endpoints (`/api/v1/loan-applications/**`)
+
+Require `ROLE_STAFF` (any staff role). Staff can read all applications within their tenant. Write operations (start-review, approval decisions, disbursement) have further role checks enforced at the service layer.
+
+=== Admin endpoints (`/api/v1/admin/**`)
+
+Require `ROLE_ADMIN`.
+
+=== Public endpoints
+
+`/api/v1/auth/**`, `/actuator/health`, `/actuator/info`, and the Swagger UI paths are accessible without authentication, as configured in the Order 2 filter chain.
+
+== Workflow Stage Enforcement
+
+Recording an approval decision requires more than `ROLE_STAFF`. `ApprovalWorkflowService` enforces that the caller's `LosRole` matches the current workflow stage before persisting a decision.
+
+The current stage is derived by counting existing `APPROVE` decisions on the application and using that count as an index into the configured `los.workflow.stages` list. A `CREDIT_COMMITTEE` officer cannot act while the application is still at the `LOAN_OFFICER` stage, and a `LOAN_OFFICER` cannot act at the `BRANCH_MANAGER` stage.
+
+If the role does not match, the service throws an exception that maps to `403 Forbidden` with error code `APPROVAL_STAGE_MISMATCH`.
+
+`LosRole.fromAuthorities()` resolves the workflow role from the authenticated principal's granted authorities, making the stage check independent of the token format.
+
+=== Duplicate Decision Prevention
+
+`ApprovalWorkflowService` also checks whether the officer has already recorded a decision on the application. A second decision from the same officer returns `409 Conflict` with error code `DUPLICATE_APPROVAL`. This ensures a single officer cannot approve at multiple stages.
+
+== Tenant Isolation
+
+All repository queries include `tenantId` as a filter parameter. Cross-tenant queries are structurally impossible — a query for application `LOS-2026-00042` in tenant `bank-a` returns empty if the application belongs to tenant `default`.
+
+`tenantId` is set during authentication (embedded in the JWT claim) and extracted by `JwtAuthFilter` into the `CustomerPrincipal` or the security context. Services read it from the authenticated principal or request context — never from user-supplied input.
+
+**Pending PR** (`feature/FINERACT-2442-updates-security`): adds an explicit check in `JwtAuthFilter` that the JWT `tenantId` claim matches the `X-Fineract-Platform-TenantId` request header, returning `403 Forbidden` on mismatch. Until this PR merges, tenant isolation relies solely on the repository layer.
+
+== Authorization Failures
+
+* `401 Unauthorized` — missing, invalid, or expired JWT.
+* `403 Forbidden` — authenticated but insufficient permissions (wrong role, stage mismatch, tenant mismatch, or customer accessing another customer's data).
+* `404 Not Found` — used instead of `403` when a customer requests an application that exists but belongs to a different customer, to avoid leaking existence information.
+* `409 Conflict` — duplicate approval decision.
+
+== Further Reading
+
+* link:authentication.adoc[Authentication] — how roles are assigned at login
+* link:security-architecture.adoc[Security Architecture] — how authorization fits into the broader security model
+* link:../workflows/approval.adoc[Approval Workflow] — stage sequencing detail

@@ -1,0 +1,189 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Security Architecture
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+The LOS applies defense-in-depth: multiple independent controls each reduce a class of risk. No single control is relied upon exclusively. This document describes each layer, its current status, and where to find implementation detail.
+
+== Security Layers
+
+[cols="2,3,2", options="header"]
+|===
+| Layer | Implementation | Status
+
+| Authentication
+| JWT (customer) + Fineract delegation (staff)
+| Merged
+
+| Authorization
+| Role-based, `@PreAuthorize`, service-layer checks
+| Merged
+
+| Input validation
+| Bean Validation (`@NotNull`, `@NotBlank`, `@Size`, etc.) on all request DTOs
+| Merged
+
+| Tenant isolation
+| `tenantId` column on every table, all queries tenant-scoped
+| Merged (header validation pending — see below)
+
+| Rate limiting
+| Bucket4j `RateLimitFilter`, per-IP token buckets
+| **Pending PR review**
+
+| XSS protection
+| OWASP Java Encoder (`XssSanitizer`) applied at service layer before persistence
+| **Pending PR review**
+
+| Security headers
+| Spring Security `headers()` DSL + `StaticHeadersWriter`
+| **Pending PR review**
+
+| CSRF
+| Disabled for `/api/**` — stateless JWT, no session cookies
+| Merged
+
+| Transport security
+| HTTPS required in production — not enforced at application level
+| Configuration only
+
+| Secrets management
+| Environment variables with safe local defaults
+| Merged
+
+| Dependency security
+| Dependabot, CycloneDX SBOM, Apache RAT
+| Merged
+
+| Audit logging
+| MDC `correlationId` on every request; state transitions and decisions logged
+| Merged (`tenantId` in MDC pending PR)
+|===
+
+== Authentication and Authorization
+
+Authentication is handled by `JwtAuthFilter` and the dual filter chains in `SecurityConfig`. Authorization is enforced by Spring Security method security (`@EnableMethodSecurity`) and by `ApprovalWorkflowService` for workflow-stage role matching.
+
+Details: link:authentication.adoc[Authentication] and link:authorization.adoc[Authorization].
+
+== Input Validation
+
+All request DTOs carry Bean Validation annotations. Spring Boot's `@Valid` binding triggers validation before any service code runs. A validation failure returns `400 Bad Request` with a structured error body listing each failing field.
+
+The DTO classes in `org.apache.fineract.los.dto.request` use annotations including `@NotNull`, `@NotBlank`, `@Min`, `@PositiveOrZero`, and `@Size`. All queries use JPA named parameters — there is no string-concatenated SQL anywhere in the codebase.
+
+== Tenant Isolation
+
+Every entity table carries a `tenant_id` column. Every repository query includes `tenantId` as a WHERE-clause parameter. Services extract `tenantId` from the authenticated principal — never from user-supplied request fields.
+
+**Pending PR (`feature/FINERACT-2442-updates-security`):** `JwtAuthFilter` will additionally validate that the `tenantId` JWT claim matches the `X-Fineract-Platform-TenantId` request header, returning `403 Forbidden` on a mismatch. Until this merges, tenant enforcement relies on the repository layer alone.
+
+== Rate Limiting
+
+**Pending PR (`feature/FINERACT-2442-updates-security`) — not yet in `main`.**
+
+`RateLimitFilter` (Bucket4j + Caffeine) will apply per-IP token buckets:
+
+* `/api/v1/auth/**` — 5 requests per 15 minutes (brute-force protection)
+* `/api/v1/admin/**` — 20 requests per minute
+* All other endpoints — 100 requests per minute
+
+Exceeded limits return `429 Too Many Requests` with a `Retry-After` header.
+
+== XSS Protection
+
+**Pending PR (`feature/FINERACT-2442-updates-security`) — not yet in `main`.**
+
+`XssSanitizer` (OWASP Java Encoder) will be applied at the service layer before persisting user-supplied text fields (comments, names, loan purpose, etc.), using `Encode.forHtml()`. This is a secondary defence — Angular's template engine sanitizes output by default, but encoding on the backend protects against stored XSS if the data is ever consumed by a different client.
+
+== Security Headers
+
+**Pending PR (`feature/FINERACT-2442-updates-security`) — not yet in `main`.**
+
+The PR configures the following headers via Spring Security's `headers()` DSL and `StaticHeadersWriter` on both filter chains:
+
+* `X-Frame-Options: DENY` — prevents clickjacking
+* `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` — enforces HTTPS
+* `Content-Security-Policy` — restricts resource loading to same origin
+* `Referrer-Policy: strict-origin-when-cross-origin`
+* `Permissions-Policy: geolocation=(), microphone=(), camera=()`
+
+The PR replaces the previously deprecated `permissionsPolicy()` DSL call with `StaticHeadersWriter` (commit `1a3f181`).
+
+== Transport Security
+
+HTTPS is not enforced at the application level. In production, TLS must be terminated either at the application (Spring SSL configuration) or at a reverse proxy or load balancer in front of it. The `Strict-Transport-Security` header (pending PR) will instruct browsers to reject plain HTTP once HTTPS has been established.
+
+== Secrets Management
+
+All sensitive values are provided via environment variables with safe local defaults:
+
+* `JWT_SECRET` — JWT signing key (must be at least 32 characters in any shared environment)
+* `DB_PASSWORD` — PostgreSQL password
+* `FINERACT_USERNAME` / `FINERACT_PASSWORD` — Fineract API credentials
+
+`JwtSecretValidator` verifies the secret meets minimum length at startup and fails fast if not. Secrets are never logged. See link:../development/configuration.adoc[Configuration] for the full variable list.
+
+== Audit Logging
+
+`JwtAuthFilter` places `correlationId` into the SLF4J MDC for every authenticated request. The pending PR adds `tenantId` to MDC as well. Service layer code logs all state machine transitions (from/to state, application ref, actor) and all approval decisions (stage, decision, officer username) at `INFO` level. Authentication failures are logged at `WARN`.
+
+Log output does not include passwords, JWT token strings, or full stack traces.
+
+== Dependency and CI Security
+
+[cols="2,3", options="header"]
+|===
+| Tool | Role
+
+| Dependabot
+| Automated PRs for dependency version updates
+
+| CycloneDX Maven Plugin
+| Generates SBOM at `target/bom.json` on each build
+
+| Apache RAT
+| Verifies Apache license headers on all source files
+
+| CodeQL (GitHub Actions)
+| Static analysis for security vulnerabilities on every push and PR
+
+| Spotless
+| Enforces code formatting, indirectly prevents obfuscated code patterns
+|===
+
+== Not Implemented
+
+* Account lockout after repeated failed login attempts — rate limiting is the only brute-force control (and is pending merge).
+* Token revocation — no blacklist; tokens remain valid until expiration.
+* Refresh tokens.
+* Multi-factor authentication.
+* Distributed rate limiting — current implementation is in-memory per instance (Caffeine cache).
+
+== Further Reading
+
+* link:authentication.adoc[Authentication] — JWT issuance and validation
+* link:authorization.adoc[Authorization] — roles, endpoint access, workflow stage enforcement
+* link:../architecture/system-overview.adoc[System Overview] — system and component boundaries

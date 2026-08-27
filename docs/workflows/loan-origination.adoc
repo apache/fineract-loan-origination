@@ -1,0 +1,157 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Loan Origination Lifecycle
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+A loan application moves through six states managed by an explicit state machine. Two states are terminal — no further transitions are possible once they are reached.
+
+== State Machine
+
+[source]
+----
+                   DRAFT
+                     │ submit()  [Customer]
+                     ▼
+                 SUBMITTED
+                     │ startReview()  [Staff]
+                     ▼
+               UNDER_REVIEW ──────── REJECTED  (terminal)
+                  │    │
+     refer()      │    │ approve() on final stage
+    [Staff]       │    │ [Staff]
+                  ▼    ▼
+               REFERRED  APPROVED
+                  │         │ disburse()  [Staff]
+     submit()     │         ▼
+    [Customer]    │     DISBURSED  (terminal)
+                  │
+                  └──► UNDER_REVIEW  (resumes at same stage)
+----
+
+== States
+
+[cols="2,3,2,1", options="header"]
+|===
+| State | Meaning | Who acts next | Terminal
+
+| `DRAFT`
+| Created by customer, not yet submitted
+| Customer
+| No
+
+| `SUBMITTED`
+| Submitted, awaiting staff pickup
+| Staff (any role)
+| No
+
+| `UNDER_REVIEW`
+| Under active review; credit scoring runs on entry; approval decisions recorded here
+| Staff (role must match current stage)
+| No
+
+| `REFERRED`
+| Returned to customer for additional information; resumes at the same approval stage on resubmission
+| Customer
+| No
+
+| `APPROVED`
+| All approval stages passed; awaiting disbursement trigger
+| Staff
+| No
+
+| `REJECTED`
+| Rejected at any approval stage
+| —
+| Yes
+
+| `DISBURSED`
+| Loan created in Fineract; origination complete
+| —
+| Yes
+|===
+
+== Valid Transitions
+
+[cols="2,2,3", options="header"]
+|===
+| From | To | Trigger
+
+| `DRAFT`
+| `SUBMITTED`
+| Customer submits application
+
+| `SUBMITTED`
+| `UNDER_REVIEW`
+| Staff starts review (triggers credit scoring)
+
+| `UNDER_REVIEW`
+| `APPROVED`
+| Staff records APPROVE on the final configured stage
+
+| `UNDER_REVIEW`
+| `REJECTED`
+| Staff records REJECT at any stage
+
+| `UNDER_REVIEW`
+| `REFERRED`
+| Staff records REFER at any stage
+
+| `REFERRED`
+| `UNDER_REVIEW`
+| Customer resubmits
+
+| `APPROVED`
+| `DISBURSED`
+| Staff triggers disbursement to Fineract
+|===
+
+All other transitions are rejected by `LoanStateTransitionValidator` with `409 Conflict`. Transitions from `REJECTED` or `DISBURSED` are structurally impossible — both states have no outgoing entries in the transition map.
+
+== Key Behaviours
+
+**Application reference** is generated in the format `LOS-{YEAR}-{SEQUENCE}` (e.g. `LOS-2026-00042`) when the application is created. It is unique per tenant.
+
+**Credit scoring** runs automatically when a SUBMITTED (or REFERRED) application transitions to UNDER_REVIEW. Scoring is idempotent — a re-submitted application already in UNDER_REVIEW does not recompute. See link:credit-scoring.adoc[Credit Scoring].
+
+**Approval** is a sequential multi-stage process. The application status remains `UNDER_REVIEW` throughout all approval stages until the final stage is approved. See link:approval.adoc[Approval Workflow].
+
+**Optimistic locking** via `@Version` on `LoanApplication` prevents concurrent state transitions from producing inconsistent results. A second conflicting write raises `OptimisticLockException` and rolls back.
+
+**Disbursement** calls the Fineract REST API and records the returned `fineractLoanId` on the application. See link:disbursement.adoc[Disbursement].
+
+== Implementation
+
+`LoanOriginationStateMachine` is the only component that calls `setStatus()` on a `LoanApplication`. All other services transition the state machine — they never manipulate the status field directly.
+
+`LoanStateTransitionValidator` holds the transition map as the single source of truth. Adding a new valid transition requires a one-line change to `buildTransitionMap()`.
+
+`LoanApplicationService` orchestrates creation, submission, and the move to UNDER_REVIEW (which includes the credit scoring trigger). `ApprovalWorkflowService` handles all decisions during UNDER_REVIEW. `DisbursementBridgeService` handles the APPROVED → DISBURSED transition.
+
+== Further Reading
+
+* link:credit-scoring.adoc[Credit Scoring] — how the score is calculated on entry to UNDER_REVIEW
+* link:approval.adoc[Approval Workflow] — sequential stage enforcement and decision rules
+* link:disbursement.adoc[Disbursement] — Fineract loan creation on final approval
+* link:../architecture/backend-architecture.adoc[Backend Architecture] — state machine and service layer detail

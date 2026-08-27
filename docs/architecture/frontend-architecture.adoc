@@ -1,0 +1,147 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= Frontend Architecture
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Overview
+
+The frontend is an Angular 21 single-page application using standalone components and TypeScript. It provides two separate user experiences within the same application: one for customers (loan applicants) and one for staff (loan officers, credit committee, branch managers).
+
+== Application Structure
+
+[source]
+----
+frontend/src/app/
+├── core/          Singleton services, guards, interceptors, models
+├── features/      Feature modules (lazy-loaded by route)
+│   ├── auth/      Customer login
+│   ├── staff/     Staff login, dashboard, application management
+│   ├── dashboard/ Customer dashboard
+│   └── loan-application/  Application create, list, detail
+├── layout/        App shells
+│   ├── main-layout/   Customer shell (nav, sidebar)
+│   └── staff-layout/  Staff shell (nav, sidebar)
+├── shared/        Reusable components, pipes, directives
+├── app.routes.ts  Route definitions
+└── app.config.ts  Application configuration
+----
+
+== Customer / Staff Separation
+
+The application has two distinct route trees with separate authentication states, separate JWT tokens, and separate app shells.
+
+[cols="2,2,2", options="header"]
+|===
+| Concern | Customer | Staff
+
+| Login endpoint
+| `POST /api/v1/auth/login`
+| `POST /api/v1/auth/staff/login`
+
+| Token storage key
+| `los_token`
+| `los_staff_token`
+
+| Route prefix
+| `/` (no prefix)
+| `/staff/...`
+
+| App shell
+| `MainLayoutComponent`
+| `StaffLayoutComponent`
+
+| Route guard
+| `authGuard`
+| `staffAuthGuard`
+
+| Auth service
+| `AuthService`
+| `StaffAuthService`
+|===
+
+Staff credentials are validated against Fineract. Customer credentials are validated against the LOS `customer_credentials` table. Neither service shares state with the other.
+
+== Routing Architecture
+
+All feature components are lazy-loaded using `loadComponent`. This means each route's component bundle is only downloaded when the route is first visited, reducing the initial payload.
+
+Customer routes are protected by `authGuard`. Staff routes are protected by `staffAuthGuard`. Both guards check for the presence of a valid JWT in localStorage and redirect to the appropriate login page if absent.
+
+Public routes (login pages) have no guards. An unmatched route redirects to `/login`.
+
+== Core Layer
+
+=== Guards
+
+`authGuard` — functional guard on customer routes. Checks `AuthService.isAuthenticated()`. On failure, redirects to `/login` preserving the intended URL as a `returnUrl` query parameter.
+
+`staffAuthGuard` — same pattern for staff routes, using `StaffAuthService`. Redirects to `/staff/login`.
+
+=== Interceptors
+
+Two interceptors run on every outgoing request:
+
+`AuthInterceptor` — adds the `Authorization: Bearer <token>` header. Uses the staff token for staff-prefixed URLs, the customer token for all others.
+
+`TenantInterceptor` — adds the `X-Fineract-Platform-TenantId` header. Reads the tenant ID from the corresponding auth service. Both headers are required by the backend on every authenticated request.
+
+=== Services
+
+Services in `core/services/` are provided at the root level (singletons). They own HTTP communication and expose observable state to components.
+
+`AuthService` and `StaffAuthService` maintain a `BehaviorSubject<User | null>` as the authentication state. Components and guards subscribe to this observable rather than reading localStorage directly.
+
+HTTP services (`CustomerLoanApplicationService`, `StaffLoanApplicationService`, `CreditScoringService`) wrap backend endpoints and return typed `Observable` responses. Components call these services and handle success and error cases in subscriptions.
+
+== State Management
+
+The application uses service-based state management. Shared state lives in singleton services as RxJS `BehaviorSubject` instances. Components derive their view state from observables exposed by these services.
+
+Angular signals are used in some components (notably the staff dashboard) for local reactive state such as filter selections and computed filtered lists.
+
+There is no external state management library (no NgRx). The current scope of shared state — primarily authentication and the active application list — does not require it.
+
+== Error Handling
+
+A global HTTP error interceptor handles common error codes:
+
+* `401` — logs the user out and redirects to the appropriate login page
+* `403` — displays an access-denied message
+* Network errors (status `0`) — displays a connectivity error message
+
+Component-level error handling covers domain-specific cases, such as displaying validation messages from a `400` response body.
+
+== Backend Interaction
+
+All backend communication goes through the services in `core/services/`. Components never call `HttpClient` directly. This keeps API URL construction, header management, and response parsing in one place.
+
+The two interceptors ensure that every request from any component automatically carries the correct authentication token and tenant header without any component needing to set them explicitly.
+
+The backend API base URL is set per environment in `src/environments/`. In development it points to `http://localhost:8080`. In a production build it is replaced at build time.
+
+== Further Reading
+
+* link:system-overview.adoc[System Overview] — how frontend fits into the full system
+* link:backend-architecture.adoc[Backend Architecture] — backend layer structure and service responsibilities
+* link:integration.adoc[Integration Architecture] — staff authentication via Fineract
+* link:../api/rest-api.adoc[REST API Reference] — all endpoints the frontend calls

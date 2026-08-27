@@ -1,0 +1,554 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= REST API Reference
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== Conventions
+
+**Base URL:** `http://localhost:8082/api/v1`
+
+**Content-Type:** `application/json` for all requests and responses.
+
+**Interactive docs:** Swagger UI is available at `/swagger-ui.html` when the application is running.
+
+=== Authentication Headers
+
+All authenticated endpoints require:
+
+[source]
+----
+Authorization: Bearer <JWT>
+X-Fineract-Platform-TenantId: <tenantId>
+----
+
+`X-Fineract-Platform-TenantId` defaults to `"default"` if omitted. The `tenantId` in the JWT and in the header must match.
+
+See link:../security/authentication.adoc[Authentication] for how to obtain a token.
+
+=== Common Status Codes
+
+[cols="1,3", options="header"]
+|===
+| Status | Meaning
+
+| 200
+| Success
+
+| 201
+| Resource created
+
+| 204
+| Success, no body
+
+| 400
+| Validation error — response body contains field-level errors
+
+| 401
+| Missing or invalid JWT
+
+| 403
+| Authenticated but insufficient permissions, or tenant mismatch
+
+| 404
+| Resource not found
+
+| 409
+| State conflict (invalid transition, duplicate approval decision)
+
+| 502
+| Fineract integration failure
+|===
+
+---
+
+== Authentication Endpoints
+
+These endpoints are public — no JWT required.
+
+=== Customer Login
+
+`POST /api/v1/auth/login`
+
+Validates credentials against the LOS `customer_credentials` table (BCrypt). Returns a JWT with `userType=CUSTOMER`.
+
+*Request:*
+[source,json]
+----
+{ "username": "...", "password": "...", "tenantId": "default" }
+----
+
+*Response 200:*
+[source,json]
+----
+{
+  "token": "<JWT>",
+  "username": "...",
+  "clientId": 123,
+  "tenantId": "default",
+  "role": "ROLE_CUSTOMER",
+  "userType": "CUSTOMER",
+  "expiresInMinutes": 15
+}
+----
+
+*Errors:* `401` invalid credentials or tenant mismatch.
+
+---
+
+=== Staff Login
+
+`POST /api/v1/auth/staff/login`
+
+Delegates credential validation to Fineract. Maps the returned Fineract role to an LOS workflow role. Returns a JWT with `userType=STAFF`. No staff passwords are stored in the LOS.
+
+*Request:*
+[source,json]
+----
+{ "username": "...", "password": "...", "tenantId": "default" }
+----
+
+*Response 200:*
+[source,json]
+----
+{
+  "token": "<JWT>",
+  "username": "...",
+  "losRole": "ROLE_LOAN_OFFICER",
+  "displayRole": "Loan Officer",
+  "tenantId": "default",
+  "userType": "STAFF",
+  "expiresInMinutes": 15
+}
+----
+
+*Errors:* `401` Fineract rejected credentials. `403` Fineract accepted but no LOS role mapping found for the user's Fineract role.
+
+---
+
+== Customer Endpoints
+
+All require a `ROLE_CUSTOMER` JWT. All responses are scoped to the authenticated customer's `clientId` — a customer cannot read or modify another customer's data.
+
+=== Get Own Profile
+
+`GET /api/v1/customer/me`
+
+Returns the authenticated customer's `clientId` and display name from the JWT.
+
+*Response 200:*
+[source,json]
+----
+{ "clientId": 123, "displayName": "..." }
+----
+
+---
+
+=== Create Application
+
+`POST /api/v1/customer/loan-applications`
+
+Creates an application in `DRAFT` status. The `fineractClientId` is set from the JWT — the request body cannot override it.
+
+*Request:*
+[source,json]
+----
+{
+  "requestedAmount": 50000,
+  "currency": "USD",
+  "loanPurpose": "BUSINESS",
+  "tenorMonths": 12,
+  "fineractLoanProductId": 1,
+  "applicant": {
+    "fullName": "...",
+    "nationalId": "...",
+    "monthlyIncome": 5000,
+    "employmentStatus": "EMPLOYED",
+    "employmentDurationMonths": 24,
+    "existingLoanObligations": 500
+  }
+}
+----
+
+*Required fields:* `requestedAmount` (positive), `tenorMonths` (min 1), `applicant.fullName` (non-blank). All `applicant` monetary and duration fields must be `>= 0`.
+
+*Response 201:* `LoanApplicationResponse` (see xref:_loan_application_response[common response]).
+
+---
+
+=== List Own Applications
+
+`GET /api/v1/customer/loan-applications`
+
+Returns all applications owned by the authenticated customer.
+
+*Response 200:* Array of `LoanApplicationResponse`.
+
+---
+
+=== Get Own Application
+
+`GET /api/v1/customer/loan-applications/{applicationRef}`
+
+Returns a single application. Returns `404` if not found or owned by a different customer.
+
+*Response 200:* `LoanApplicationResponse`.
+
+---
+
+=== Submit Application
+
+`POST /api/v1/customer/loan-applications/{applicationRef}/submit`
+
+Transitions `DRAFT → SUBMITTED`. Also used to resubmit a `REFERRED` application (`REFERRED → UNDER_REVIEW` — triggers credit scoring).
+
+*Response 200:* `LoanApplicationResponse` with updated status.
+
+*Errors:* `409` if the application is not in a submittable state.
+
+---
+
+=== Get Own Credit Score
+
+`GET /api/v1/customer/loan-applications/{applicationRef}/credit-score`
+
+Returns the credit score. Only available after the application has entered `UNDER_REVIEW`.
+
+*Response 200:* `CreditScoreResponse` (see xref:_credit_score_response[common response]).
+
+*Errors:* `500` if no score exists yet (application has not been reviewed).
+
+---
+
+== Staff Endpoints
+
+The following endpoints are under `/api/v1/loan-applications`. Most are accessible to any authenticated user (no `@PreAuthorize` on read endpoints); write operations requiring staff roles are noted explicitly.
+
+=== List All Applications
+
+`GET /api/v1/loan-applications`
+
+Returns all applications for the tenant. No filtering or pagination currently.
+
+*Response 200:* Array of `LoanApplicationResponse`.
+
+---
+
+=== Get Application
+
+`GET /api/v1/loan-applications/{applicationRef}`
+
+*Response 200:* `LoanApplicationResponse`.
+
+---
+
+=== Submit Application (staff path)
+
+`POST /api/v1/loan-applications/{applicationRef}/submit`
+
+Same transition logic as the customer submit endpoint — `DRAFT → SUBMITTED`.
+
+---
+
+=== Start Review
+
+`POST /api/v1/loan-applications/{applicationRef}/start-review`
+
+**Requires:** `ROLE_STAFF`
+
+Transitions `SUBMITTED → UNDER_REVIEW`. Triggers credit scoring. Idempotent if a score already exists.
+
+*Response 200:* `LoanApplicationResponse`.
+
+*Errors:* `409` if not in `SUBMITTED` state.
+
+---
+
+=== Get Credit Score
+
+`GET /api/v1/loan-applications/{applicationRef}/credit-score`
+
+Returns the persisted credit score.
+
+*Response 200:* `CreditScoreResponse`.
+
+*Errors:* `500` if scoring has not run yet.
+
+---
+
+=== Get Staff Detail
+
+`GET /api/v1/loan-applications/{applicationRef}/staff-detail`
+
+Returns a composite view: application summary + applicant profile + credit score + full approval history. Intended for the staff review screen.
+
+*Response 200:* `StaffApplicationDetailResponse` (composite — see source DTO for full structure).
+
+---
+
+=== Get Staff Profile
+
+`GET /api/v1/staff/me`
+
+Returns the authenticated staff member's username and LOS workflow role, resolved from their JWT authorities.
+
+*Response 200:*
+[source,json]
+----
+{ "username": "...", "losRole": "LOAN_OFFICER" }
+----
+
+---
+
+== Approval Endpoints
+
+All require `ROLE_STAFF`.
+
+=== List Approval History
+
+`GET /api/v1/loan-applications/{applicationRef}/approval-decisions`
+
+Returns all recorded approval decisions in chronological order.
+
+*Response 200:* Array of `ApprovalStage` records, each containing `stageName`, `officerUsername`, `decision`, `comments`, `createdAt`.
+
+---
+
+=== Record Approval Decision
+
+`POST /api/v1/loan-applications/{applicationRef}/approval-decisions`
+
+Records an `APPROVE`, `REJECT`, or `REFER` decision for the application's current workflow stage. The stage and officer identity are derived server-side from the approval history and JWT — they are not supplied in the request body.
+
+*Request:*
+[source,json]
+----
+{ "decision": "APPROVE", "comments": "..." }
+----
+
+`decision` must be one of `APPROVE`, `REJECT`, `REFER`. `comments` is required (non-blank).
+
+*Response 201:* The persisted `ApprovalStage` record.
+
+*Effects:*
+
+* `APPROVE` on a non-final stage — application stays `UNDER_REVIEW`, next stage becomes active.
+* `APPROVE` on the final stage — application transitions to `APPROVED`.
+* `REJECT` at any stage — application transitions to `REJECTED` (terminal).
+* `REFER` at any stage — application transitions to `REFERRED`.
+
+*Errors:* `403` role does not match current stage. `409` officer has already decided on this application.
+
+See link:../workflows/approval.adoc[Approval Workflow] for stage sequencing details.
+
+---
+
+== Disbursement
+
+=== Disburse Loan
+
+`POST /api/v1/loan-applications/{applicationRef}/disburse`
+
+**Requires:** `ROLE_STAFF`
+
+Creates a loan account in Fineract and transitions the application `APPROVED → DISBURSED`. Requires `fineractClientId` and `fineractLoanProductId` to be set on the application. The entire operation is transactional — a Fineract failure rolls back the status change.
+
+*Response 200:* `FineractLoanCreateResponse` containing the `fineractLoanId`.
+
+*Errors:* `400` application not in `APPROVED` state or missing required Fineract identifiers. `502` Fineract call failed.
+
+See link:../workflows/disbursement.adoc[Disbursement] for full flow and mock adapter details.
+
+---
+
+== Admin Endpoints
+
+All require `ROLE_ADMIN`.
+
+=== Register Customer Account
+
+`POST /api/v1/admin/customers`
+
+Creates login credentials for a customer, linking them to an existing Fineract `clientId`.
+
+*Request:*
+[source,json]
+----
+{
+  "username": "...",
+  "password": "...",
+  "fineractClientId": 123,
+  "tenantId": "default"
+}
+----
+
+*Required:* all fields non-blank; `fineractClientId` positive.
+
+*Response 201:*
+[source,json]
+----
+{ "id": 1, "username": "...", "fineractClientId": 123, "tenantId": "default" }
+----
+
+*Errors:* `409` username already exists for this tenant.
+
+---
+
+=== Create Staff Account
+
+`POST /api/v1/admin/staff`
+
+Creates a staff account. `role` must be `ROLE_STAFF` or `ROLE_ADMIN`.
+
+*Request:*
+[source,json]
+----
+{
+  "username": "...",
+  "password": "...",
+  "email": "...",
+  "role": "ROLE_STAFF",
+  "tenantId": "default"
+}
+----
+
+*Response 201:* `StaffResponse` (id, username, email, role, tenantId, active, createdAt, updatedAt).
+
+---
+
+=== List Staff Accounts
+
+`GET /api/v1/admin/staff?tenantId=default`
+
+*Response 200:* Array of `StaffResponse`.
+
+---
+
+=== Update Staff Account
+
+`PATCH /api/v1/admin/staff/{id}`
+
+Updates email, role, or password. All fields optional — only provided fields are updated.
+
+*Request:*
+[source,json]
+----
+{ "email": "...", "role": "ROLE_ADMIN", "password": "..." }
+----
+
+*Response 200:* Updated `StaffResponse`.
+
+---
+
+=== Deactivate Staff Account
+
+`POST /api/v1/admin/staff/{id}/deactivate`
+
+Prevents login. Preserves the account record. Returns `204 No Content`.
+
+---
+
+=== Reactivate Staff Account
+
+`POST /api/v1/admin/staff/{id}/reactivate`
+
+Re-enables a deactivated account. Returns `204 No Content`.
+
+---
+
+== Common Response Structures
+
+[[_loan_application_response]]
+=== LoanApplicationResponse
+
+Returned by most loan application endpoints.
+
+[cols="2,1,3", options="header"]
+|===
+| Field | Type | Description
+
+| `applicationRef`
+| String
+| Application reference (e.g. `LOS-2026-00042`)
+
+| `status`
+| String
+| Current lifecycle state
+
+| `requestedAmount`
+| Decimal
+| Requested loan amount
+
+| `currency`
+| String
+| ISO 4217 currency code
+
+| `loanPurpose`
+| String
+| Loan purpose
+
+| `tenorMonths`
+| Integer
+| Loan duration in months
+
+| `fineractLoanId`
+| Long
+| Set after disbursement; null otherwise
+
+| `createdAt` / `updatedAt`
+| DateTime
+| ISO 8601 timestamps
+|===
+
+[[_credit_score_response]]
+=== CreditScoreResponse
+
+[cols="2,1,3", options="header"]
+|===
+| Field | Type | Description
+
+| `score`
+| Integer
+| Total score (0–100)
+
+| `riskCategory`
+| String
+| `LOW`, `MODERATE`, `HIGH`, or `VERY_HIGH`
+
+| `factorScores`
+| Object
+| Map of factor name → points awarded
+
+| `scoredAt`
+| DateTime
+| When the score was computed
+|===
+
+---
+
+== Further Reading
+
+* link:../security/authentication.adoc[Authentication] — token acquisition and JWT structure
+* link:../security/authorization.adoc[Authorization] — role enforcement and tenant isolation
+* link:../workflows/loan-origination.adoc[Loan Origination Lifecycle] — full state machine
+* link:../workflows/approval.adoc[Approval Workflow] — stage sequencing rules
+* link:../workflows/disbursement.adoc[Disbursement] — Fineract integration

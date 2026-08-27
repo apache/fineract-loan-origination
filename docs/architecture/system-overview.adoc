@@ -1,0 +1,169 @@
+////
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+////
+
+= System Overview
+:toc:
+:toc-placement!:
+
+toc::[]
+
+== What the LOS Is
+
+The Apache Fineract Loan Origination System is a standalone service that manages the loan application lifecycle from initial customer submission through credit scoring, multi-stage staff approval, and final disbursement into Apache Fineract.
+
+The LOS owns:
+
+* Loan application intake and lifecycle state
+* Credit scoring and risk assessment
+* Multi-stage approval workflow
+* Customer and staff authentication
+* Disbursement trigger to Fineract
+
+The LOS does not own:
+
+* Loan account management and repayment schedules
+* Accounting and ledger entries
+* Client master data
+* Loan product configuration
+
+All of those remain in Apache Fineract. The disbursement bridge is the single handoff point — once an application reaches `DISBURSED`, all subsequent operations happen in Fineract.
+
+== Component Diagram
+
+[source]
+----
+┌─────────────────────────────────────────────────────┐
+│              Angular Frontend (SPA)                  │
+│   Customer UI          │          Staff UI           │
+└────────────────────────┬────────────────────────────┘
+                         │ HTTPS + JWT
+                         ▼
+┌─────────────────────────────────────────────────────┐
+│              Spring Boot REST API                    │
+│                                                      │
+│   Controllers → Services → Domain → Repositories    │
+│                                                      │
+│   • LoanApplicationService                           │
+│   • CreditScoringService                             │
+│   • ApprovalWorkflowService                          │
+│   • DisbursementBridgeService                        │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│                   PostgreSQL                         │
+└────────────────┬────────────────────────────────────┘
+                 │ (disbursement only)
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│           Apache Fineract (External)                 │
+│  POST /api/v1/loans          (disbursement)          │
+│  POST /api/v1/authentication (staff login)           │
+└─────────────────────────────────────────────────────┘
+----
+
+== Application Lifecycle
+
+The application state machine has six states:
+
+[source]
+----
+DRAFT → SUBMITTED → UNDER_REVIEW → APPROVED → DISBURSED
+                          │
+                       REJECTED
+                          │
+                       REFERRED → UNDER_REVIEW
+----
+
+`REJECTED` and `DISBURSED` are terminal states — no transitions are permitted from either.
+
+For the full transition map and validation rules, see link:../workflows/loan-origination.adoc[Loan Origination Workflow].
+
+== High-Level Data Flow
+
+[cols="1,4", options="header"]
+|===
+| Step | What happens
+
+| Application created
+| Customer submits request; `LoanApplication` created in `DRAFT`, stored in PostgreSQL
+
+| Application submitted
+| Customer submits; state machine transitions to `SUBMITTED`
+
+| Review started
+| Staff picks up; transitions to `UNDER_REVIEW`; credit scoring executes and result is persisted
+
+| Approval decisions
+| Staff record sequential decisions per role; each decision stored as an `ApprovalStage` record
+
+| Final approval
+| All stages approved; transitions to `APPROVED`
+
+| Disbursement
+| Staff triggers; LOS calls Fineract `POST /api/v1/loans`; Fineract loan ID recorded; transitions to `DISBURSED`
+|===
+
+== Technology Stack
+
+[cols="2,3", options="header"]
+|===
+| Layer | Technology
+
+| Backend
+| Java 21, Spring Boot 4.1, Spring Security 6, Spring Data JPA
+
+| Frontend
+| Angular 21, TypeScript, TailwindCSS
+
+| Database
+| PostgreSQL 15
+
+| Authentication
+| JWT (HS512), BCrypt (customer passwords)
+
+| Build
+| Maven 3.9, Node.js 22
+
+| Infrastructure
+| Docker, Docker Compose
+|===
+
+== Multi-Tenancy
+
+The LOS is multi-tenant. Every entity carries a `tenantId` column. All repository queries are filtered by `tenantId`. The JWT token contains the `tenantId` claim; the request filter validates it matches the `X-Fineract-Platform-TenantId` header on every request. A mismatch returns `403 Forbidden`.
+
+This means one LOS deployment can serve multiple isolated institutions with no data leakage between them.
+
+== External System Boundary
+
+Fineract is treated as an external system. The LOS communicates with it over REST. There are exactly two integration points:
+
+* **Staff login** — credentials validated against Fineract's `/api/v1/authentication`
+* **Loan disbursement** — loan account created via Fineract's `/api/v1/loans`
+
+Both are behind an interface (`FineractIntegrationPort`) with a real and a mock adapter. See link:integration.adoc[Integration Architecture] for details.
+
+== Further Reading
+
+* link:backend-architecture.adoc[Backend Architecture] — layers, domain model, state machine, service responsibilities
+* link:frontend-architecture.adoc[Frontend Architecture] — Angular structure, guards, interceptors, customer/staff separation
+* link:integration.adoc[Integration Architecture] — Fineract bridge, adapters, error boundary
+* link:../security/index.adoc[Security] — authentication flows, authorization model
+* link:../workflows/index.adoc[Workflows] — approval stages, credit scoring, disbursement
