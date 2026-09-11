@@ -199,8 +199,9 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
         flex-direction: column;
         padding: 1.25rem 0;
         transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        overflow: hidden;
         position: relative;
+        overflow: visible;
+        z-index: 1;
 
         &.collapsed {
           width: 64px;
@@ -311,6 +312,7 @@ const SIDEBAR_KEY = 'los-staff-sidebar-collapsed';
         cursor: pointer;
         color: var(--color-text-muted);
         flex-shrink: 0;
+        z-index: 1;
 
         &:hover {
           border-color: var(--color-primary);
