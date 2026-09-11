@@ -23,7 +23,7 @@ package org.apache.fineract.los.exception;
  * an application is currently sitting at — e.g. a BRANCH_MANAGER attempting to act while the
  * application is still awaiting its LOAN_OFFICER decision.
  *
- * <p>Unchecked — the global exception handler maps this to HTTP 409 Conflict.
+ * <p>Unchecked — the global exception handler maps this to HTTP 403 Forbidden.
  */
 public class ApprovalStageMismatchException extends RuntimeException {
 
