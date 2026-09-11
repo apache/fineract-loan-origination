@@ -1,0 +1,77 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: Fineract Signed Commits Check
+
+# Asks GitHub whether it verified each commit on the pull request, and says so on the pull
+# request when it did not. The reasoning — why the old local `%G?` check could not answer
+# this, and why the trigger below is what it is — lives in
+# .github/scripts/check-commit-signatures.js.
+#
+# Two things follow from `pull_request_target` and are easy to trip over:
+#
+#   - The copy of this workflow that runs is the one on the **base branch**. A pull request
+#     editing this file cannot change the check applied to it. That is deliberate: under
+#     `pull_request`, a contributor could weaken their own gate, and did.
+#   - Nothing here may check out or execute the pull request's code. Writable token plus
+#     untrusted code is the "pwn request" vulnerability. The checkout below is ref-less and
+#     sparse, so it yields this repository's base branch and nothing from the fork.
+#
+# This is early feedback, not the enforcement boundary. Branch protection's "Require signed
+# commits" is enforced by GitHub itself and cannot be edited by any workflow; this check
+# exists so a contributor is told *which* of several distinct problems they have, and how to
+# fix it, before they run into that.
+
+on:
+  # zizmor: ignore[dangerous-triggers] — required to comment on fork pull requests, and safe
+  # here: no checkout of the pull request's code, and the only input is the GitHub API's own
+  # verification verdict.
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  verify-signatures:
+    name: Verify Commit Signatures
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read # ref-less checkout of this repository's base branch
+      pull-requests: write # the explanatory comment
+    steps:
+      # No `ref:`. On `pull_request_target` this resolves to the base branch of *this*
+      # repository, never the pull request's head — which is what makes the writable token
+      # above safe to hold. Only the script directory is fetched.
+      - name: Check out this repository's scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Verify signatures and report
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const check = require('./.github/scripts/check-commit-signatures.js');
+            await check({ github, context, core });

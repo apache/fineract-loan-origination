@@ -47,5 +47,5 @@ frontend/package-lock.json
 memory.md
 rat-report.txt
 postman/
-scripts/
+/scripts/
 src/main/resources/db/seed/
