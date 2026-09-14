@@ -55,7 +55,7 @@ under the License.
 
     <properties>
         <java.version>21</java.version>
-        <springdoc.version>3.0.3</springdoc.version>
+        <springdoc.version>3.1.0</springdoc.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <cyclonedx.version>2.9.3</cyclonedx.version>
         <rat.version>0.18</rat.version>
