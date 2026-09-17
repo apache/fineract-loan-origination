@@ -27,21 +27,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 /**
- * Repository for {@link CreditScore} entity.
+ * Repository for the {@link CreditScore} entity.
  *
- * <p>CreditScore has a one-to-one relationship with {@link LoanApplication}. A score is computed
- * once when the application enters UNDER_REVIEW and is immutable after creation.
- *
- * <p>Score retrieval is a read-heavy operation — results are cached at the service layer via Redis
- * in production to avoid repeated database hits for the same application.
+ * <p>A credit score has a one-to-one relationship with {@link LoanApplication}. It is computed once
+ * when the application enters UNDER_REVIEW and is immutable thereafter.
  */
 @Repository
 public interface CreditScoreRepository extends JpaRepository<CreditScore, Long> {
 
   /**
    * Finds the credit score for a given application.
-   *
-   * <p>Primary access pattern — score is always retrieved in context of its parent application.
    *
    * @param application the parent loan application
    * @return the credit score if it has been computed
@@ -51,8 +46,8 @@ public interface CreditScoreRepository extends JpaRepository<CreditScore, Long> 
   /**
    * Finds the credit score by application ID and tenant.
    *
-   * <p>Used when only the application ID is available without loading the full application entity
-   * first. Traverses the join to {@link LoanApplication} for tenant isolation.
+   * <p>Used when only the application ID is available, avoiding a load of the full application
+   * entity. Traverses the join to {@link LoanApplication} to enforce tenant isolation.
    *
    * @param applicationId internal application ID
    * @param tenantId institution identifier
