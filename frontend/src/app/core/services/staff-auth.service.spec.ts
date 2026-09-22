@@ -21,8 +21,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { StaffAuthService } from './staff-auth.service';
+import { PayloadEncryptionService } from './payload-encryption.service';
 
-const LOGIN_URL = 'http://localhost:8082/api/v1/auth/staff/login';
+const LOGIN_URL = 'http://localhost:8082/api/v1/auth/staff/login/encrypted';
 
 const LO_RESPONSE = {
   token: 'staff.jwt.token',
@@ -47,14 +48,27 @@ const BM_RESPONSE = {
   displayRole: 'Branch Manager',
 };
 
+const mockEncryptionService = {
+  encrypt: vi.fn().mockResolvedValue({
+    wrappedKey: 'mock-wrapped-key',
+    ciphertext: 'mock-ciphertext',
+  }),
+};
+
 describe('StaffAuthService', () => {
   let service: StaffAuthService;
   let http: HttpTestingController;
 
   beforeEach(() => {
     sessionStorage.clear();
+    vi.clearAllMocks();
     TestBed.configureTestingModule({
-      providers: [StaffAuthService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        StaffAuthService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: PayloadEncryptionService, useValue: mockEncryptionService },
+      ],
     });
     service = TestBed.inject(StaffAuthService);
     http = TestBed.inject(HttpTestingController);
@@ -81,27 +95,31 @@ describe('StaffAuthService', () => {
 
   // ── Successful login ─────────────────────────────────────────────────────
 
-  it('returns true on successful login', () => {
+  it('returns true on successful login', async () => {
     let result: boolean | undefined;
     service.login('john', 'pass').subscribe((v) => (result = v));
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     expect(result).toBe(true);
   });
 
-  it('becomes authenticated after login', () => {
+  it('becomes authenticated after login', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     expect(service.isAuthenticated()).toBe(true);
   });
 
-  it('stores Bearer token in auth header', () => {
+  it('stores Bearer token in auth header', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     expect(service.getAuthHeader()).toBe('Bearer staff.jwt.token');
   });
 
-  it('builds profile with username, losRole, displayRole, tenantId', () => {
+  it('builds profile with username, losRole, displayRole, tenantId', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     const p = service.getProfile();
     expect(p?.username).toBe('john');
@@ -110,67 +128,76 @@ describe('StaffAuthService', () => {
     expect(p?.tenantId).toBe('default');
   });
 
-  it('persists token to sessionStorage', () => {
+  it('persists token to sessionStorage', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     expect(sessionStorage.getItem('los-staff-token')).toBe('staff.jwt.token');
   });
 
   // ── Role helpers ─────────────────────────────────────────────────────────
 
-  it('isLoanOfficer returns true for LOAN_OFFICER role', () => {
+  it('isLoanOfficer returns true for LOAN_OFFICER role', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     expect(service.isLoanOfficer()).toBe(true);
     expect(service.isCreditCommittee()).toBe(false);
     expect(service.isBranchManager()).toBe(false);
   });
 
-  it('isCreditCommittee returns true for CREDIT_COMMITTEE role', () => {
+  it('isCreditCommittee returns true for CREDIT_COMMITTEE role', async () => {
     service.login('cc', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(CC_RESPONSE);
     expect(service.isCreditCommittee()).toBe(true);
     expect(service.isLoanOfficer()).toBe(false);
   });
 
-  it('isBranchManager returns true for BRANCH_MANAGER role', () => {
+  it('isBranchManager returns true for BRANCH_MANAGER role', async () => {
     service.login('bm', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(BM_RESPONSE);
     expect(service.isBranchManager()).toBe(true);
     expect(service.isLoanOfficer()).toBe(false);
   });
 
-  it('getLosRole returns the role string', () => {
+  it('getLosRole returns the role string', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     expect(service.getLosRole()).toBe('ROLE_LOAN_OFFICER');
   });
 
-  it('getDisplayRole returns the display string', () => {
+  it('getDisplayRole returns the display string', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     expect(service.getDisplayRole()).toBe('Loan Officer');
   });
 
   // ── Failed login ─────────────────────────────────────────────────────────
 
-  it('returns false on 401', () => {
+  it('returns false on 401', async () => {
     let result: boolean | undefined;
     service.login('john', 'wrong').subscribe((v) => (result = v));
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush({}, { status: 401, statusText: 'Unauthorized' });
     expect(result).toBe(false);
   });
 
-  it('stays unauthenticated after failed login', () => {
+  it('stays unauthenticated after failed login', async () => {
     service.login('john', 'wrong').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush({}, { status: 401, statusText: 'Unauthorized' });
     expect(service.isAuthenticated()).toBe(false);
   });
 
   // ── Logout ───────────────────────────────────────────────────────────────
 
-  it('clears auth state on logout', () => {
+  it('clears auth state on logout', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     service.logout();
     expect(service.isAuthenticated()).toBe(false);
@@ -178,8 +205,9 @@ describe('StaffAuthService', () => {
     expect(service.getProfile()).toBeNull();
   });
 
-  it('removes token from sessionStorage on logout', () => {
+  it('removes token from sessionStorage on logout', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
     service.logout();
     expect(sessionStorage.getItem('los-staff-token')).toBeNull();
@@ -187,15 +215,26 @@ describe('StaffAuthService', () => {
 
   // ── Request shape ────────────────────────────────────────────────────────
 
-  it('POSTs to staff login URL with credentials and tenantId', () => {
+  it('POSTs to staff login URL with encrypted payload', async () => {
     service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     const req = http.expectOne(LOGIN_URL);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toMatchObject({
+    expect(req.request.body).toEqual({
+      wrappedKey: 'mock-wrapped-key',
+      ciphertext: 'mock-ciphertext',
+    });
+    req.flush(LO_RESPONSE);
+  });
+
+  it('calls encryption service with credentials and tenantId', async () => {
+    service.login('john', 'pass').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
+    http.expectOne(LOGIN_URL).flush(LO_RESPONSE);
+    expect(mockEncryptionService.encrypt).toHaveBeenCalledWith({
       username: 'john',
       password: 'pass',
       tenantId: 'default',
     });
-    req.flush(LO_RESPONSE);
   });
 });

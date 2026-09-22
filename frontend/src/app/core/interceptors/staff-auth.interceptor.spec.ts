@@ -22,10 +22,18 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { staffAuthInterceptor } from './staff-auth.interceptor';
 import { StaffAuthService } from '../services/staff-auth.service';
+import { PayloadEncryptionService } from '../services/payload-encryption.service';
 
 const STAFF_URL = 'http://localhost:8082/api/v1/loan-applications';
 const AUTH_URL = 'http://localhost:8082/api/v1/auth/login';
 const CUSTOMER_URL = 'http://localhost:8082/api/v1/customer/loan-applications';
+
+const mockEncryptionService = {
+  encrypt: vi.fn().mockResolvedValue({
+    wrappedKey: 'mock-wrapped-key',
+    ciphertext: 'mock-ciphertext',
+  }),
+};
 
 describe('staffAuthInterceptor', () => {
   let http: HttpClient;
@@ -39,6 +47,7 @@ describe('staffAuthInterceptor', () => {
         StaffAuthService,
         provideHttpClient(withInterceptors([staffAuthInterceptor])),
         provideHttpClientTesting(),
+        { provide: PayloadEncryptionService, useValue: mockEncryptionService },
       ],
     });
     http = TestBed.inject(HttpClient);

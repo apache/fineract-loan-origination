@@ -28,6 +28,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.api.dto.response.FineractAuthResponse;
+import org.apache.fineract.los.crypto.PayloadDecryptionService;
 import org.apache.fineract.los.domain.CustomerCredential;
 import org.apache.fineract.los.repository.CustomerCredentialRepository;
 import org.apache.fineract.los.security.JwtService;
@@ -54,6 +55,8 @@ public class AuthController {
   private final JwtService jwtService;
   private final FineractCredentialValidationService fineractValidationService;
   private final ApprovalWorkflowProperties workflowProperties;
+  private final PayloadDecryptionService payloadDecryptionService;
+  private final jakarta.validation.Validator validator;
 
   public record LoginRequest(
       @NotBlank(message = "Username is required")
@@ -93,7 +96,61 @@ public class AuthController {
       String userType,
       int expiresInMinutes) {}
 
-  @Operation(summary = "Authenticate a customer and issue a JWT")
+  /** Encrypted envelope — wrappedKey + ciphertext replace the plaintext fields. */
+  public record EncryptedLoginRequest(@NotBlank String wrappedKey, @NotBlank String ciphertext) {}
+
+  // ── Encrypted login endpoints ────────────────────────────────────────────
+
+  /**
+   * Customer login via encrypted payload. Angular encrypts {@code LoginRequest} JSON with AES-GCM
+   * and wraps the AES key with the backend RSA public key. This endpoint decrypts and delegates to
+   * the existing {@link #login} logic.
+   */
+  @PostMapping("/login/encrypted")
+  public ResponseEntity<LoginResponse> loginEncrypted(
+      @Valid @RequestBody final EncryptedLoginRequest envelope) {
+    final LoginRequest request = decryptAs(envelope, LoginRequest.class);
+    if (request == null) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
+    return login(request);
+  }
+
+  /**
+   * Staff login via encrypted payload. Same envelope pattern as {@link #loginEncrypted}, delegates
+   * to {@link #staffLogin}.
+   */
+  @PostMapping("/staff/login/encrypted")
+  public ResponseEntity<StaffLoginResponse> staffLoginEncrypted(
+      @Valid @RequestBody final EncryptedLoginRequest envelope) {
+    final StaffLoginRequest request = decryptAs(envelope, StaffLoginRequest.class);
+    if (request == null) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
+    return staffLogin(request);
+  }
+
+  private <T> T decryptAs(final EncryptedLoginRequest envelope, final Class<T> type) {
+    try {
+      final String json =
+          payloadDecryptionService.decrypt(envelope.wrappedKey(), envelope.ciphertext());
+      // Use a new ObjectMapper instance — avoids injection issues
+      final com.fasterxml.jackson.databind.ObjectMapper mapper =
+          new com.fasterxml.jackson.databind.ObjectMapper();
+      final T obj = mapper.readValue(json, type);
+      // Validate the deserialized object as if @Valid had been applied
+      final var violations = validator.validate(obj);
+      if (!violations.isEmpty()) {
+        log.warn("Encrypted login payload failed validation: {} violation(s)", violations.size());
+        return null;
+      }
+      return obj;
+    } catch (Exception ex) {
+      log.warn("Encrypted login request could not be decrypted: {}", ex.getClass().getSimpleName());
+      return null;
+    }
+  }
+
   @PostMapping("/login")
   public ResponseEntity<LoginResponse> login(@Valid @RequestBody final LoginRequest request) {
     final Optional<CustomerCredential> credentialOpt =

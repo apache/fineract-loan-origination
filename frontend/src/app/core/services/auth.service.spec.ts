@@ -21,8 +21,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { AuthService } from './auth.service';
+import { PayloadEncryptionService } from './payload-encryption.service';
 
-const LOGIN_URL = 'http://localhost:8082/api/v1/auth/login';
+const LOGIN_URL = 'http://localhost:8082/api/v1/auth/login/encrypted';
 
 const MOCK_RESPONSE = {
   token: 'eyJhbGciOiJIUzI1NiJ9.test',
@@ -34,14 +35,27 @@ const MOCK_RESPONSE = {
   expiresInMinutes: 15,
 };
 
+const mockEncryptionService = {
+  encrypt: vi.fn().mockResolvedValue({
+    wrappedKey: 'mock-wrapped-key',
+    ciphertext: 'mock-ciphertext',
+  }),
+};
+
 describe('AuthService', () => {
   let service: AuthService;
   let http: HttpTestingController;
 
   beforeEach(() => {
     sessionStorage.clear();
+    vi.clearAllMocks();
     TestBed.configureTestingModule({
-      providers: [AuthService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        AuthService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: PayloadEncryptionService, useValue: mockEncryptionService },
+      ],
     });
     service = TestBed.inject(AuthService);
     http = TestBed.inject(HttpTestingController);
@@ -71,38 +85,44 @@ describe('AuthService', () => {
   it('returns true on successful login', async () => {
     let result: boolean | undefined;
     service.login('sara', 'sara123').subscribe((v) => (result = v));
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
     expect(result).toBe(true);
   });
 
-  it('marks authenticated after successful login', () => {
+  it('marks authenticated after successful login', async () => {
     service.login('sara', 'sara123').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
     expect(service.isAuthenticated()).toBe(true);
   });
 
-  it('stores Bearer token in auth header after login', () => {
+  it('stores Bearer token in auth header after login', async () => {
     service.login('sara', 'sara123').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
     expect(service.getAuthHeader()).toBe(`Bearer ${MOCK_RESPONSE.token}`);
   });
 
-  it('builds profile from login response', () => {
+  it('builds profile from login response', async () => {
     service.login('sara', 'sara123').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
     const profile = service.getProfile();
     expect(profile?.clientId).toBe(1);
     expect(profile?.displayName).toBe('sara');
   });
 
-  it('sets tenant ID from login response', () => {
+  it('sets tenant ID from login response', async () => {
     service.login('sara', 'sara123').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
     expect(service.getTenantId()).toBe('default');
   });
 
-  it('persists token in sessionStorage after login', () => {
+  it('persists token in sessionStorage after login', async () => {
     service.login('sara', 'sara123').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
     expect(sessionStorage.getItem('los-customer-token')).toBe(MOCK_RESPONSE.token);
   });
@@ -112,28 +132,32 @@ describe('AuthService', () => {
   it('returns false on 401 response', async () => {
     let result: boolean | undefined;
     service.login('sara', 'wrong').subscribe((v) => (result = v));
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http
       .expectOne(LOGIN_URL)
       .flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
     expect(result).toBe(false);
   });
 
-  it('remains unauthenticated after failed login', () => {
+  it('remains unauthenticated after failed login', async () => {
     service.login('sara', 'wrong').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush({}, { status: 401, statusText: 'Unauthorized' });
     expect(service.isAuthenticated()).toBe(false);
   });
 
-  it('keeps null profile after failed login', () => {
+  it('keeps null profile after failed login', async () => {
     service.login('sara', 'wrong').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush({}, { status: 401, statusText: 'Unauthorized' });
     expect(service.getProfile()).toBeNull();
   });
 
   // ── Logout ───────────────────────────────────────────────────────────────
 
-  it('clears auth state on logout', () => {
+  it('clears auth state on logout', async () => {
     service.login('sara', 'sara123').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
 
     service.logout();
@@ -143,8 +167,9 @@ describe('AuthService', () => {
     expect(service.getProfile()).toBeNull();
   });
 
-  it('clears sessionStorage on logout', () => {
+  it('clears sessionStorage on logout', async () => {
     service.login('sara', 'sara123').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
 
     service.logout();
@@ -152,8 +177,9 @@ describe('AuthService', () => {
     expect(sessionStorage.getItem('los-customer-token')).toBeNull();
   });
 
-  it('resets tenant to default on logout', () => {
+  it('resets tenant to default on logout', async () => {
     service.login('sara', 'sara123').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
 
     service.logout();
@@ -163,18 +189,26 @@ describe('AuthService', () => {
 
   // ── Persistence ──────────────────────────────────────────────────────────
 
-  it('sends login request to correct URL with credentials', () => {
+  it('sends login request to correct URL with encrypted payload', async () => {
     service.login('sara', 'sara123').subscribe();
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
     const req = http.expectOne(LOGIN_URL);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toMatchObject({ username: 'sara', password: 'sara123' });
+    expect(req.request.body).toEqual({
+      wrappedKey: 'mock-wrapped-key',
+      ciphertext: 'mock-ciphertext',
+    });
     req.flush(MOCK_RESPONSE);
   });
 
-  it('includes tenantId in login request body', () => {
+  it('calls encryption service with credentials and tenantId', async () => {
     service.login('sara', 'sara123').subscribe();
-    const req = http.expectOne(LOGIN_URL);
-    expect(req.request.body.tenantId).toBe('default');
-    req.flush(MOCK_RESPONSE);
+    await vi.waitFor(() => http.match(LOGIN_URL).length > 0);
+    http.expectOne(LOGIN_URL).flush(MOCK_RESPONSE);
+    expect(mockEncryptionService.encrypt).toHaveBeenCalledWith({
+      username: 'sara',
+      password: 'sara123',
+      tenantId: 'default',
+    });
   });
 });

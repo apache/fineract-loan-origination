@@ -43,8 +43,8 @@ import org.springframework.stereotype.Component;
  * <p>Applies different rate limits based on endpoint sensitivity:
  *
  * <ul>
- *   <li><strong>Auth endpoints</strong> (/api/v1/auth/**): 5 requests per 15 minutes per IP —
- *       prevents credential stuffing and brute-force attacks
+ *   <li><strong>Auth endpoints</strong> (/api/v1/auth/**): 100 requests per minute per IP — relaxed
+ *       for demo usage allowing multiple role logins
  *   <li><strong>Admin endpoints</strong> (/api/v1/admin/**): 20 requests per minute per IP —
  *       prevents abuse of privileged operations
  *   <li><strong>Other endpoints</strong>: 100 requests per minute per IP — prevents general API
@@ -60,9 +60,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class RateLimitFilter implements Filter {
 
-  // Auth endpoints: Strict limit to prevent brute-force attacks
-  private static final int AUTH_MAX_REQUESTS = 5;
-  private static final Duration AUTH_WINDOW = Duration.ofMinutes(15);
+  // Auth endpoints: Relaxed limit for demo usage (multiple role logins)
+  private static final int AUTH_MAX_REQUESTS = 100;
+  private static final Duration AUTH_WINDOW = Duration.ofMinutes(1);
 
   // Admin endpoints: Moderate limit for privileged operations
   private static final int ADMIN_MAX_REQUESTS = 20;
@@ -129,9 +129,9 @@ public class RateLimitFilter implements Filter {
   }
 
   /**
-   * Creates a bucket for authentication endpoints with strict limits.
+   * Creates a bucket for authentication endpoints with relaxed limits for demo.
    *
-   * <p>Allows 5 requests per 15 minutes with greedy refill strategy.
+   * <p>Allows 100 requests per minute with greedy refill strategy.
    */
   private Bucket createAuthBucket() {
     return Bucket.builder()

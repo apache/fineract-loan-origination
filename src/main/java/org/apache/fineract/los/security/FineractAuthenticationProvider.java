@@ -52,13 +52,23 @@ public class FineractAuthenticationProvider implements AuthenticationProvider {
 
     List<SimpleGrantedAuthority> authorities =
         fineractResponse.getPermissions() == null
-            ? List.of(new SimpleGrantedAuthority("ROLE_STAFF"))
+            ? new ArrayList<>()
             : fineractResponse.getPermissions().stream()
                 .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
 
+    // Map Fineract "Super user" role to ROLE_ADMIN
+    if (fineractResponse.getRoles() != null) {
+      for (FineractAuthResponse.FineractRole role : fineractResponse.getRoles()) {
+        if ("Super user".equals(role.getName())) {
+          authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+          break;
+        }
+      }
+    }
+
+    // Ensure ROLE_STAFF is always present for Fineract-authenticated users
     if (authorities.stream().noneMatch(a -> a.getAuthority().equals("ROLE_STAFF"))) {
-      authorities = new ArrayList<>(authorities);
       authorities.add(new SimpleGrantedAuthority("ROLE_STAFF"));
     }
 

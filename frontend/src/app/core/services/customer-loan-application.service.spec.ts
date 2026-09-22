@@ -21,8 +21,16 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { CustomerLoanApplicationService } from './customer-loan-application.service';
+import { PayloadEncryptionService } from './payload-encryption.service';
 
 const BASE = 'http://localhost:8082/api/v1/customer/loan-applications';
+
+const mockEncryptionService = {
+  encrypt: vi.fn().mockResolvedValue({
+    wrappedKey: 'mock-wrapped-key',
+    ciphertext: 'mock-ciphertext',
+  }),
+};
 
 describe('CustomerLoanApplicationService', () => {
   let service: CustomerLoanApplicationService;
@@ -30,7 +38,12 @@ describe('CustomerLoanApplicationService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [CustomerLoanApplicationService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        CustomerLoanApplicationService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: PayloadEncryptionService, useValue: mockEncryptionService },
+      ],
     });
     service = TestBed.inject(CustomerLoanApplicationService);
     http = TestBed.inject(HttpTestingController);

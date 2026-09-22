@@ -18,8 +18,9 @@
  */
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, from, map, of, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { PayloadEncryptionService } from './payload-encryption.service';
 
 export interface StaffProfile {
   username: string;
@@ -44,6 +45,7 @@ const PROFILE_KEY = 'los-staff-profile';
 @Injectable({ providedIn: 'root' })
 export class StaffAuthService {
   private readonly http = inject(HttpClient);
+  private readonly encryption = inject(PayloadEncryptionService);
 
   private readonly tokenSubject = new BehaviorSubject<string | null>(this.loadToken());
   private readonly profileSubject = new BehaviorSubject<StaffProfile | null>(this.loadProfile());
@@ -55,32 +57,33 @@ export class StaffAuthService {
   // -------------------------------------------------------------------------
 
   login(username: string, password: string): Observable<boolean> {
-    return this.http
-      .post<StaffLoginResponse>(`${environment.losApiUrl}/auth/staff/login`, {
-        username,
-        password,
-        tenantId: environment.tenantId,
-      })
-      .pipe(
-        tap((res) => {
-          const profile: StaffProfile = {
-            username: res.username,
-            losRole: res.losRole,
-            displayRole: res.displayRole,
-            tenantId: res.tenantId,
-          };
-          this.tokenSubject.next(res.token);
-          this.profileSubject.next(profile);
-          try {
-            sessionStorage.setItem(TOKEN_KEY, res.token);
-            sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-          } catch {
-            /* storage unavailable */
-          }
-        }),
-        map(() => true),
-        catchError(() => of(false)),
-      );
+    const plainPayload = { username, password, tenantId: environment.tenantId };
+    return from(this.encryption.encrypt(plainPayload)).pipe(
+      switchMap((envelope) =>
+        this.http.post<StaffLoginResponse>(
+          `${environment.losApiUrl}/auth/staff/login/encrypted`,
+          envelope,
+        ),
+      ),
+      tap((res) => {
+        const profile: StaffProfile = {
+          username: res.username,
+          losRole: res.losRole,
+          displayRole: res.displayRole,
+          tenantId: res.tenantId,
+        };
+        this.tokenSubject.next(res.token);
+        this.profileSubject.next(profile);
+        try {
+          sessionStorage.setItem(TOKEN_KEY, res.token);
+          sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+        } catch {
+          /* storage unavailable */
+        }
+      }),
+      map(() => true),
+      catchError(() => of(false)),
+    );
   }
 
   logout(): void {

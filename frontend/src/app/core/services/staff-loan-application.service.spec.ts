@@ -22,6 +22,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { StaffLoanApplicationService } from './staff-loan-application.service';
 import { StaffAuthService } from './staff-auth.service';
+import { PayloadEncryptionService } from './payload-encryption.service';
 
 const BASE = 'http://localhost:8082/api/v1/loan-applications';
 
@@ -61,6 +62,13 @@ const DETAIL = {
   disbursedAt: null,
 };
 
+const mockEncryptionService = {
+  encrypt: vi.fn().mockResolvedValue({
+    wrappedKey: 'mock-wrapped-key',
+    ciphertext: 'mock-ciphertext',
+  }),
+};
+
 describe('StaffLoanApplicationService', () => {
   let service: StaffLoanApplicationService;
   let http: HttpTestingController;
@@ -74,6 +82,7 @@ describe('StaffLoanApplicationService', () => {
         StaffAuthService,
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: PayloadEncryptionService, useValue: mockEncryptionService },
       ],
     });
     service = TestBed.inject(StaffLoanApplicationService);

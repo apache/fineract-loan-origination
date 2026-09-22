@@ -18,8 +18,9 @@
  */
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, map, of, catchError, tap } from 'rxjs';
+import { BehaviorSubject, Observable, from, map, of, catchError, tap, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { PayloadEncryptionService } from './payload-encryption.service';
 
 export interface CustomerProfile {
   clientId: number;
@@ -45,6 +46,7 @@ const TENANT_KEY = 'los-customer-tenant';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly encryption = inject(PayloadEncryptionService);
   private readonly tokenSubject = new BehaviorSubject<string | null>(this.loadToken());
   private readonly profileSubject = new BehaviorSubject<CustomerProfile | null>(this.loadProfile());
   private readonly tenantIdSubject = new BehaviorSubject<string>(this.loadTenantId());
@@ -53,34 +55,32 @@ export class AuthService {
   readonly tenantId$ = this.tenantIdSubject.asObservable();
 
   login(username: string, password: string): Observable<boolean> {
-    return this.http
-      .post<LoginResponse>(`${environment.losApiUrl}/auth/login`, {
-        username,
-        password,
-        tenantId: environment.tenantId,
-      })
-      .pipe(
-        tap((res) => {
-          const profile: CustomerProfile = {
-            clientId: res.clientId,
-            displayName: res.username,
-            role: res.role,
-            userType: res.userType,
-          };
-          this.tokenSubject.next(res.token);
-          this.profileSubject.next(profile);
-          this.setTenantId(res.tenantId);
-          try {
-            sessionStorage.setItem(TOKEN_KEY, res.token);
-            sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-            sessionStorage.setItem(TENANT_KEY, res.tenantId);
-          } catch {
-            /* storage unavailable */
-          }
-        }),
-        map(() => true),
-        catchError(() => of(false)),
-      );
+    const plainPayload = { username, password, tenantId: environment.tenantId };
+    return from(this.encryption.encrypt(plainPayload)).pipe(
+      switchMap((envelope) =>
+        this.http.post<LoginResponse>(`${environment.losApiUrl}/auth/login/encrypted`, envelope),
+      ),
+      tap((res) => {
+        const profile: CustomerProfile = {
+          clientId: res.clientId,
+          displayName: res.username,
+          role: res.role,
+          userType: res.userType,
+        };
+        this.tokenSubject.next(res.token);
+        this.profileSubject.next(profile);
+        this.setTenantId(res.tenantId);
+        try {
+          sessionStorage.setItem(TOKEN_KEY, res.token);
+          sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+          sessionStorage.setItem(TENANT_KEY, res.tenantId);
+        } catch {
+          /* storage unavailable */
+        }
+      }),
+      map(() => true),
+      catchError(() => of(false)),
+    );
   }
 
   getAuthHeader(): string | null {
