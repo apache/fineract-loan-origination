@@ -201,7 +201,7 @@ under the License.
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-java</artifactId>
-            <version>7.34.6</version>
+            <version>8.0.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
