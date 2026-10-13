@@ -45,7 +45,9 @@ import org.apache.fineract.los.repository.ApprovalStageRepository;
 import org.apache.fineract.los.service.ApprovalWorkflowService;
 import org.apache.fineract.los.service.CreditScoringService;
 import org.apache.fineract.los.service.LoanApplicationService;
+import org.apache.fineract.los.statemachine.LoanStateTransitionException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -57,6 +59,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
@@ -345,6 +348,25 @@ class GlobalExceptionHandlerTest {
         .andExpect(jsonPath("$.status").value(expectedStatus.value()))
         .andExpect(jsonPath("$.error").value(expectedStatus.getReasonPhrase()))
         .andExpect(jsonPath("$.message").value("Existing error reason"));
+  }
+
+  @Test
+  @DisplayName("LoanStateTransitionException maps to 409 Conflict with the transition message")
+  void invalidStateTransitionReturnsConflict() {
+    final LoanStateTransitionException ex =
+        new LoanStateTransitionException(
+            LoanApplicationStatus.APPROVED, LoanApplicationStatus.SUBMITTED);
+
+    final ResponseEntity<ErrorResponse> response =
+        new GlobalExceptionHandler().handleInvalidStateTransition(ex);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
+    assertThat(response.getBody().getError()).isEqualTo(HttpStatus.CONFLICT.getReasonPhrase());
+    assertThat(response.getBody().getMessage())
+        .isEqualTo(ex.getMessage())
+        .contains("APPROVED", "SUBMITTED");
   }
 
   private ResultActions expectBadRequest(final String path, final String body) throws Exception {
