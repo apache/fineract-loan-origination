@@ -19,23 +19,71 @@
 
 package org.apache.fineract.los.exception;
 
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 /**
  * Centralised mapping from LOS exceptions to HTTP responses.
  *
  * <p>Every custom exception in {@code org.apache.fineract.los.exception} is handled here — no
  * controller should need its own try/catch for these. Anything unmapped falls through to a generic
- * 500 with the exception message, which is acceptable for a POC but should be tightened (message
- * scrubbing) before any production use.
+ * 500 without exposing exception details.
  */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleValidation(final MethodArgumentNotValidException ex) {
+    final String message =
+        ex.getBindingResult().getAllErrors().stream()
+            .map(
+                error ->
+                    error instanceof FieldError fieldError
+                        ? fieldError.getField() + ": " + fieldError.getDefaultMessage()
+                        : error.getDefaultMessage())
+            .sorted()
+            .collect(Collectors.joining("; "));
+    return build(HttpStatus.BAD_REQUEST, message);
+  }
+
+  @ExceptionHandler(HandlerMethodValidationException.class)
+  public ResponseEntity<ErrorResponse> handleMethodValidation(
+      final HandlerMethodValidationException ex) {
+    if (ex.isForReturnValue()) {
+      return handleUnexpected(ex);
+    }
+
+    final String message =
+        ex.getParameterValidationResults().stream()
+            .flatMap(
+                result ->
+                    result.getResolvableErrors().stream()
+                        .map(
+                            error ->
+                                (error instanceof FieldError fieldError
+                                        ? fieldError.getField()
+                                        : result.getMethodParameter().getParameterName())
+                                    + ": "
+                                    + error.getDefaultMessage()))
+            .sorted()
+            .collect(Collectors.joining("; "));
+    return build(HttpStatus.BAD_REQUEST, message);
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleUnreadableMessage(
+      final HttpMessageNotReadableException ex) {
+    return build(HttpStatus.BAD_REQUEST, "Request body is missing or contains invalid JSON.");
+  }
 
   @ExceptionHandler(ApplicationNotFoundException.class)
   public ResponseEntity<ErrorResponse> handleApplicationNotFound(
