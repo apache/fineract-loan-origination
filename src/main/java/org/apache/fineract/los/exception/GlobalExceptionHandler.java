@@ -19,6 +19,7 @@
 
 package org.apache.fineract.los.exception;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.statemachine.LoanStateTransitionException;
@@ -26,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -72,7 +74,10 @@ public class GlobalExceptionHandler {
                             error ->
                                 (error instanceof FieldError fieldError
                                         ? fieldError.getField()
-                                        : result.getMethodParameter().getParameterName())
+                                        : Objects.requireNonNullElse(
+                                            result.getMethodParameter().getParameterName(),
+                                            "arg"
+                                                + result.getMethodParameter().getParameterIndex()))
                                     + ": "
                                     + error.getDefaultMessage()))
             .sorted()
@@ -84,6 +89,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleUnreadableMessage(
       final HttpMessageNotReadableException ex) {
     return build(HttpStatus.BAD_REQUEST, "Request body is missing or contains invalid JSON.");
+  }
+
+  @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+  public ResponseEntity<ErrorResponse> handleUnsupportedMediaType(
+      final HttpMediaTypeNotSupportedException ex) {
+    return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Request content type is not supported.");
   }
 
   @ExceptionHandler(ApplicationNotFoundException.class)

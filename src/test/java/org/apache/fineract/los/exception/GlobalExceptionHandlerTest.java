@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -34,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.stream.Stream;
 import org.apache.fineract.los.api.ApprovalController;
 import org.apache.fineract.los.api.CustomerLoanApplicationController;
@@ -57,6 +59,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +69,8 @@ import org.springframework.security.web.method.annotation.AuthenticationPrincipa
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.method.ParameterValidationResult;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -222,6 +228,24 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
+  void bodyWithoutContentTypeReturnsUnsupportedMediaType() throws Exception {
+    mockMvc
+        .perform(post(APPLICATIONS).content(VALID_REQUEST))
+        .andExpect(status().isUnsupportedMediaType())
+        .andExpect(jsonPath("$.status").value(415))
+        .andExpect(jsonPath("$.error").value("Unsupported Media Type"))
+        .andExpect(jsonPath("$.message").value("Request content type is not supported."))
+        .andExpect(jsonPath("$.timestamp").isNotEmpty())
+        .andExpect(jsonPath("$.*", hasSize(4)))
+        .andExpect(
+            result ->
+                assertThat(result.getResolvedException())
+                    .isInstanceOf(HttpMediaTypeNotSupportedException.class));
+
+    verifyNoInteractions(loanApplicationService, creditScoringService, approvalWorkflowService);
+  }
+
+  @Test
   void customerRequestIsRejectedBeforeServiceInvocation() throws Exception {
     expectBadRequest("/api/v1/customer/loan-applications", "{}")
         .andExpect(jsonPath("$.message", containsString("requestedAmount: must not be null")));
@@ -263,6 +287,32 @@ class GlobalExceptionHandlerTest {
                     .isInstanceOf(HandlerMethodValidationException.class));
 
     verifyNoInteractions(loanApplicationService);
+  }
+
+  @Test
+  void methodValidationFallsBackToParameterIndex() {
+    final MethodParameter parameter = mock(MethodParameter.class);
+    when(parameter.getParameterName()).thenReturn(null);
+    when(parameter.getParameterIndex()).thenReturn(1);
+
+    final ParameterValidationResult result = mock(ParameterValidationResult.class);
+    when(result.getMethodParameter()).thenReturn(parameter);
+    when(result.getResolvableErrors())
+        .thenReturn(
+            List.of(
+                new DefaultMessageSourceResolvable(
+                    new String[] {"NotBlank"}, "must not be blank")));
+    final HandlerMethodValidationException exception = mock(HandlerMethodValidationException.class);
+    when(exception.getParameterValidationResults()).thenReturn(List.of(result));
+
+    final ResponseEntity<ErrorResponse> response =
+        new GlobalExceptionHandler().handleMethodValidation(exception);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().getStatus()).isEqualTo(400);
+    assertThat(response.getBody().getError()).isEqualTo("Bad Request");
+    assertThat(response.getBody().getMessage()).isEqualTo("arg1: must not be blank");
   }
 
   @Test
