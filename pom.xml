@@ -315,6 +315,8 @@ under the License.
                         <exclude>**/docker/**</exclude>
                         <exclude>**/docs/**</exclude>
                         <exclude>**/*.md</exclude>
+                        <!-- Third-party SecLists data; license and provenance are bundled in META-INF/licenses. -->
+                        <exclude>src/main/resources/common-passwords.txt</exclude>
                     </excludes>
                 </configuration>
             </plugin>
