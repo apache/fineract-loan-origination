@@ -28,6 +28,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -55,7 +56,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * writer — preventing silent data corruption.
  */
 @Entity
-@Table(name = "loan_application")
+@Table(
+    name = "loan_application",
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = "uk_loan_application_tenant_fineract_loan_id",
+            columnNames = {"tenant_id", "fineract_loan_id"}))
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
@@ -125,6 +131,9 @@ public class LoanApplication {
    * The Fineract {@code loanId} returned by {@code POST /loans} once the disbursement bridge has
    * successfully created the loan. Null until loan creation succeeds. Immutable once set — this is
    * the audit link between the external LOS record and the Fineract core loan.
+   *
+   * <p>Unique per tenant: each Fineract tenant numbers its loans independently, so the same ID may
+   * appear under two tenants but never twice within one.
    */
   @Column(name = "fineract_loan_id")
   private Long fineractLoanId;
