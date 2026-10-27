@@ -1,0 +1,25 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+Resource: common-passwords.txt
+Source project: https://github.com/danielmiessler/SecLists
+Source file: Passwords/Common-Credentials/100k-most-used-passwords-NCSC.txt
+Source commit: 49c3b2d1d2481572bd7b0cb5af875a73cdf9d08e
+Upstream license: see SecLists-LICENSE.txt
+Modifications: renamed to common-passwords.txt; contents unchanged.

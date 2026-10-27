@@ -42,6 +42,7 @@ import org.apache.fineract.los.service.ApprovalWorkflowService;
 import org.apache.fineract.los.service.CreditScoringService;
 import org.apache.fineract.los.service.LoanApplicationService;
 import org.apache.fineract.los.service.StaffManagementService;
+import org.apache.fineract.los.validation.PasswordValidator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -82,6 +83,7 @@ class MethodSecurityAuthorizationTest {
   @Mock private ApprovalStageRepository approvalStageRepository;
   @Mock private CustomerCredentialRepository customerCredentialRepository;
   @Mock private PasswordEncoder passwordEncoder;
+  @Mock private PasswordValidator passwordValidator;
 
   private MockMvc mockMvc;
 
@@ -98,7 +100,8 @@ class MethodSecurityAuthorizationTest {
                     new ApprovalController(
                         approvalWorkflowService, approvalStageRepository, loanApplicationService)),
                 withMethodSecurity(
-                    new AdminCustomerController(customerCredentialRepository, passwordEncoder)))
+                    new AdminCustomerController(
+                        customerCredentialRepository, passwordEncoder, passwordValidator)))
             .setControllerAdvice(new GlobalExceptionHandler())
             .build();
   }
@@ -185,7 +188,7 @@ class MethodSecurityAuthorizationTest {
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.message").value(LosErrorConstants.MSG_ACCESS_DENIED));
 
-    verifyNoInteractions(customerCredentialRepository, passwordEncoder);
+    verifyNoInteractions(customerCredentialRepository, passwordEncoder, passwordValidator);
   }
 
   @Test

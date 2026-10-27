@@ -64,7 +64,7 @@ public class AdminStaffController {
 
   public record CreateStaffRequest(
       @NotBlank String username,
-      @NotBlank @Size(min = 8, message = "Password must be at least 8 characters") String password,
+      @NotBlank String password,
       @NotBlank String email,
       @NotBlank
           @Pattern(

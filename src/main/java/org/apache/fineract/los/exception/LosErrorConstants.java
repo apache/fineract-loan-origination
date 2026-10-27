@@ -182,4 +182,32 @@ public final class LosErrorConstants {
   /** Message returned when the caller is authenticated but not allowed to perform an action. */
   public static final String MSG_ACCESS_DENIED =
       "You do not have permission to perform this action.";
+
+  /** Message when request fields fail validation. */
+  public static final String MSG_REQUEST_VALIDATION_FAILED = "Request contains invalid fields.";
+
+  /** Message when a password fails the password policy. */
+  public static final String MSG_WEAK_PASSWORD = "Password does not meet security requirements.";
+
+  /** Message when a password is missing or blank. */
+  public static final String MSG_PASSWORD_REQUIRED = "Password must not be blank.";
+
+  /** Message when a password is shorter than the minimum length. */
+  public static final String MSG_PASSWORD_TOO_SHORT =
+      "Password must be at least 12 characters long.";
+
+  /** Message when a password is present in the common-password blocklist. */
+  public static final String MSG_PASSWORD_TOO_COMMON =
+      "Password is too common. Choose a less common password.";
+
+  /** Message when a password contains the user's username. */
+  public static final String MSG_PASSWORD_CONTAINS_USERNAME =
+      "Password must not contain the username, regardless of letter case.";
+
+  /** Message when a password contains the user's email address. */
+  public static final String MSG_PASSWORD_CONTAINS_EMAIL =
+      "Password must not contain the email address, regardless of letter case.";
+
+  /** Message when the request body is missing or cannot be read. */
+  public static final String MSG_REQUEST_BODY_UNREADABLE = "Request body is missing or invalid.";
 }

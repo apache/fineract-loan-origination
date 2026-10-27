@@ -24,7 +24,10 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.domain.StaffCredential;
+import org.apache.fineract.los.exception.WeakPasswordException;
 import org.apache.fineract.los.repository.StaffCredentialRepository;
+import org.apache.fineract.los.validation.PasswordValidationResult;
+import org.apache.fineract.los.validation.PasswordValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,7 @@ public class StaffManagementService {
 
   private final StaffCredentialRepository staffCredentialRepository;
   private final PasswordEncoder passwordEncoder;
+  private final PasswordValidator passwordValidator;
 
   /**
    * Creates a new staff account.
@@ -62,6 +66,13 @@ public class StaffManagementService {
       final String email,
       final String role,
       final String tenantId) {
+
+    final PasswordValidationResult result =
+        passwordValidator.validate(plainPassword, username, email);
+
+    if (!result.isValid()) {
+      throw new WeakPasswordException(result.errors());
+    }
 
     if (staffCredentialRepository.existsByUsernameAndTenantId(username, tenantId)) {
       throw new ResponseStatusException(

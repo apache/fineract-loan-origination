@@ -45,3 +45,6 @@ frontend/assets/**
 postman/*.json
 scripts/*.ps1
 src/main/resources/db/seed/*.sql
+
+# Third-party SecLists data; license and provenance are in src/main/resources/META-INF/licenses.
+src/main/resources/common-passwords.txt
