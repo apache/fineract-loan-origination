@@ -25,6 +25,7 @@ import org.apache.fineract.los.bridge.dto.FineractLoanCreateRequest;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateResponse;
 import org.apache.fineract.los.bridge.dto.FineractLoanRequest;
 import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
+import org.apache.fineract.los.repository.LoanApplicationRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -37,9 +38,10 @@ import org.springframework.stereotype.Component;
  * mocked or simulated Fineract responses so that all origination flows can be fully demonstrated
  * without dependency on unreleased APIs."
  *
- * <p>Generates monotonically increasing fake {@code loanId} per JVM instance — sufficient for
- * demonstrating the end-to-end DRAFT → ... → DISBURSED flow in local development, integration
- * tests, and CI, without a running Fineract dependency.
+ * <p>Generates increasing fake {@code loanId} values for demonstrating the end-to-end DRAFT → ... →
+ * DISBURSED flow in local development, integration tests, and CI, without a running Fineract
+ * dependency. Each new ID is higher than any Fineract loan ID already stored, so restarting the
+ * application does not hand out an ID that is already in use.
  */
 @Slf4j
 @Component
@@ -55,8 +57,18 @@ public class MockFineractLoanApiClient implements FineractLoanApiClient {
 
   private final AtomicLong sequence = new AtomicLong(MOCK_ID_SEED);
 
+  private final LoanApplicationRepository loanApplicationRepository;
+
+  public MockFineractLoanApiClient(final LoanApplicationRepository loanApplicationRepository) {
+    this.loanApplicationRepository = loanApplicationRepository;
+  }
+
   @Override
   public FineractLoanCreateResponse createLoan(final FineractLoanCreateRequest request) {
+    // The counter lives in memory and resets on restart, so move it past the IDs already stored.
+    final long highestStoredId =
+        loanApplicationRepository.findMaxFineractLoanId().orElse(MOCK_ID_SEED);
+    sequence.accumulateAndGet(highestStoredId, Math::max);
     final long fakeLoanId = sequence.incrementAndGet();
 
     log.warn(

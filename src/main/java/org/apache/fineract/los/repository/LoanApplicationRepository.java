@@ -26,6 +26,7 @@ import org.apache.fineract.los.domain.enums.LoanApplicationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -136,4 +137,16 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
    * @return total number of applications for the tenant
    */
   long countByTenantId(String tenantId);
+
+  /**
+   * Returns the highest Fineract loan ID stored for any application.
+   *
+   * <p>Used only by {@code MockFineractLoanApiClient} so its generated loan IDs continue after the
+   * IDs already stored instead of restarting from a fixed seed. It returns a single number and no
+   * application data, so it is intentionally not scoped by tenant.
+   *
+   * @return the highest stored Fineract loan ID, or empty if no application has one
+   */
+  @Query("SELECT MAX(a.fineractLoanId) FROM LoanApplication a")
+  Optional<Long> findMaxFineractLoanId();
 }
