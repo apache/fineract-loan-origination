@@ -54,6 +54,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/loan-applications")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('STAFF')")
 public class LoanApplicationController {
 
   private static final String TENANT_HEADER = "X-Fineract-Platform-TenantId";

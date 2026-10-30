@@ -178,4 +178,8 @@ public final class LosErrorConstants {
           + "Configure los.workflow.role-mapping to map the user's Fineract role "
           + "to one of the configured approval workflow stages before recording "
           + "approval decisions.";
+
+  /** Message returned when the caller is authenticated but not allowed to perform an action. */
+  public static final String MSG_ACCESS_DENIED =
+      "You do not have permission to perform this action.";
 }

@@ -159,7 +159,7 @@ under the License.
         <dependency>
             <groupId>org.owasp.encoder</groupId>
             <artifactId>encoder</artifactId>
-            <version>1.4.0</version>
+            <version>1.5.0</version>
         </dependency>
 
         <!-- ==================== API DOCS ==================== -->
@@ -224,7 +224,7 @@ under the License.
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
-            <version>6.0.1</version>
+            <version>6.1.0</version>
             <scope>test</scope>
         </dependency>
 

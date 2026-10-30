@@ -145,6 +145,8 @@ public class SecurityConfig {
                         "/swagger-ui.html",
                         "/v3/api-docs/**")
                     .permitAll()
+                    .requestMatchers("/api/v1/loan-applications/**")
+                    .hasRole("STAFF")
                     .anyRequest()
                     .authenticated())
         .httpBasic(basic -> basic.realmName("Fineract Loan Origination Service"))

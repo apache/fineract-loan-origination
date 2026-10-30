@@ -43,6 +43,8 @@ public class CustomerAuthSteps {
 
   private Response response;
 
+  private String token;
+
   @Before
   public void setUp() {
     RestAssured.port = config.port;
@@ -76,9 +78,32 @@ public class CustomerAuthSteps {
             .post("/api/v1/auth/login");
   }
 
+  @When("the customer calls {word} {string} with their token")
+  public void theCustomerCallsWithTheirToken(String method, String path) {
+    if (token == null) {
+      token = response.jsonPath().getString("token");
+    }
+    response =
+        RestAssured.given()
+            .header("Authorization", "Bearer " + token)
+            .header("X-Fineract-Platform-TenantId", "default")
+            .request(method, path);
+  }
+
   @Then("the response status is {int}")
   public void theResponseStatusIs(int status) {
     assertThat(response.statusCode()).isEqualTo(status);
+  }
+
+  @Then("the response message is {string}")
+  public void theResponseMessageIs(String message) {
+    assertThat(response.jsonPath().getString("message")).isEqualTo(message);
+  }
+
+  @Then("the response body contains no applicant data")
+  public void theResponseBodyContainsNoApplicantData() {
+    assertThat(response.getBody().asString())
+        .doesNotContain("applicantName", "nationalId", "creditScore", "monthlyIncome");
   }
 
   @Then("the response contains a JWT token")

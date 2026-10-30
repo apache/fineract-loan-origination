@@ -28,13 +28,13 @@ import org.apache.fineract.los.api.dto.response.CreditScoreResponse;
 import org.apache.fineract.los.api.dto.response.LoanApplicationResponse;
 import org.apache.fineract.los.domain.LoanApplication;
 import org.apache.fineract.los.dto.request.CreateLoanApplicationRequest;
+import org.apache.fineract.los.exception.ApplicationNotFoundException;
 import org.apache.fineract.los.security.CustomerPrincipal;
 import org.apache.fineract.los.service.CreditScoringService;
 import org.apache.fineract.los.service.LoanApplicationService;
 import org.apache.fineract.los.validation.ValidApplicationRef;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -157,7 +157,10 @@ public class CustomerLoanApplicationController {
 
     final Long ownerClientId = loanApplicationService.getFineractClientIdOrThrow(application);
     if (!ownerClientId.equals(principal.getClientId())) {
-      throw new AccessDeniedException("Application does not belong to this customer");
+      // Respond exactly as for a missing application, so callers cannot probe for references
+      // that belong to other customers.
+      throw new ApplicationNotFoundException(
+          application.getApplicationRef(), application.getTenantId());
     }
   }
 
