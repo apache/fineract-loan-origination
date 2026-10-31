@@ -26,7 +26,7 @@ import org.apache.fineract.los.scoring.model.CreditScoreResult;
  * Top-level strategy for computing a composite credit score from an {@link
  * ApplicantScoringProfile}.
  *
- * <p>The default implementation ({@link DefaultCreditScoringStrategy}) aggregates all registered
+ * The default implementation ({@link DefaultCreditScoringStrategy}) aggregates all registered
  * {@link ScoringFactor} beans using the rule-based weighting described in the GSoC proposal. Future
  * contributors can swap in a credit-bureau-backed or ML-backed strategy by implementing this
  * interface and marking it {@code @Primary} — no changes required to {@code CreditScoringService}

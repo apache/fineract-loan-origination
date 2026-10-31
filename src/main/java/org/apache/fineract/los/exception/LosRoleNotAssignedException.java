@@ -25,7 +25,7 @@ package org.apache.fineract.los.exception;
  * User" who isn't LOAN_OFFICER/BRANCH_MANAGER/CREDIT_COMMITTEE attempting to record an approval
  * decision.
  *
- * <p>Unchecked — the global exception handler maps this to HTTP 403 Forbidden.
+ * Unchecked — the global exception handler maps this to HTTP 403 Forbidden.
  */
 public class LosRoleNotAssignedException extends RuntimeException {
 

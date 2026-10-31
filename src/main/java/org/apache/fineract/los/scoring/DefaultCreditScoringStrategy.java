@@ -32,17 +32,17 @@ import org.springframework.stereotype.Component;
 /**
  * Default rule-based implementation of {@link CreditScoringStrategy}.
  *
- * <p>Discovers every {@link ScoringFactor} bean via constructor injection — Spring collects all
+ * Discovers every {@link ScoringFactor} bean via constructor injection — Spring collects all
  * beans implementing the interface into the {@code List<ScoringFactor>} automatically. Adding a new
  * factor to the engine requires only implementing {@link ScoringFactor} and annotating it
  * {@code @Component} — this class never changes.
  *
- * <p>The composite score is the sum of every factor's points. Because each {@link ScoringFactor} is
+ * The composite score is the sum of every factor's points. Because each {@link ScoringFactor} is
  * individually bounded by its configured weight ({@link ScoringFactor#maxPoints()}), and {@link
  * ScoringWeightsProperties} validates on startup that all weights sum to 100, the composite score
  * is guaranteed to fall within 0-100 without any additional clamping here.
  *
- * <p>{@link #calculate} is a pure function — no persistence, no Fineract calls. Mapping the result
+ * {@link #calculate} is a pure function — no persistence, no Fineract calls. Mapping the result
  * onto the {@code CreditScore} entity is the responsibility of {@code CreditScoringService}.
  */
 @Slf4j

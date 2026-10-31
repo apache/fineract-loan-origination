@@ -47,26 +47,26 @@ import org.springframework.util.StringUtils;
  * Orchestrates the multi-stage approval workflow (LOAN_OFFICER → CREDIT_COMMITTEE → BRANCH_MANAGER,
  * configurable via {@link ApprovalWorkflowProperties}).
  *
- * <p>Both the workflow stage an application is currently awaiting a decision at, and the officer
+ * Both the workflow stage an application is currently awaiting a decision at, and the officer
  * recording that decision, are derived entirely server-side — from the count of prior APPROVE
  * decisions and from the authenticated {@link Authentication} principal respectively. Neither is
  * accepted from client input (see {@link ApprovalDecisionRequest}), which is what makes the
  * four-eyes / sequential-stage enforcement in {@link #validateStageMatchesRole} meaningful: a
  * caller cannot simply claim to be acting at a stage they haven't reached.
  *
- * <p>This service owns the mapping from an {@link ApprovalDecision} to the corresponding {@link
+ * This service owns the mapping from an {@link ApprovalDecision} to the corresponding {@link
  * LoanApplicationStatus} transition, and is the <strong>only</strong> caller of {@link
  * LoanOriginationStateMachine} for decisions made during review.
  *
- * <p>Transition rules applied here:
+ * Transition rules applied here:
  *
- * <ul>
- *   <li>REJECT — always terminal, regardless of stage: UNDER_REVIEW → REJECTED
- *   <li>REFER — always returns the application to the applicant: UNDER_REVIEW → REFERRED
- *   <li>APPROVE on a non-final configured stage — application remains UNDER_REVIEW, awaiting the
+ * 
+ *   REJECT — always terminal, regardless of stage: UNDER_REVIEW → REJECTED
+ *   REFER — always returns the application to the applicant: UNDER_REVIEW → REFERRED
+ *   APPROVE on a non-final configured stage — application remains UNDER_REVIEW, awaiting the
  *       next stage
- *   <li>APPROVE on the final configured stage — UNDER_REVIEW → APPROVED
- * </ul>
+ *   APPROVE on the final configured stage — UNDER_REVIEW → APPROVED
+ * 
  */
 @Slf4j
 @Service
@@ -140,7 +140,7 @@ public class ApprovalWorkflowService {
   /**
    * Derives the workflow stage this application is currently awaiting a decision at.
    *
-   * <p>The number of prior APPROVE decisions recorded is the zero-based index into the configured
+   * The number of prior APPROVE decisions recorded is the zero-based index into the configured
    * stage sequence. REJECT ends the workflow entirely (terminal), and REFER returns the application
    * to the applicant without advancing the stage pointer — so a re-submitted, re-reviewed
    * application resumes at the same stage it was referred from.
@@ -211,7 +211,7 @@ public class ApprovalWorkflowService {
   /**
    * Applies the correct state-machine transition for a given stage decision.
    *
-   * <p>This method is the single place where {@link ApprovalDecision} is translated into a {@link
+   * This method is the single place where {@link ApprovalDecision} is translated into a {@link
    * LoanApplicationStatus} — the only component in the codebase permitted to make that mapping.
    */
   private void applyTransition(

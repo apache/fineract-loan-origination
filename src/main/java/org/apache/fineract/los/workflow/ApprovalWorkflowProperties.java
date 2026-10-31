@@ -40,9 +40,9 @@ public class ApprovalWorkflowProperties {
   /**
    * Maps Fineract role names to LOS workflow stages.
    *
-   * <p>Example:
+   * Example:
    *
-   * <p>loan_officer -> LOAN_OFFICER
+   * loan_officer -> LOAN_OFFICER
    */
   private Map<String, String> roleMapping = new java.util.HashMap<>();
 

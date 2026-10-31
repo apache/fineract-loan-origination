@@ -42,7 +42,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 /**
  * Records a single approval decision at one stage of the multi-stage approval workflow.
  *
- * <p>Many-to-one with {@code LoanApplication}. One application accumulates multiple approval stage
+ * Many-to-one with {@code LoanApplication}. One application accumulates multiple approval stage
  * records as it progresses through the workflow — full audit trail.
  *
  * <p>This entity is immutable after creation — once a decision is recorded it must not be modified.

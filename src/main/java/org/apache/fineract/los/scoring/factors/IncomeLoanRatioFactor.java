@@ -32,14 +32,14 @@ import org.springframework.stereotype.Component;
  * Scores the applicant's income-to-loan ratio — the ratio of monthly income to the requested loan
  * amount.
  *
- * <p>Default weight: 30 points (configurable via {@code los.scoring.weights.income-ratio}).
+ * Default weight: 30 points (configurable via {@code los.scoring.weights.income-ratio}).
  * Thresholds are also configurable via {@code los.scoring.weights.income-ratio-*} so institutions
  * can tune their own risk appetite without code changes.
  *
- * <p>All arithmetic uses {@link BigDecimal} exclusively — never mixed with {@code float}/{@code
+ * All arithmetic uses {@link BigDecimal} exclusively — never mixed with {@code float}/{@code
  * double} — to avoid precision drift on financial calculations.
  *
- * <p>Division by zero is explicitly guarded: a zero or negative requested amount is treated as
+ * Division by zero is explicitly guarded: a zero or negative requested amount is treated as
  * invalid input and scored as zero rather than throwing {@link ArithmeticException}.
  */
 @Component

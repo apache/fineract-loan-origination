@@ -46,7 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST API for the loan application lifecycle: create, submit, move to review, and read.
  *
- * <p>Multi-tenancy follows Fineract's own convention — every endpoint reads {@code
+ * Multi-tenancy follows Fineract's own convention — every endpoint reads {@code
  * X-Fineract-Platform-TenantId} and defaults to {@code "default"} if the header is absent, which is
  * convenient for local demos with a single tenant.
  */

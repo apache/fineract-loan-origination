@@ -25,21 +25,21 @@ import org.apache.fineract.los.scoring.model.FactorScore;
 /**
  * Strategy interface for a single credit scoring factor.
  *
- * <p>Each implementation evaluates exactly one dimension of creditworthiness — income ratio, debt
+ * Each implementation evaluates exactly one dimension of creditworthiness — income ratio, debt
  * burden, employment stability, repayment history, or loan purpose risk — and returns a bounded
  * {@link FactorScore}.
  *
- * <p>Implementations must be:
+ * Implementations must be:
  *
- * <ul>
- *   <li><strong>Pure</strong> — no side effects, no database or network access, deterministic
+ * 
+ *   Pure — no side effects, no database or network access, deterministic
  *       output for the same input
- *   <li><strong>Bounded</strong> — {@code score()} must never return points exceeding {@code
+ *   Bounded — {@code score()} must never return points exceeding {@code
  *       maxPoints()}
- *   <li><strong>Stateless</strong> — safe for concurrent use as a singleton Spring bean
- * </ul>
+ *   Stateless — safe for concurrent use as a singleton Spring bean
+ * 
  *
- * <p>New factors can be added by implementing this interface and registering as a Spring bean —
+ * New factors can be added by implementing this interface and registering as a Spring bean —
  * {@link DefaultCreditScoringStrategy} discovers all factors via constructor injection without
  * requiring code changes.
  */

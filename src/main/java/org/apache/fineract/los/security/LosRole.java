@@ -25,7 +25,7 @@ import org.springframework.security.core.GrantedAuthority;
 /**
  * LOS workflow roles, one per configured approval stage.
  *
- * <p>Enum constant names are intentionally identical to the stage-name strings configured under
+ * Enum constant names are intentionally identical to the stage-name strings configured under
  * {@code los.workflow.stages} (e.g. {@code "LOAN_OFFICER"}), so a stage name resolved by {@link
  * org.apache.fineract.los.workflow.ApprovalWorkflowProperties#stageForFineractRole(String)} can be
  * converted directly via {@link #valueOf(String)} — adding a fourth workflow stage only requires
@@ -42,7 +42,7 @@ public enum LosRole {
   /**
    * Resolves the first {@code ROLE_<LosRole>} authority present on an authenticated principal.
    *
-   * <p>Staff principals carry exactly one such authority (see {@link
+   * Staff principals carry exactly one such authority (see {@link
    * FineractAuthenticationProvider}), alongside the unconditional {@code ROLE_STAFF}. Authorities
    * that aren't a recognised {@link LosRole} name (e.g. {@code ROLE_STAFF} itself) are ignored
    * rather than throwing, since a principal is expected to carry authorities this enum doesn't

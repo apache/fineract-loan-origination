@@ -32,20 +32,20 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for {@link LoanOriginationStateMachine}.
  *
- * <p>Tests are structured using nested classes grouped by starting state — each nested class sets
+ * Tests are structured using nested classes grouped by starting state — each nested class sets
  * up an application in that state and tests all valid and invalid transitions from it.
  *
- * <p>No Spring context is loaded — pure unit tests using plain Java instantiation. All tests run in
+ * No Spring context is loaded — pure unit tests using plain Java instantiation. All tests run in
  * milliseconds.
  *
- * <p>Coverage targets:
+ * Coverage targets:
  *
- * <ul>
- *   <li>All 7 valid transitions — must succeed
- *   <li>All representative invalid transitions — must throw
- *   <li>Terminal state guard — must throw on any attempt
- *   <li>Null input guards — must throw IllegalArgumentException
- * </ul>
+ * 
+ *   All 7 valid transitions — must succeed
+ *   All representative invalid transitions — must throw
+ *   Terminal state guard — must throw on any attempt
+ *   Null input guards — must throw IllegalArgumentException
+ * 
  */
 @DisplayName("LoanOriginationStateMachine")
 class LoanOriginationStateMachineTest {

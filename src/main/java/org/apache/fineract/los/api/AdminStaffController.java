@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Admin-only endpoints for managing LOS staff accounts.
  *
- * <p>All endpoints require {@code ROLE_ADMIN}. Staff accounts created here can log in via {@code
+ * All endpoints require {@code ROLE_ADMIN}. Staff accounts created here can log in via {@code
  * POST /api/v1/auth/staff/login} and receive a LOS-issued JWT token.
  */
 @Tag(

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for {@link ScoringWeightsProperties}.
  *
- * <p>No Spring context loaded — pure unit tests exercising the startup validation logic directly.
+ * No Spring context loaded — pure unit tests exercising the startup validation logic directly.
  */
 @DisplayName("ScoringWeightsProperties")
 class ScoringWeightsPropertiesTest {
@@ -45,7 +45,7 @@ class ScoringWeightsPropertiesTest {
     assertThat(properties.getLoanPurposeRisk()).isEqualTo(10);
 
     properties.validateWeightsSumToHundred();
-    // No exception thrown — validation passed
+    //  validation passed
   }
 
   @Test

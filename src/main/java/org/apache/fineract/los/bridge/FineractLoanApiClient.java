@@ -27,25 +27,25 @@ import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
 /**
  * Adapter boundary between the LOS disbursement bridge and Apache Fineract's core REST API.
  *
- * <p>Exactly one implementation is active at runtime, selected via {@code
+ * Exactly one implementation is active at runtime, selected via {@code
  * los.fineract.mock-enabled}:
  *
- * <ul>
- *   <li>{@link RestFineractLoanApiClient} — calls a real Fineract instance's loan APIs
- *   <li>{@link MockFineractLoanApiClient} — returns simulated responses for the full loan lifecycle
- * </ul>
+ * 
+ *   {@link RestFineractLoanApiClient} — calls a real Fineract instance's loan APIs
+ *   {@link MockFineractLoanApiClient} — returns simulated responses for the full loan lifecycle
+ * 
  *
- * <p>{@code DisbursementBridgeService} depends only on this interface — swapping implementations
+ * {@code DisbursementBridgeService} depends only on this interface — swapping implementations
  * requires no change to calling code, satisfying the "bridge isolated behind an interface" risk
  * mitigation in the proposal.
  *
- * <p>Fineract loan lifecycle operations:
+ * Fineract loan lifecycle operations:
  *
- * <ol>
- *   <li>{@link #createLoan} — POST /loans — creates the loan, returns loanId
- *   <li>{@link #approveLoan} — POST /loans/{loanId}?command=approve — approves the loan
- *   <li>{@link #disburseLoan} — POST /loans/{loanId}?command=disburse — disburses funds
- * </ol>
+ * 
+ *   {@link #createLoan} — POST /loans — creates the loan, returns loanId
+ *   {@link #approveLoan} — POST /loans/{loanId}?command=approve — approves the loan
+ *   {@link #disburseLoan} — POST /loans/{loanId}?command=disburse — disburses funds
+ * 
  */
 public interface FineractLoanApiClient {
 

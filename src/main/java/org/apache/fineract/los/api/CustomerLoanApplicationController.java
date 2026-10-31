@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
  * {@link CustomerPrincipal}'s own {@code clientId} — this is the endpoint the Angular customer app
  * calls, distinct from the staff-facing {@link LoanApplicationController}.
  *
- * <p>Customers may create, view, and submit their own applications. Back-office actions
+ * Customers may create, view, and submit their own applications. Back-office actions
  * (start-review, approval decisions, disbursement) remain staff-only and live exclusively in {@link
  * LoanApplicationController}.
  */
@@ -165,9 +165,9 @@ public class CustomerLoanApplicationController {
   }
 
   /**
-   * Builds customer-facing response with referral information if applicable.
+   * Builds customer-facing response with referral information(if applicable).
    *
-   * <p>If the application is REFERRED, fetches the most recent REFER decision and includes staff
+   * If the application is REFERRED, it fetches the most recent REFER decision and includes staff
    * comments and stage name so the customer understands what needs to be corrected.
    */
   private LoanApplicationResponse buildResponse(final LoanApplication application) {

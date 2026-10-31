@@ -200,15 +200,15 @@ public class AuthController {
   /**
    * Staff login endpoint - validates credentials against Fineract and issues JWT with LOS role.
    *
-   * <p>Security features:
+   * Security features:
    *
-   * <ul>
-   *   <li>Validates credentials against Fineract authentication API
-   *   <li>Rejects users without Fineract roles mapped to LOS workflow stages
-   *   <li>Issues JWT with userType=STAFF and losRole claim
-   *   <li>Rate-limited by RateLimitFilter (5 requests per 15 minutes)
-   *   <li>Input validation on username, password, and tenantId
-   * </ul>
+   * 
+   *  Validates credentials against Fineract authentication API
+   *   Rejects users without Fineract roles mapped to LOS workflow stages
+   *   Issues JWT with userType=STAFF and losRole claim
+   *   Rate-limited by RateLimitFilter (5 requests per 15 minutes)
+   *   Input validation on username, password, and tenantId
+   * 
    *
    * @param request Staff login credentials
    * @return JWT token with staff role information

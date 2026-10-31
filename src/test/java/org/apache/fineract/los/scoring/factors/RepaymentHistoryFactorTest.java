@@ -33,7 +33,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 /**
  * Unit tests for {@link RepaymentHistoryFactor}.
  *
- * <p>Verifies the BigDecimal-based rewrite produces identical results to the original float-based
+ * Verifies the BigDecimal-based rewrite produces identical results to the original float-based
  * logic for representative cases, with no precision drift.
  */
 @DisplayName("RepaymentHistoryFactor")

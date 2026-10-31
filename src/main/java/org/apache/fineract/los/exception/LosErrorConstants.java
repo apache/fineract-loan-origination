@@ -22,7 +22,7 @@ package org.apache.fineract.los.exception;
 /**
  * Centralised error codes and message constants for the Loan Origination Service.
  *
- * <p>All exception messages must reference constants from this class — no hardcoded strings in
+ * All exception messages must reference constants from this class — no hardcoded strings in
  * business logic. This ensures consistent error responses across all layers and makes message
  * changes a single-point update.
  */

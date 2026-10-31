@@ -22,7 +22,7 @@ package org.apache.fineract.los.exception;
 /**
  * Thrown when a {@code LoanApplication} cannot be found for the given reference and tenant.
  *
- * <p>Unchecked — the global exception handler maps this to HTTP 404 Not Found.
+ * Unchecked — the global exception handler maps this to HTTP 404 Not Found.
  */
 public class ApplicationNotFoundException extends RuntimeException {
 

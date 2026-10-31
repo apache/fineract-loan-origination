@@ -35,7 +35,7 @@ import org.springframework.http.HttpHeaders;
  * FineractUserDetailsService#PASSWORD_HOLDER} so the UserDetailsService can forward it to Fineract
  * for validation.
  *
- * <p>The thread-local is always cleared in the finally block to prevent leaks.
+ * The thread-local is always cleared in the finally block to prevent leaks.
  */
 public class BasicAuthPasswordExtractorFilter implements Filter {
 

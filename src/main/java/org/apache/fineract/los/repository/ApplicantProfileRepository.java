@@ -28,7 +28,7 @@ import org.springframework.stereotype.Repository;
 /**
  * Repository for {@link ApplicantProfile} entity.
  *
- * <p>ApplicantProfile has a one-to-one relationship with {@link LoanApplication}. All queries are
+ * ApplicantProfile has a one-to-one relationship with {@link LoanApplication}. All queries are
  * scoped by {@code tenantId} for tenant isolation.
  */
 @Repository
@@ -37,7 +37,7 @@ public interface ApplicantProfileRepository extends JpaRepository<ApplicantProfi
   /**
    * Finds the applicant profile for a given application.
    *
-   * <p>Primary access pattern — profile is always looked up via its parent application.
+   * Primary access pattern — profile is always looked up via its parent application.
    *
    * @param application the parent loan application
    * @return the applicant profile if it exists
@@ -45,7 +45,7 @@ public interface ApplicantProfileRepository extends JpaRepository<ApplicantProfi
   /**
    * Finds all applicant profiles belonging to a given Fineract client, scoped to a tenant.
    *
-   * <p>Used by the customer-facing controller to scope "my applications" to only what the
+   * Used by the customer-facing controller to scope "my applications" to only what the
    * authenticated customer's clientId actually owns.
    *
    * @param fineractClientId the Fineract client identifier of the logged-in customer
@@ -60,7 +60,7 @@ public interface ApplicantProfileRepository extends JpaRepository<ApplicantProfi
   /**
    * Finds the applicant profile by application ID and tenant.
    *
-   * <p>Used when only the application ID is available without loading the full application entity
+   * Used when only the application ID is available without loading the full application entity
    * first. Traverses the join to {@link LoanApplication} for tenant isolation.
    *
    * @param applicationId internal application ID
@@ -73,7 +73,7 @@ public interface ApplicantProfileRepository extends JpaRepository<ApplicantProfi
   /**
    * Checks whether a profile already exists for an application.
    *
-   * <p>Used by the service layer to prevent duplicate profile creation for the same application.
+   * Used by the service layer to prevent duplicate profile creation for the same application.
    *
    * @param application the parent loan application
    * @return true if a profile already exists

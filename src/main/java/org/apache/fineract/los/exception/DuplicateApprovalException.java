@@ -23,7 +23,7 @@ package org.apache.fineract.los.exception;
  * Thrown when the same officer attempts to record a second approval decision on an application —
  * violates the four-eyes principle enforced by {@code ApprovalWorkflowService}.
  *
- * <p>Unchecked — the global exception handler maps this to HTTP 409 Conflict.
+ * Unchecked — the global exception handler maps this to HTTP 409 Conflict.
  */
 public class DuplicateApprovalException extends RuntimeException {
 

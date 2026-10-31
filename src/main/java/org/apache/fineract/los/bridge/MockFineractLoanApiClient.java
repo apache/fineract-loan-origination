@@ -32,12 +32,12 @@ import org.springframework.stereotype.Component;
  * Mock {@link FineractLoanApiClient} implementation — simulates the complete Fineract loan
  * lifecycle without calling a real Fineract instance.
  *
- * <p>Active by default ({@code los.fineract.mock-enabled=true}), per the proposal's risk mitigation
+ * Active by default ({@code los.fineract.mock-enabled=true}), per the proposal's risk mitigation
  * for FINERACT-2418 being unavailable during the coding period: "the integration layer will use
  * mocked or simulated Fineract responses so that all origination flows can be fully demonstrated
  * without dependency on unreleased APIs."
  *
- * <p>Generates monotonically increasing fake {@code loanId} per JVM instance — sufficient for
+ * Generates monotonically increasing fake {@code loanId} per JVM instance — sufficient for
  * demonstrating the end-to-end DRAFT → ... → DISBURSED flow in local development, integration
  * tests, and CI, without a running Fineract dependency.
  */

@@ -38,17 +38,17 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Bridges the pure {@link CreditScoringStrategy} scoring engine to persistence.
  *
- * <p>Responsibilities:
+ * Responsibilities:
  *
- * <ul>
- *   <li>Builds the immutable {@link ApplicantScoringProfile} input from the {@link
+ * 
+ *   Builds the immutable {@link ApplicantScoringProfile} input from the {@link
  *       ApplicantProfile} and {@link LoanApplication} entities
- *   <li>Delegates the actual scoring computation to {@link CreditScoringStrategy}
- *   <li>Maps the resulting {@link CreditScoreResult} — including every individual {@link
+ *   Delegates the actual scoring computation to {@link CreditScoringStrategy}
+ *   Maps the resulting {@link CreditScoreResult} — including every individual {@link
  *       FactorScore} — onto a persisted {@link CreditScore} entity
- * </ul>
+ * 
  *
- * <p>{@link CreditScore} is documented as immutable after creation and computed once when an
+ * {@link CreditScore} is documented as immutable after creation and computed once when an
  * application enters UNDER_REVIEW. This service honours that contract: if a score already exists
  * for the application, {@link #computeAndPersist} returns the existing record unchanged rather than
  * recomputing — recomputation would silently invalidate an auditable, explainability-bearing
@@ -139,7 +139,7 @@ public class CreditScoringService {
   /**
    * Builds the scoring engine's input model from the applicant profile and application.
    *
-   * <p>{@code successfulRepaymentsCount} and {@code missedRepaymentsCount} are left null here —
+   * {@code successfulRepaymentsCount} and {@code missedRepaymentsCount} are left null here —
    * they require querying the applicant's prior loan history from Fineract, which is a natural
    * extension point for {@code FineractLoanApiClient} once a "client loan history" read endpoint is
    * wired in. {@code RepaymentHistoryFactor} explicitly handles null/zero as "first-time borrower,

@@ -30,10 +30,10 @@ import org.springframework.stereotype.Repository;
 /**
  * Repository for {@link RequiredDocument} entity.
  *
- * <p>RequiredDocument has a many-to-one relationship with {@link LoanApplication}. One application
+ * RequiredDocument has a many-to-one relationship with {@link LoanApplication}. One application
  * can have multiple required documents across different document types.
  *
- * <p>The state machine uses this repository to check whether all required documents are verified
+ * The state machine uses this repository to check whether all required documents are verified
  * before allowing application state transitions.
  */
 @Repository
@@ -42,7 +42,7 @@ public interface RequiredDocumentRepository extends JpaRepository<RequiredDocume
   /**
    * Returns all documents for a given application.
    *
-   * <p>Primary access pattern — documents are always retrieved in context of their parent
+   * Primary access pattern — documents are always retrieved in context of their parent
    * application.
    *
    * @param application the parent loan application
@@ -53,7 +53,7 @@ public interface RequiredDocumentRepository extends JpaRepository<RequiredDocume
   /**
    * Returns all documents for an application in a specific status.
    *
-   * <p>Used by the state machine to verify all required documents are VERIFIED before allowing
+   * Used by the state machine to verify all required documents are VERIFIED before allowing
    * transition from SUBMITTED to UNDER_REVIEW.
    *
    * @param application the parent loan application
@@ -66,7 +66,7 @@ public interface RequiredDocumentRepository extends JpaRepository<RequiredDocume
   /**
    * Finds a specific document by ID scoped to a tenant.
    *
-   * <p>Used for document-level operations (verify, reject, delete) with tenant isolation enforced.
+   * Used for document-level operations (verify, reject, delete) with tenant isolation enforced.
    *
    * @param id document internal ID
    * @param tenantId institution identifier
@@ -77,7 +77,7 @@ public interface RequiredDocumentRepository extends JpaRepository<RequiredDocume
   /**
    * Checks whether any unverified documents exist for an application.
    *
-   * <p>Used by the state machine before allowing transition to UNDER_REVIEW. If this returns true,
+   * Used by the state machine before allowing transition to UNDER_REVIEW. If this returns true,
    * the transition is blocked until all documents are verified.
    *
    * @param application the parent loan application
@@ -90,7 +90,7 @@ public interface RequiredDocumentRepository extends JpaRepository<RequiredDocume
   /**
    * Counts documents by status for a given application.
    *
-   * <p>Used for document completion tracking in the applicant-facing status view.
+   * Used for document completion tracking in the applicant-facing status view.
    *
    * @param application the parent loan application
    * @param documentStatus status to count

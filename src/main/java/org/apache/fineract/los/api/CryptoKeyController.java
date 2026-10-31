@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Serves the RSA public key that Angular uses to wrap the per-login AES-GCM session key.
  *
- * <p>This endpoint is intentionally public (no authentication required) — the public key is not a
+ * This endpoint is intentionally public (no authentication required) — the public key is not a
  * secret. Only the matching private key, which never leaves the JVM, can decrypt.
  */
 @RestController

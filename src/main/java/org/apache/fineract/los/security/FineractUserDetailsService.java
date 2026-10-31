@@ -36,11 +36,11 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Authenticates customers by delegating to Fineract's POST /v1/authentication endpoint.
  *
- * <p>Spring Security calls {@link #loadUserByUsername(String)} with the username from the Basic
+ * Spring Security calls {@link #loadUserByUsername(String)} with the username from the Basic
  * auth header. We forward the credentials to Fineract, which validates them and returns the linked
  * {@code clientId}. That clientId is what scopes all subsequent data access.
  *
- * <p>The password is passed via a thread-local because Spring's {@link UserDetailsService} contract
+ * The password is passed via a thread-local because Spring's {@link UserDetailsService} contract
  * only provides the username. The actual credential check happens inside Fineract — Spring
  * Security's password comparison is bypassed by returning a {@link NoOpCredential}.
  */

@@ -34,7 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * Service layer for creating and managing LOS staff accounts.
  *
- * <p>Staff accounts are stored locally in the {@code staff_credentials} table and authenticated via
+ * Staff accounts are stored locally in the {@code staff_credentials} table and authenticated via
  * BCrypt password hashing — independent of Fineract's user store.
  */
 @Slf4j
@@ -92,7 +92,7 @@ public class StaffManagementService {
   /**
    * Updates an existing staff member's email, role, and/or password.
    *
-   * <p>Fields that are {@code null} in the request are left unchanged.
+   * Fields that are {@code null} in the request are left unchanged.
    *
    * @param id staff credential primary key
    * @param email new email, or {@code null} to leave unchanged

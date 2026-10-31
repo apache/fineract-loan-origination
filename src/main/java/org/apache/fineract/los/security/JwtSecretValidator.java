@@ -28,10 +28,10 @@ import org.springframework.stereotype.Component;
  * Startup guard that prevents the application from booting outside of dev/test profiles when the
  * JWT signing secret is still set to one of the known-insecure defaults shipped with the codebase.
  *
- * <p>This bean is only registered when the active Spring profile is neither {@code dev} nor {@code
+ * This bean is only registered when the active Spring profile is neither {@code dev} nor {@code
  * test}. In those profiles a weak secret is intentional and expected.
  *
- * <p>If the secret is insecure the application will fail to start with a clear error message
+ * If the secret is insecure the application will fail to start with a clear error message
  * instructing the operator to set the {@code JWT_SECRET} environment variable.
  */
 @Component

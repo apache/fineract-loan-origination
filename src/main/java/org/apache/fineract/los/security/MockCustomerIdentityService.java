@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 /**
  * TEMPORARY POC identity source for customer logins.
  *
- * <p>This hardcoded map exists only so the customer-facing security chain has something real to
+ * This hardcoded map exists only so the customer-facing security chain has something real to
  * authenticate against while the project doesn't yet have a persisted customer-credential table.
  * Replace with a DB-backed {@link UserDetailsService} (e.g. querying by {@code fineractClientId} or
  * a dedicated login table) before this is used anywhere beyond local development.

@@ -26,11 +26,11 @@ import lombok.Getter;
 /**
  * Immutable input model for the credit scoring engine.
  *
- * <p>Deliberately decoupled from JPA entities — the scoring engine must never depend on
+ * Deliberately decoupled from JPA entities — the scoring engine must never depend on
  * persistence-layer classes. This allows scoring to be unit tested without any database or Spring
  * context.
  *
- * <p>Built exclusively via the {@link Builder} — no public constructor or setters, preventing
+ * Built exclusively via the {@link Builder} — no public constructor or setters, preventing
  * partially-constructed instances from entering the scoring pipeline.
  */
 @Getter

@@ -42,10 +42,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 /**
  * Tracks a document required for a loan application.
  *
- * <p>Many-to-one relationship with {@code LoanApplication}. One application may require multiple
+ * Many-to-one relationship with {@code LoanApplication}. One application may require multiple
  * documents — ID proof, income proof, bank statement etc.
  *
- * <p>The state machine uses this entity to enforce that all required documents are VERIFIED before
+ * The state machine uses this entity to enforce that all required documents are VERIFIED before
  * an application can transition from SUBMITTED to UNDER_REVIEW.
  */
 @Entity

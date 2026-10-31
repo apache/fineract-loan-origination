@@ -30,16 +30,16 @@ import org.springframework.stereotype.Component;
  * Defines and validates all permitted state transitions for a {@link
  * org.apache.fineract.los.domain.LoanApplication}.
  *
- * <p>The transition map is the single source of truth for the entire loan origination lifecycle.
+ * The transition map is the single source of truth for the entire loan origination lifecycle.
  * Adding a new valid transition requires only a one-line change in {@link #buildTransitionMap()} —
  * no other code changes needed.
  *
- * <p>Uses {@link EnumMap} and {@link EnumSet} for O(1) lookup performance — optimal for
+ * Uses {@link EnumMap} and {@link EnumSet} for O(1) lookup performance — optimal for
  * high-throughput banking workloads where thousands of applications may be processed concurrently.
  *
- * <p>Valid transitions:
+ * Valid transitions:
  *
- * <pre>
+ * 
  * DRAFT        → SUBMITTED
  * SUBMITTED    → UNDER_REVIEW
  * UNDER_REVIEW → APPROVED
@@ -48,9 +48,9 @@ import org.springframework.stereotype.Component;
  * REFERRED     → SUBMITTED (customer corrects and resubmits)
  * REFERRED     → UNDER_REVIEW (staff starts review directly)
  * APPROVED     → DISBURSED
- * </pre>
+ * 
  *
- * <p>Terminal states (REJECTED, DISBURSED) have no outgoing transitions — they are excluded from
+ * Terminal states (REJECTED, DISBURSED) have no outgoing transitions — they are excluded from
  * the map entirely.
  */
 @Component
@@ -83,7 +83,7 @@ public class LoanStateTransitionValidator {
   /**
    * Returns the set of statuses the application can legally transition to from the given status.
    *
-   * <p>Returns an empty set for terminal states (REJECTED, DISBURSED) since no further transitions
+   * Returns an empty set for terminal states (REJECTED, DISBURSED) since no further transitions
    * are possible.
    *
    * @param from current status
@@ -96,7 +96,7 @@ public class LoanStateTransitionValidator {
   /**
    * Builds the complete transition map for the loan origination lifecycle.
    *
-   * <p>Uses {@link EnumMap} for memory efficiency and cache-friendly iteration — all keys are known
+   * Uses {@link EnumMap} for memory efficiency and cache-friendly iteration — all keys are known
    * at compile time.
    *
    * @return immutable-by-convention transition map

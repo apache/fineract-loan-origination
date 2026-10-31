@@ -40,21 +40,21 @@ import org.springframework.stereotype.Component;
 /**
  * Rate limiting filter using token bucket algorithm to prevent brute-force attacks and API abuse.
  *
- * <p>Applies different rate limits based on endpoint sensitivity:
+ * Applies different rate limits based on endpoint sensitivity:
  *
- * <ul>
- *   <li><strong>Auth endpoints</strong> (/api/v1/auth/**): 100 requests per minute per IP — relaxed
+ * 
+ *   Auth endpoints(/api/v1/auth/**): 100 requests per minute per IP — relaxed
  *       for demo usage allowing multiple role logins
- *   <li><strong>Admin endpoints</strong> (/api/v1/admin/**): 20 requests per minute per IP —
+ *   Admin endpoints(/api/v1/admin/**): 20 requests per minute per IP —
  *       prevents abuse of privileged operations
- *   <li><strong>Other endpoints</strong>: 100 requests per minute per IP — prevents general API
+ *   Other endpoints: 100 requests per minute per IP — prevents general API
  *       abuse and DoS
- * </ul>
+ * 
  *
- * <p>Rate limits are tracked per client IP address using an in-memory cache that expires entries
+ * Rate limits are tracked per client IP address using an in-memory cache that expires entries
  * after 15 minutes of inactivity.
  *
- * <p>When rate limit is exceeded, returns HTTP 429 (Too Many Requests) with Retry-After header.
+ * When rate limit is exceeded, returns HTTP 429 (Too Many Requests) with Retry-After header.
  */
 @Slf4j
 @Component
@@ -131,7 +131,7 @@ public class RateLimitFilter implements Filter {
   /**
    * Creates a bucket for authentication endpoints with relaxed limits for demo.
    *
-   * <p>Allows 100 requests per minute with greedy refill strategy.
+   * Allows 100 requests per minute with greedy refill strategy.
    */
   private Bucket createAuthBucket() {
     return Bucket.builder()
@@ -143,7 +143,7 @@ public class RateLimitFilter implements Filter {
   /**
    * Creates a bucket for admin endpoints with moderate limits.
    *
-   * <p>Allows 20 requests per minute with greedy refill strategy.
+   * Allows 20 requests per minute with greedy refill strategy.
    */
   private Bucket createAdminBucket() {
     return Bucket.builder()
@@ -155,7 +155,7 @@ public class RateLimitFilter implements Filter {
   /**
    * Creates a bucket for general endpoints with liberal limits.
    *
-   * <p>Allows 100 requests per minute with greedy refill strategy.
+   * Allows 100 requests per minute with greedy refill strategy.
    */
   private Bucket createGeneralBucket() {
     return Bucket.builder()
@@ -168,7 +168,7 @@ public class RateLimitFilter implements Filter {
   /**
    * Extracts the client IP address from the request.
    *
-   * <p>Checks X-Forwarded-For header first (for requests behind proxies/load balancers), then falls
+   * Checks X-Forwarded-For header first (for requests behind proxies/load balancers), then falls
    * back to remote address.
    */
   private String getClientIp(final HttpServletRequest request) {

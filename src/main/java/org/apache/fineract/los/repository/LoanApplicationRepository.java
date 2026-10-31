@@ -31,10 +31,10 @@ import org.springframework.stereotype.Repository;
 /**
  * Repository for {@link LoanApplication} aggregate root.
  *
- * <p>All query methods are scoped by {@code tenantId} — never use methods without tenant isolation
+ * All query methods are scoped by {@code tenantId} — never use methods without tenant isolation
  * as they would expose data across institutions.
  *
- * <p>Naming convention follows Spring Data JPA method derivation — no manual SQL required for
+ * Naming convention follows Spring Data JPA method derivation — no manual SQL required for
  * standard queries.
  */
 @Repository
@@ -43,7 +43,7 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
   /**
    * Finds a loan application by its internal ID and tenant.
    *
-   * <p>Always use this over {@code findById} to enforce tenant isolation.
+   * Always use this over {@code findById} to enforce tenant isolation.
    *
    * @param id internal surrogate key
    * @param tenantId institution identifier from request header
@@ -54,7 +54,7 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
   /**
    * Finds a loan application by its human-readable reference.
    *
-   * <p>Used when clients provide the application reference (e.g. LOS-2026-00101) instead of the
+   * Used when clients provide the application reference (e.g. LOS-2026-00101) instead of the
    * internal ID.
    *
    * @param applicationRef human-readable reference
@@ -66,7 +66,7 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
   /**
    * Returns all applications for a tenant in a given status.
    *
-   * <p>Used by loan officers to fetch their work queue (e.g. all SUBMITTED applications awaiting
+   * Used by loan officers to fetch their work queue (e.g. all SUBMITTED applications awaiting
    * review).
    *
    * @param status lifecycle status to filter by
@@ -78,7 +78,7 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
   /**
    * Returns a paginated list of all applications for a tenant.
    *
-   * <p>Used for the main application dashboard. Pagination is mandatory — never load all
+   * Used for the main application dashboard. Pagination is mandatory — never load all
    * applications at once.
    *
    * @param tenantId institution identifier
@@ -90,7 +90,7 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
   /**
    * Returns a paginated list of applications filtered by status.
    *
-   * <p>Used for role-specific dashboards — loan officers see UNDER_REVIEW, branch managers see
+   * Used for role-specific dashboards — loan officers see UNDER_REVIEW, branch managers see
    * APPROVED etc.
    *
    * @param status lifecycle status to filter by
@@ -104,7 +104,7 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
   /**
    * Checks whether an application reference already exists for a given tenant.
    *
-   * <p>Used by the service layer before generating a new reference to guarantee uniqueness within a
+   * Used by the service layer before generating a new reference to guarantee uniqueness within a
    * tenant.
    *
    * @param applicationRef reference to check
@@ -116,7 +116,7 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
   /**
    * Counts applications in a given status for a tenant.
    *
-   * <p>Used for dashboard metrics and reporting.
+   * Used for dashboard metrics and reporting.
    *
    * @param status lifecycle status to count
    * @param tenantId institution identifier
@@ -127,7 +127,7 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
   /**
    * Counts the total number of applications ever created for a tenant, regardless of status.
    *
-   * <p>Used by {@code LoanApplicationService} as the seed value when generating the next
+   * Used by {@code LoanApplicationService} as the seed value when generating the next
    * human-readable application reference (LOS-{YEAR}-{SEQUENCE}). Collisions are still checked via
    * {@link #existsByApplicationRefAndTenantId} — this count is a starting point, not a guarantee of
    * uniqueness.

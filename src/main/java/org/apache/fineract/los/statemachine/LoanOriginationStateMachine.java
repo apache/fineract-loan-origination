@@ -30,40 +30,40 @@ import org.springframework.stereotype.Component;
 /**
  * Core state machine governing the lifecycle of a {@link LoanApplication}.
  *
- * <p>This is the <strong>only</strong> component permitted to call {@link
+ * This is the <strong>only</strong> component permitted to call {@link
  * LoanApplication#setStatus}. All other layers (service, API, bridge) must go through this class to
  * change application status — direct status mutation is a design violation.
  *
- * <h2>Design Principles Applied</h2>
+ * Design Principles Applied
  *
- * <ul>
- *   <li><strong>Single Responsibility</strong> — this class does one thing: validate and apply
+ * 
+ *   Single Responsibility — this class does one thing: validate and apply
  *       status transitions
- *   <li><strong>Open/Closed</strong> — new transitions are added to {@link
+ *   Open/Closed — new transitions are added to {@link
  *       LoanStateTransitionValidator} only, this class never changes
- *   <li><strong>Guard Clause Pattern</strong> — terminal state check precedes transition validation
+ *   Guard Clause Pattern — terminal state check precedes transition validation
  *       for early exit
- *   <li><strong>Audit-First</strong> — every transition is logged at INFO level for operational
+ *   Audit-First — every transition is logged at INFO level for operational
  *       visibility
- * </ul>
+ * 
  *
- * <h2>Concurrency Safety</h2>
+ * Concurrency Safety
  *
- * <p>This class is stateless — all state lives in the {@link LoanApplication} entity which is
+ * This class is stateless — all state lives in the {@link LoanApplication} entity which is
  * protected by optimistic locking ({@code @Version}). Concurrent transition attempts on the same
  * application will result in an {@code OptimisticLockException} on the second writer — preventing
  * silent data corruption.
  *
- * <h2>Usage</h2>
+ * Usage
  *
- * <pre>
+ *
  * // Correct — always go through state machine
  * stateMachine.transition(application,
  *     LoanApplicationStatus.SUBMITTED);
  *
  * // Wrong — never call directly
  * application.setStatus(LoanApplicationStatus.SUBMITTED);
- * </pre>
+ * 
  */
 @Slf4j
 @Component
@@ -76,10 +76,10 @@ public class LoanOriginationStateMachine {
   /**
    * Validates and applies a status transition to the given loan application.
    *
-   * <p>The application entity is mutated in-place. The caller is responsible for persisting the
+   * The application entity is mutated in-place. The caller is responsible for persisting the
    * entity after this method returns successfully.
    *
-   * <p>This method is intentionally <strong>not</strong> transactional — transaction boundaries are
+   * This method is intentionally <strong>not</strong> transactional — transaction boundaries are
    * managed by the service layer to allow batching multiple operations in a single transaction.
    *
    * @param application the loan application to transition
@@ -120,7 +120,7 @@ public class LoanOriginationStateMachine {
   /**
    * Returns all statuses the application can legally transition to from its current status.
    *
-   * <p>Used by the API layer to return available actions to the client — enabling dynamic UI that
+   * Used by the API layer to return available actions to the client — enabling dynamic UI that
    * only shows buttons for valid next steps.
    *
    * @param application the loan application to query
@@ -176,7 +176,7 @@ public class LoanOriginationStateMachine {
   /**
    * Guards against transition attempts on terminal state applications.
    *
-   * <p>Terminal states (REJECTED, DISBURSED) have no valid outgoing transitions. Attempting to
+   * Terminal states (REJECTED, DISBURSED) have no valid outgoing transitions. Attempting to
    * transition from a terminal state is always an error regardless of the target status.
    *
    * @param application application to check

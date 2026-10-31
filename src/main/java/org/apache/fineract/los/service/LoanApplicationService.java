@@ -43,11 +43,11 @@ import org.springframework.util.StringUtils;
  * Service layer responsible for the lifecycle of a {@link LoanApplication}: creation, submission,
  * and movement into review.
  *
- * <p>All status mutation is delegated exclusively to {@link LoanOriginationStateMachine} — this
+ * All status mutation is delegated exclusively to {@link LoanOriginationStateMachine} — this
  * class never calls {@code application.setStatus(...)} directly, matching the design contract
  * documented on {@link LoanApplication}.
  *
- * <p>Credit scoring is triggered from here (via {@link CreditScoringService}) the moment an
+ * Credit scoring is triggered from here (via {@link CreditScoringService}) the moment an
  * application first enters {@code UNDER_REVIEW} — the state where the entity's own Javadoc says
  * scoring "runs automatically on entry to this state."
  */
@@ -125,7 +125,7 @@ public class LoanApplicationService {
   /**
    * Submits a DRAFT or REFERRED application — transitions it to SUBMITTED via the state machine.
    *
-   * <p>When a REFERRED application is resubmitted, it returns to SUBMITTED status and will progress
+   * When a REFERRED application is resubmitted, it returns to SUBMITTED status and will progress
    * back to UNDER_REVIEW when staff calls moveToUnderReview. The approval stage is preserved — the
    * application resumes at the same workflow stage it was referred from (e.g., if CREDIT_COMMITTEE
    * referred it, CREDIT_COMMITTEE reviews it again after resubmission).
@@ -144,7 +144,7 @@ public class LoanApplicationService {
   /**
    * Returns all loan applications for the given tenant.
    *
-   * <p>Used by the dashboard/list endpoint.
+   * Used by the dashboard/list endpoint.
    *
    * @param tenantId institution identifier
    * @return all applications for the tenant
@@ -179,7 +179,7 @@ public class LoanApplicationService {
   /**
    * Assembles the full staff detail view for a single application.
    *
-   * <p>Combines LoanApplication + ApplicantProfile + CreditScore + ApprovalStages into one {@link
+   * Combines LoanApplication + ApplicantProfile + CreditScore + ApprovalStages into one {@link
    * StaffApplicationDetailResponse} so the staff dashboard needs only one API call.
    *
    * @param applicationRef human-readable application reference
@@ -339,7 +339,7 @@ public class LoanApplicationService {
    * Generates a unique, human-readable application reference in the format LOS-{YEAR}-{SEQUENCE},
    * e.g. LOS-2026-00101.
    *
-   * <p>Seeds the sequence from the tenant's total application count and probes forward on collision
+   * Seeds the sequence from the tenant's total application count and probes forward on collision
    * — sufficient uniqueness guarantee for POC-scale concurrency without requiring a dedicated
    * sequence table.
    *

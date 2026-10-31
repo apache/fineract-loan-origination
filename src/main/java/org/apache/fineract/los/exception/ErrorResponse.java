@@ -26,7 +26,7 @@ import lombok.Getter;
 /**
  * Standard error response body returned by {@link GlobalExceptionHandler}.
  *
- * <p>Kept intentionally simple for the POC — status, a single message, and a timestamp. Follows
+ * Kept intentionally simple for the POC — status, a single message, and a timestamp. Follows
  * Fineract's own convention of returning JSON error bodies rather than plain text.
  */
 @Getter

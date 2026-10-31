@@ -32,7 +32,7 @@ import org.apache.fineract.los.domain.enums.ApprovalDecision;
 /**
  * Input payload for recording a single approval-stage decision against a loan application.
  *
- * <p>{@code stageName} and {@code assignedOfficer} are deliberately absent. Both are derived
+ * {@code stageName} and {@code assignedOfficer} are deliberately absent. Both are derived
  * server-side — the stage from the application's current workflow position, the officer from the
  * authenticated principal — rather than trusted from client input. Accepting either from the
  * request body would let any authenticated caller record a decision under someone else's name or
@@ -52,7 +52,7 @@ public class ApprovalDecisionRequest {
   /**
    * Mandatory audit comments accompanying the approval decision.
    *
-   * <p>Required for every workflow decision to provide a complete audit trail.
+   * Required for every workflow decision to provide a complete audit trail.
    */
   @NotBlank(message = "comments are required for audit trail")
   @Size(min = 10, max = 2000, message = "comments must be between 10 and 2000 characters")

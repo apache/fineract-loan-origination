@@ -29,10 +29,10 @@ import org.springframework.stereotype.Repository;
 /**
  * Repository for {@link CreditScore} entity.
  *
- * <p>CreditScore has a one-to-one relationship with {@link LoanApplication}. A score is computed
+ * CreditScore has a one-to-one relationship with {@link LoanApplication}. A score is computed
  * once when the application enters UNDER_REVIEW and is immutable after creation.
  *
- * <p>Score retrieval is a read-heavy operation — results are cached at the service layer via Redis
+ * Score retrieval is a read-heavy operation — results are cached at the service layer via Redis
  * in production to avoid repeated database hits for the same application.
  */
 @Repository
@@ -41,7 +41,7 @@ public interface CreditScoreRepository extends JpaRepository<CreditScore, Long> 
   /**
    * Finds the credit score for a given application.
    *
-   * <p>Primary access pattern — score is always retrieved in context of its parent application.
+   * Primary access pattern — score is always retrieved in context of its parent application.
    *
    * @param application the parent loan application
    * @return the credit score if it has been computed
@@ -51,7 +51,7 @@ public interface CreditScoreRepository extends JpaRepository<CreditScore, Long> 
   /**
    * Finds the credit score by application ID and tenant.
    *
-   * <p>Used when only the application ID is available without loading the full application entity
+   * Used when only the application ID is available without loading the full application entity
    * first. Traverses the join to {@link LoanApplication} for tenant isolation.
    *
    * @param applicationId internal application ID
@@ -64,7 +64,7 @@ public interface CreditScoreRepository extends JpaRepository<CreditScore, Long> 
   /**
    * Checks whether a credit score exists for an application.
    *
-   * <p>Used by the service layer to prevent duplicate score computation for the same application.
+   * Used by the service layer to prevent duplicate score computation for the same application.
    *
    * @param application the parent loan application
    * @return true if a score has already been computed
@@ -74,7 +74,7 @@ public interface CreditScoreRepository extends JpaRepository<CreditScore, Long> 
   /**
    * Counts credit scores by risk category for a tenant.
    *
-   * <p>Used for portfolio-level risk reporting — how many HIGH/MEDIUM/LOW risk applications exist
+   * Used for portfolio-level risk reporting — how many HIGH/MEDIUM/LOW risk applications exist
    * across the institution's portfolio. Traverses the join to {@link LoanApplication} for tenant
    * scoping.
    *

@@ -22,10 +22,10 @@ package org.apache.fineract.los.domain.enums;
 /**
  * Represents the lifecycle states of a LoanApplication.
  *
- * <p>Valid transitions are enforced exclusively by {@code LoanOriginationStateMachine}. No code
+ * Valid transitions are enforced exclusively by {@code LoanOriginationStateMachine}. No code
  * outside the state machine may call {@code LoanApplication#setStatus} directly.
  *
- * <pre>
+ * 
  * DRAFT
  *   └─► SUBMITTED
  *         └─► UNDER_REVIEW
@@ -34,7 +34,7 @@ package org.apache.fineract.los.domain.enums;
  *               ├─► REJECTED
  *               └─► REFERRED
  *                     └─► UNDER_REVIEW
- * </pre>
+ * 
  */
 public enum LoanApplicationStatus {
 

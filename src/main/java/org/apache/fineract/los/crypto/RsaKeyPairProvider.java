@@ -30,12 +30,12 @@ import org.springframework.stereotype.Component;
 /**
  * Generates and holds an in-memory RSA-2048 key pair for the demo payload encryption feature.
  *
- * <p>The key pair is created once at application startup and lives only in JVM memory — it is never
+ * The key pair is created once at application startup and lives only in JVM memory — it is never
  * persisted to disk or committed to the repository. On restart a new pair is generated,
  * invalidating any in-flight login that fetched the previous public key (this is acceptable for a
  * demo scenario).
  *
- * <p>The public key is served to Angular via {@code GET /api/v1/auth/public-key} so the frontend
+ * The public key is served to Angular via {@code GET /api/v1/auth/public-key} so the frontend
  * can wrap a freshly generated AES-GCM key using RSA-OAEP. The private key never leaves the JVM.
  */
 @Slf4j

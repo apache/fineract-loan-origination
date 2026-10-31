@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Configuration;
  * Enables binding of {@link ScoringWeightsProperties} from {@code application.yml} into a managed
  * Spring bean.
  *
- * <p>Without this registration, {@code @ConfigurationProperties} classes are not automatically
+ * Without this registration, {@code @ConfigurationProperties} classes are not automatically
  * picked up unless component scanned via {@code @Component} — this explicit registration is the
  * Spring Boot recommended approach for properties classes that live outside the main application
  * package scan root.

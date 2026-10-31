@@ -41,22 +41,22 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 /**
  * Stores the computed credit score and individual factor contributions for a loan application.
  *
- * <p>One-to-one with {@code LoanApplication}. Computed automatically when the application enters
+ * One-to-one with {@code LoanApplication}. Computed automatically when the application enters
  * UNDER_REVIEW status. Immutable after creation.
  *
- * <p>Individual factor scores are stored separately to support score explainability — a regulatory
+ * Individual factor scores are stored separately to support score explainability — a regulatory
  * requirement in many jurisdictions. Loan officers and applicants can see exactly which factors
  * drove the overall score.
  *
- * <p>Factor weights (CGAP guidelines, configurable):
+ * Factor weights (CGAP guidelines, configurable):
  *
- * <ul>
- *   <li>Income-to-loan ratio: 30%
- *   <li>Existing debt burden: 25%
- *   <li>Employment stability: 20%
- *   <li>Repayment history: 15%
- *   <li>Loan purpose risk: 10%
- * </ul>
+ *
+ *   Income-to-loan ratio: 30%
+ *   Existing debt burden: 25%
+ *   Employment stability: 20%
+ *   Repayment history: 15%
+ *   Loan purpose risk: 10%
+ * 
  */
 @Entity
 @Table(name = "credit_score")

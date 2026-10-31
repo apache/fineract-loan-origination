@@ -34,7 +34,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 /**
  * Unit tests for {@link IncomeLoanRatioFactor}.
  *
- * <p>Specifically covers the review feedback that previously caused {@link ArithmeticException} on
+ * Specifically covers the review feedback that previously caused {@link ArithmeticException} on
  * a zero requested amount — verifies the guard now prevents this entirely.
  */
 @DisplayName("IncomeLoanRatioFactor")

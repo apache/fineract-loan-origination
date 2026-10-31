@@ -30,10 +30,10 @@ import org.springframework.stereotype.Repository;
 /**
  * Repository for {@link ApprovalStage} entity.
  *
- * <p>ApprovalStage has a many-to-one relationship with {@link LoanApplication}. Each record is an
+ * ApprovalStage has a many-to-one relationship with {@link LoanApplication}. Each record is an
  * immutable audit entry for one officer decision at one workflow stage.
  *
- * <p>Results are always ordered by {@code createdAt} ascending to reconstruct the chronological
+ * Results are always ordered by {@code createdAt} ascending to reconstruct the chronological
  * approval history.
  */
 @Repository
@@ -42,7 +42,7 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
   /**
    * Returns the full approval history for an application in chronological order.
    *
-   * <p>Used to render the approval timeline in the loan officer dashboard and audit reports.
+   * Used to render the approval timeline in the loan officer dashboard and audit reports.
    *
    * @param application the parent loan application
    * @return all stages ordered oldest to newest
@@ -52,7 +52,7 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
   /**
    * Returns all approval stages for an application at a specific named stage.
    *
-   * <p>Used to check whether a particular stage (e.g. BRANCH_MANAGER) has already been acted upon.
+   * Used to check whether a particular stage (e.g. BRANCH_MANAGER) has already been acted upon.
    *
    * @param application the parent loan application
    * @param stageName name of the workflow stage
@@ -64,7 +64,7 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
   /**
    * Finds the most recent approval stage for an application.
    *
-   * <p>Used by the workflow engine to determine which stage the application is currently at and
+   * Used by the workflow engine to determine which stage the application is currently at and
    * what action was last taken.
    *
    * @param application the parent loan application
@@ -75,7 +75,7 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
   /**
    * Returns all stages with a specific decision for an application.
    *
-   * <p>Used to check if any REJECT decision exists in the history — which would block re-approval.
+   * Used to check if any REJECT decision exists in the history — which would block re-approval.
    *
    * @param application the parent loan application
    * @param decision the decision to filter by
@@ -88,7 +88,7 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
    * Checks whether an approval stage exists for a specific officer on a specific application at a
    * specific stage name.
    *
-   * <p>Used to prevent the same officer from deciding twice on the same stage in the same review
+   * Used to prevent the same officer from deciding twice on the same stage in the same review
    * cycle — while allowing them to act again after a referral resubmission at a different cycle.
    *
    * @param application the parent loan application
@@ -102,7 +102,7 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
   /**
    * Checks whether an approval stage exists for a specific officer on a specific application.
    *
-   * <p>Used to prevent the same officer from approving multiple stages of the same application —
+   * Used to prevent the same officer from approving multiple stages of the same application —
    * four-eyes principle enforcement.
    *
    * @param application the parent loan application
@@ -115,7 +115,7 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
   /**
    * Counts total approval stages for an application.
    *
-   * <p>Used for reporting and audit purposes.
+   * Used for reporting and audit purposes.
    *
    * @param application the parent loan application
    * @return total number of approval stage records
@@ -125,7 +125,7 @@ public interface ApprovalStageRepository extends JpaRepository<ApprovalStage, Lo
   /**
    * Counts approval-stage records with a specific decision for an application.
    *
-   * <p>Used by {@code ApprovalWorkflowService} to derive the application's current workflow stage —
+   * Used by {@code ApprovalWorkflowService} to derive the application's current workflow stage —
    * the number of APPROVE decisions recorded so far is the zero-based index into {@code
    * ApprovalWorkflowProperties#getStages()} for the next stage awaiting a decision.
    *

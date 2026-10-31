@@ -22,7 +22,7 @@ package org.apache.fineract.los.exception;
 /**
  * Thrown when an {@code ApplicantProfile} cannot be found for a given loan application.
  *
- * <p>Unchecked — the global exception handler maps this to HTTP 404 Not Found.
+ * Unchecked — the global exception handler maps this to HTTP 404 Not Found.
  */
 public class ApplicantProfileNotFoundException extends RuntimeException {
 

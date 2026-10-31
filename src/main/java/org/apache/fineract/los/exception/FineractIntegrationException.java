@@ -23,7 +23,7 @@ package org.apache.fineract.los.exception;
  * Thrown when a call from the disbursement bridge to Apache Fineract's core REST API fails —
  * network error, non-2xx response, or malformed response body.
  *
- * <p>Unchecked — the global exception handler maps this to HTTP 502 Bad Gateway, signalling that
+ * Unchecked — the global exception handler maps this to HTTP 502 Bad Gateway, signalling that
  * the failure originated in a downstream dependency rather than in the LOS request itself.
  */
 public class FineractIntegrationException extends RuntimeException {

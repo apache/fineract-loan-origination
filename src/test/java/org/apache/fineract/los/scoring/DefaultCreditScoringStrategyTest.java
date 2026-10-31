@@ -38,7 +38,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for {@link DefaultCreditScoringStrategy}.
  *
- * <p>Wires the real {@link ScoringWeightsProperties} defaults and all five real {@link
+ * Wires the real {@link ScoringWeightsProperties} defaults and all five real {@link
  * ScoringFactor} implementations — this is an integration-of-pure-functions test, not a mock-based
  * one, since the whole point of this class is aggregation across the real factors.
  */

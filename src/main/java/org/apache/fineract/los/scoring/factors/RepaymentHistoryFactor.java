@@ -31,14 +31,14 @@ import org.springframework.stereotype.Component;
 /**
  * Scores the applicant's past repayment behaviour in Fineract.
  *
- * <p>Default weight: 15 points (configurable via {@code los.scoring.weights.repayment-history}).
+ * Default weight: 15 points (configurable via {@code los.scoring.weights.repayment-history}).
  *
- * <p>Critical design decision: first-time borrowers with no history (both counts null or zero) are
+ * Critical design decision: first-time borrowers with no history (both counts null or zero) are
  * scored at the <strong>midpoint</strong> rather than zero. Penalising first-time borrowers as if
  * they had bad history would unfairly exclude new applicants — common in microfinance where many
  * borrowers have no formal credit history.
  *
- * <p>All arithmetic uses {@link BigDecimal} exclusively — never mixed with {@code float}/{@code
+ * All arithmetic uses {@link BigDecimal} exclusively — never mixed with {@code float}/{@code
  * double} — to avoid precision drift on financial calculations.
  */
 @Component

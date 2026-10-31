@@ -22,7 +22,7 @@ package org.apache.fineract.los.domain.enums;
 /**
  * Represents the declared purpose of a loan application.
  *
- * <p>Used as an input to the loan purpose risk scoring factor (10% weight per CGAP guidelines).
+ * Used as an input to the loan purpose risk scoring factor (10% weight per CGAP guidelines).
  * Purposes with more predictable income generation score higher.
  */
 public enum LoanPurpose {

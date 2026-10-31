@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * Centralised mapping from LOS exceptions to HTTP responses.
  *
- * <p>Every custom exception in {@code org.apache.fineract.los.exception} is handled here — no
+ * Every custom exception in {@code org.apache.fineract.los.exception} is handled here — no
  * controller should need its own try/catch for these. Anything unmapped falls through to a generic
  * 500 with the exception message, which is acceptable for a POC but should be tightened (message
  * scrubbing) before any production use.

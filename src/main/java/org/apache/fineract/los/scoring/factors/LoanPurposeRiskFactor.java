@@ -31,20 +31,20 @@ import org.springframework.util.StringUtils;
 /**
  * Scores risk based on the declared purpose of the loan.
  *
- * <p>Default weight: 10 points (configurable via {@code los.scoring.weights.loan-purpose-risk}).
+ * Default weight: 10 points (configurable via {@code los.scoring.weights.loan-purpose-risk}).
  *
- * <p>Purpose categories are mapped to a risk multiplier based on income stability and repayment
+ * Purpose categories are mapped to a risk multiplier based on income stability and repayment
  * predictability typically associated with each category in microfinance lending:
  *
- * <ul>
- *   <li>AGRICULTURE, EDUCATION — low risk, full points
- *   <li>BUSINESS, HOME_IMPROVEMENT — moderate risk, 75%
- *   <li>CONSUMER, MEDICAL — moderate-high risk, 50%
- *   <li>SPECULATION, OTHER — high risk, 25%
- *   <li>unrecognised or missing purpose — 50% (neutral)
- * </ul>
+ * 
+ *   AGRICULTURE, EDUCATION — low risk, full points
+ *   BUSINESS, HOME_IMPROVEMENT — moderate risk, 75%
+ *   CONSUMER, MEDICAL — moderate-high risk, 50%
+ *   SPECULATION, OTHER — high risk, 25%
+ *   unrecognised or missing purpose — 50% (neutral)
+ * 
  *
- * <p>Category mapping is intentionally a simple in-memory map rather than externalised
+ * Category mapping is intentionally a simple in-memory map rather than externalised
  * configuration — unlike the numeric weights, these categorical risk tiers are a domain modelling
  * decision rather than an institution-tunable parameter. If a future institution needs different
  * categories, this can be extended to read from configuration without changing the {@link

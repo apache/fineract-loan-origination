@@ -31,7 +31,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 /**
  * Unit tests for {@link LoanStateTransitionValidator}.
  *
- * <p>Uses JUnit 5 parameterized tests to exhaustively verify the transition map without repetitive
+ * JUnit 5 parameterized tests to exhaustively verify the transition map without repetitive
  * boilerplate. Each {@code @CsvSource} row represents one transition and its expected validity.
  */
 @DisplayName("LoanStateTransitionValidator")

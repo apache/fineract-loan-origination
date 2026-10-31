@@ -45,11 +45,11 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST API for recording multi-stage approval decisions against a loan application.
  *
- * <p>The workflow stage and assigned officer are never read from the request. Both are derived by
+ * The workflow stage and assigned officer are never read from the request. Both are derived by
  * {@link ApprovalWorkflowService} from the authenticated {@link Authentication} principal and the
  * application's current position in the configured approval workflow.
  *
- * <p>A single endpoint accepts APPROVE / REJECT / REFER via {@link
+ * A single endpoint accepts APPROVE / REJECT / REFER via {@link
  * ApprovalDecisionRequest#getDecision()}, keeping all workflow validation and state transitions
  * inside {@link ApprovalWorkflowService}.
  */

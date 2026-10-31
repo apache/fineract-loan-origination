@@ -31,10 +31,10 @@ import org.springframework.security.core.userdetails.UserDetails;
  * internal staff (loan officers, branch managers) who authenticate through the default security
  * chain.
  *
- * <p>Carries {@code clientId} — the Fineract client identifier — which every customer-facing
+ * Carries {@code clientId} — the Fineract client identifier — which every customer-facing
  * endpoint uses to scope data access to only what that customer owns.
  *
- * <p>Also carries {@code tenantId} from the JWT claim, validated against the request header to
+ * Also carries {@code tenantId} from the JWT claim, validated against the request header to
  * prevent cross-tenant data access.
  */
 @Getter

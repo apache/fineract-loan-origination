@@ -26,10 +26,10 @@ import lombok.Setter;
 /**
  * DTO for POST /v1/authentication response from Fineract.
  *
- * <p>{@code clientId} is present only when the app user is linked to a client record. Staff users
+ * {@code clientId} is present only when the app user is linked to a client record. Staff users
  * (e.g. mifos) will have a null clientId.
  *
- * <p>{@code permissions} contains the Fineract role names assigned to the user.
+ * {@code permissions} contains the Fineract role names assigned to the user.
  */
 @Getter
 @Setter

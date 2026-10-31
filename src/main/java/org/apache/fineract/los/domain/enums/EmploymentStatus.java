@@ -22,7 +22,7 @@ package org.apache.fineract.los.domain.enums;
 /**
  * Represents the employment status of a loan applicant.
  *
- * <p>Used as an input to the employment stability scoring factor (20% weight per CGAP guidelines).
+ * Used as an input to the employment stability scoring factor (20% weight per CGAP guidelines).
  * Higher employment stability correlates with lower credit risk.
  */
 public enum EmploymentStatus {

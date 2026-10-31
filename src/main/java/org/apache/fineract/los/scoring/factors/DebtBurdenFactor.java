@@ -32,12 +32,12 @@ import org.springframework.stereotype.Component;
  * Scores the applicant's existing debt burden — the ratio of existing loan obligations to monthly
  * income.
  *
- * <p>Default weight: 25 points (configurable via {@code los.scoring.weights.debt-burden}).
+ * Default weight: 25 points (configurable via {@code los.scoring.weights.debt-burden}).
  * Thresholds are configurable via {@code los.scoring.weights.debt-burden-*}.
  *
- * <p>This factor is inverse to the others — a higher debt burden ratio means lower points.
+ * This factor is inverse to the others — a higher debt burden ratio means lower points.
  *
- * <p>All arithmetic uses {@link BigDecimal} exclusively. Income of zero or negative is explicitly
+ * All arithmetic uses {@link BigDecimal} exclusively. Income of zero or negative is explicitly
  * guarded to avoid {@link ArithmeticException} on division — scored as zero with an explanation
  * rather than crashing the request.
  */

@@ -29,7 +29,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 /**
  * Spring Security principal for staff users authenticated via JWT.
  *
- * <p>Staff users are Fineract users (not linked to a client) who access the LOS backoffice portal.
+ * Staff users are Fineract users (not linked to a client) who access the LOS backoffice portal.
  * They are assigned workflow roles (LOAN_OFFICER, CREDIT_COMMITTEE, BRANCH_MANAGER) that determine
  * which approval stages they can act on.
  */

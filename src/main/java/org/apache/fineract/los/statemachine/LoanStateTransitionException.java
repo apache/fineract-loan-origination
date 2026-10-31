@@ -26,10 +26,10 @@ import org.apache.fineract.los.exception.LosErrorConstants;
  * Thrown when an invalid state transition is attempted on a {@link
  * org.apache.fineract.los.domain.LoanApplication}.
  *
- * <p>This is an unchecked exception — callers are not required to catch it, but the global
+ * This is an unchecked exception — callers are not required to catch it, but the global
  * exception handler maps it to HTTP 409 Conflict so clients receive a meaningful error.
  *
- * <p>Example: attempting DRAFT → DISBURSED directly will throw this exception with a descriptive
+ * Example: attempting DRAFT → DISBURSED directly will throw this exception with a descriptive
  * message identifying both the current and attempted target status.
  */
 public class LoanStateTransitionException extends RuntimeException {

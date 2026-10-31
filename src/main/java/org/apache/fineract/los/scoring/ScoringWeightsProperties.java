@@ -33,13 +33,13 @@ import org.springframework.validation.annotation.Validated;
 /**
  * Externalised configuration for credit scoring factor weights and thresholds.
  *
- * <p>Bound from {@code application.yml} under the prefix {@code los.scoring.weights}. Institutions
+ * Bound from {@code application.yml} under the prefix {@code los.scoring.weights}. Institutions
  * can tune these values without recompiling — only a restart is required.
  *
- * <p>Default values follow CGAP microfinance credit assessment guidelines and are applied if no
+ * Default values follow CGAP microfinance credit assessment guidelines and are applied if no
  * configuration is provided.
  *
- * <p>{@link #validateWeightsSumToHundred()} runs on startup via {@code @PostConstruct} — fails fast
+ * {@link #validateWeightsSumToHundred()} runs on startup via {@code @PostConstruct} — fails fast
  * with a clear error if weights are misconfigured, rather than silently producing incorrect scores
  * at runtime.
  */

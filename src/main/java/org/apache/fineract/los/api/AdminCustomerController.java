@@ -41,10 +41,10 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * Staff-only endpoint for registering customer portal accounts.
  *
- * <p>Called once per customer at onboarding time. Links a portal username/password to an existing
- * Fineract clientId so the customer can log in via POST /api/v1/auth/login.
+ * Called once per customer at onboarding time. Links a portal username/password to an existing
+ * Fineract clientId so that the customer can log in via POST /api/v1/auth/login.
  *
- * <p>Protected by the staff security chain — requires admin credentials.
+ * Protected by the staff security chain — requires admin credentials.
  */
 @Tag(
     name = "Admin – Customer Management",

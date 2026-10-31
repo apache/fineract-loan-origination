@@ -23,14 +23,14 @@ package org.apache.fineract.los.domain.enums;
  * Represents the credit risk classification of a loan applicant as determined by the {@code
  * CreditScoringStrategy}.
  *
- * <p>Score ranges follow CGAP microfinance credit assessment guidelines. Thresholds are
+ * Score ranges follow CGAP microfinance credit assessment guidelines. Thresholds are
  * configurable via {@code application.properties} — these are defaults only.
  *
- * <pre>
+ * 
  * Score 70-100 → LOW
  * Score 40-69  → MEDIUM
  * Score 0-39   → HIGH
- * </pre>
+ * 
  */
 public enum RiskCategory {
 

@@ -25,7 +25,7 @@ import lombok.Getter;
 /**
  * Result of a single scoring factor's evaluation.
  *
- * <p>Each {@code ScoringFactor} produces one of these, carrying both the raw contribution to the
+ * Each {@code ScoringFactor} produces one of these, carrying both the raw contribution to the
  * composite score and a human-readable explanation. The explanation is stored and surfaced to
  * applicants — required for regulatory explainability in most lending jurisdictions.
  */

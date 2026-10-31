@@ -47,22 +47,22 @@ import org.springframework.web.client.RestClientException;
  * The disbursement bridge — the integration point between the external LOS and Apache Fineract's
  * existing loan module.
  *
- * <p>Orchestrates the complete Fineract loan lifecycle:
+ * Orchestrates the complete Fineract loan lifecycle:
  *
- * <ol>
- *   <li>Create loan via POST /loans
- *   <li>Approve loan via POST /loans/{id}?command=approve
- *   <li>Disburse loan via POST /loans/{id}?command=disburse
- * </ol>
+ * 
+ *   Create loan via POST /loans
+ *   Approve loan via POST /loans/{id}?command=approve
+ *   Disburse loan via POST /loans/{id}?command=disburse
+ * 
  *
- * <p>Only after successful disbursement does the LOS application transition to DISBURSED status.
+ * Only after successful disbursement does the LOS application transition to DISBURSED status.
  *
- * <p>Idempotency: uses {@code fineractIntegrationStatus} to track progress and prevent duplicate
+ * Idempotency: uses {@code fineractIntegrationStatus} to track progress and prevent duplicate
  * operations. If a loan is already created, approval can be retried. If already approved,
  * disbursement can be retried. This prevents duplicate loan creation even if the orchestration is
  * called multiple times.
  *
- * <p>Transaction boundaries: external Fineract HTTP calls are isolated from database transactions
+ * Transaction boundaries: external Fineract HTTP calls are isolated from database transactions
  * to avoid holding locks during network operations. Local state changes are persisted in separate
  * transactions after each successful Fineract operation.
  */
@@ -83,7 +83,7 @@ public class DisbursementBridgeService {
   /**
    * Orchestrates the complete Fineract loan lifecycle for an APPROVED LOS application.
    *
-   * <p>This method is idempotent: it can be called multiple times and will resume from the last
+   * This method is idempotent: it can be called multiple times and will resume from the last
    * successful state. If the loan is already created, it skips creation and proceeds to approval.
    * If already approved, it proceeds directly to disbursement.
    *
@@ -148,7 +148,7 @@ public class DisbursementBridgeService {
   /**
    * Step 1: Creates the Fineract loan via POST /loans.
    *
-   * <p>Transaction boundary: Fineract HTTP call is made outside of any transaction, then local
+   * Transaction boundary: Fineract HTTP call is made outside of any transaction, then local
    * state is persisted in a new transaction.
    */
   private void createLoan(final LoanApplication application, final ApplicantProfile profile) {
@@ -192,7 +192,7 @@ public class DisbursementBridgeService {
   /**
    * Step 2: Approves the Fineract loan via POST /loans/{id}?command=approve.
    *
-   * <p>Requires the loan to already exist (fineractLoanId must be populated).
+   * Requires the loan to already exist (fineractLoanId must be populated).
    */
   private void approveLoan(final LoanApplication application) {
     final Long loanId = application.getFineractLoanId();
@@ -242,7 +242,7 @@ public class DisbursementBridgeService {
   /**
    * Step 3: Disburses the Fineract loan via POST /loans/{id}?command=disburse.
    *
-   * <p>Requires the loan to already be approved.
+   * Requires the loan to already be approved.
    */
   private void disburseLoan(final LoanApplication application) {
     final Long loanId = application.getFineractLoanId();

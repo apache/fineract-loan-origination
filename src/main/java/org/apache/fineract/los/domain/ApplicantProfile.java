@@ -40,17 +40,17 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 /**
  * Stores personal and financial information about the loan applicant.
  *
- * <p>One-to-one relationship with {@code LoanApplication}. Separation of concerns — application
+ * One-to-one relationship with {@code LoanApplication}. Separation of concerns — application
  * tracks lifecycle, profile tracks the person.
  *
- * <p>Financial fields (monthlyIncome, existingLoanObligations) feed directly into the credit
+ * Financial fields (monthlyIncome, existingLoanObligations) feed directly into the credit
  * scoring engine:
  *
- * <ul>
- *   <li>Income-to-loan ratio uses monthlyIncome (30% weight)
- *   <li>Debt burden uses existingLoanObligations (25% weight)
- *   <li>Employment stability uses employmentStatus + employmentDurationMonths (20% weight)
- * </ul>
+ * 
+ *   Income-to-loan ratio uses monthlyIncome (30% weight)
+ *   Debt burden uses existingLoanObligations (25% weight)
+ *   Employment stability uses employmentStatus + employmentDurationMonths (20% weight)
+ * 
  */
 @Entity
 @Table(name = "applicant_profile")

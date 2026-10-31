@@ -47,7 +47,7 @@ public class JwtProperties {
    * Returns {@code true} if the configured secret is one of the known-insecure defaults shipped
    * with the codebase.
    *
-   * <p>Called from {@link JwtSecretValidator} at startup to fail fast when a default secret would
+   * Called from {@link JwtSecretValidator} at startup to fail fast when a default secret would
    * otherwise silently reach a non-dev environment.
    */
   public boolean isKnownInsecureDefault() {

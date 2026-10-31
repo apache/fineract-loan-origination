@@ -27,11 +27,11 @@ import org.apache.fineract.los.domain.enums.RiskCategory;
 /**
  * Composite output of the credit scoring engine.
  *
- * <p>Deliberately decoupled from the {@code CreditScore} JPA entity — the service layer maps this
+ * Deliberately decoupled from the {@code CreditScore} JPA entity — the service layer maps this
  * result onto the entity for persistence. Keeping the scoring engine free of persistence concerns
  * allows it to be tested and evolved independently.
  *
- * <p>{@link #factorScores} preserves individual factor contributions for explainability — both the
+ * {@link #factorScores} preserves individual factor contributions for explainability — both the
  * applicant-facing score breakdown and regulatory audit reporting depend on this granularity being
  * available, not just the final number.
  */

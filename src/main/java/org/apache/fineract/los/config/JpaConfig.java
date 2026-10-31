@@ -26,10 +26,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 /**
  * JPA configuration for the Loan Origination Service.
  *
- * <p>Enables JPA auditing so that {@code @CreatedDate} and {@code @LastModifiedDate} fields on all
+ * Enables JPA auditing so that {@code @CreatedDate} and {@code @LastModifiedDate} fields on all
  * entities are automatically populated by Spring Data on every save.
  *
- * <p>Enables JPA repositories scanning from the root package ensuring all repository interfaces are
+ * Enables JPA repositories scanning from the root package ensuring all repository interfaces are
  * discovered.
  */
 @Configuration

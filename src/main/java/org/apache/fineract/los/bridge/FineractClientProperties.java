@@ -28,9 +28,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * Externalised configuration for the connection to Apache Fineract's core REST API, used by the
  * disbursement bridge.
  *
- * <p>Bound from {@code application.yml} under the prefix {@code los.fineract}.
+ * Bound from {@code application.yml} under the prefix {@code los.fineract}.
  *
- * <p>Per the GSoC proposal's alignment strategy: while FINERACT-2418 is unresolved, {@code
+ * Per the GSoC proposal's alignment strategy: while FINERACT-2418 is unresolved, {@code
  * mockEnabled} defaults to {@code true} so the full origination flow can be demonstrated end-to-end
  * without a live Fineract instance. Once real endpoints are available, institutions flip this
  * single flag — no code changes required.

@@ -43,14 +43,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 /**
  * Root aggregate of the Loan Origination System.
  *
- * <p>Represents a loan application from initial submission through to disbursement. All lifecycle
+ * Represents a loan application from initial submission through to disbursement. All lifecycle
  * transitions are enforced exclusively by {@code LoanOriginationStateMachine} — no external code
  * may call {@code setStatus} directly.
  *
- * <p>Multi-tenancy: every query must filter by {@code tenantId}. The value is extracted from the
+ * Multi-tenancy: every query must filter by {@code tenantId}. The value is extracted from the
  * {@code X-Fineract-Platform-TenantId} request header.
  *
- * <p>Concurrency: {@code version} provides optimistic locking. Concurrent modification of the same
+ * Concurrency: {@code version} provides optimistic locking. Concurrent modification of the same
  * application by two officers will result in an {@code OptimisticLockException} on the second
  * writer — preventing silent data corruption.
  */

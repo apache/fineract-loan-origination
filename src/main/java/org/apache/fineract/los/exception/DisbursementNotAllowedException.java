@@ -24,7 +24,7 @@ package org.apache.fineract.los.exception;
  * configuration that permits disbursement (wrong status, missing Fineract client link, missing
  * product mapping).
  *
- * <p>Unchecked — the global exception handler maps this to HTTP 409 Conflict.
+ * Unchecked — the global exception handler maps this to HTTP 409 Conflict.
  */
 public class DisbursementNotAllowedException extends RuntimeException {
 

@@ -34,7 +34,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 /**
  * Unit tests for {@link DebtBurdenFactor}.
  *
- * <p>Specifically covers the review feedback regarding {@link ArithmeticException} risk on
+ * Specifically covers the review feedback regarding {@link ArithmeticException} risk on
  * zero/negative income, and rounding precision when mixing scaled percentages.
  */
 @DisplayName("DebtBurdenFactor")
