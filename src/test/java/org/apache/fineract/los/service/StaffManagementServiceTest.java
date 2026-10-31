@@ -22,12 +22,11 @@ package org.apache.fineract.los.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.apache.fineract.los.domain.StaffCredential;
 import org.apache.fineract.los.exception.WeakPasswordException;
 import org.apache.fineract.los.repository.StaffCredentialRepository;
@@ -37,6 +36,8 @@ import org.apache.fineract.los.validation.PasswordValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -98,5 +99,77 @@ class StaffManagementServiceTest {
     verify(passwordValidator).validate("short", "alice", "alice@example.com");
 
     verifyNoInteractions(passwordEncoder, repository);
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+      value = {"NULL, alice@example.com", "new@example.com, new@example.com"},
+      nullValues = "NULL")
+  void validatesPasswordAgainstEffectiveEmail(
+      final String requestedEmail, final String expectedEmail) {
+    final String password = "a-valid-password";
+    final StaffCredential staffCredential =
+        new StaffCredential("alice", "password-hash", "alice@example.com", "ROLE_STAFF", "default");
+
+    when(passwordValidator.validate(password, "alice", expectedEmail))
+        .thenReturn(new PasswordValidationResult(Collections.emptyList()));
+
+    when(passwordEncoder.encode(password)).thenReturn("encoded-password");
+
+    when(repository.findById(1L)).thenReturn(Optional.of(staffCredential));
+
+    when(repository.save(any(StaffCredential.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    service.updateStaff(1L, requestedEmail, null, password);
+
+    verify(passwordValidator).validate(password, "alice", expectedEmail);
+    verify(passwordEncoder).encode(password);
+    verify(repository).save(staffCredential);
+    assertThat(staffCredential.getPasswordHash()).isEqualTo("encoded-password");
+    assertThat(staffCredential.getEmail()).isEqualTo(expectedEmail);
+  }
+
+  @Test
+  void weakPasswordRejectedForUpdate() {
+    final String password = "short";
+    final StaffCredential staffCredential =
+        new StaffCredential("alice", "password-hash", "alice@example.com", "ROLE_STAFF", "default");
+
+    when(repository.findById(1L)).thenReturn(Optional.of(staffCredential));
+
+    when(passwordValidator.validate(password, "alice", "new@example.com"))
+        .thenReturn(new PasswordValidationResult(List.of(PasswordValidationError.TOO_SHORT)));
+
+    assertThatThrownBy(() -> service.updateStaff(1L, "new@example.com", "ROLE_ADMIN", password))
+        .isInstanceOfSatisfying(
+            WeakPasswordException.class,
+            ex -> assertThat(ex.getErrors()).containsExactly(PasswordValidationError.TOO_SHORT));
+
+    verify(repository, never()).save(any(StaffCredential.class));
+    verifyNoInteractions(passwordEncoder);
+    assertThat(staffCredential.getPasswordHash()).isEqualTo("password-hash");
+    assertThat(staffCredential.getEmail()).isEqualTo("alice@example.com");
+    assertThat(staffCredential.getRole()).isEqualTo("ROLE_STAFF");
+  }
+
+  @Test
+  void fieldsUpdatedWithPasswordNull() {
+    final StaffCredential staffCredential =
+        new StaffCredential("alice", "password-hash", "alice@example.com", "ROLE_STAFF", "default");
+
+    when(repository.findById(1L)).thenReturn(Optional.of(staffCredential));
+
+    when(repository.save(any(StaffCredential.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    StaffCredential result = service.updateStaff(1L, "new-alice@example.com", "ROLE_ADMIN", null);
+
+    assertThat(result.getEmail()).isEqualTo("new-alice@example.com");
+    assertThat(result.getRole()).isEqualTo("ROLE_ADMIN");
+    verifyNoInteractions(passwordValidator, passwordEncoder);
+    verify(repository).save(staffCredential);
+
+    assertThat(result.getPasswordHash()).isEqualTo("password-hash");
   }
 }

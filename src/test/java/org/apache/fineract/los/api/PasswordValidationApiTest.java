@@ -21,16 +21,16 @@ package org.apache.fineract.los.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.startsWith;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Optional;
+import org.apache.fineract.los.domain.StaffCredential;
 import org.apache.fineract.los.exception.GlobalExceptionHandler;
 import org.apache.fineract.los.exception.LosErrorConstants;
 import org.apache.fineract.los.repository.CustomerCredentialRepository;
@@ -85,20 +85,17 @@ class PasswordValidationApiTest {
   @DisplayName("Returns validation details for a weak customer password")
   void weakCustomerPasswordRejected() throws Exception {
     when(passwordValidator.validate("short", "alice"))
-        .thenReturn(
-            new PasswordValidationResult(
-                List.of(
-                    PasswordValidationError.TOO_SHORT, PasswordValidationError.COMMON_PASSWORD)));
+        .thenReturn(new PasswordValidationResult(List.of(PasswordValidationError.TOO_SHORT)));
 
     final String request =
         """
-                {
-                  "username": "alice",
-                  "password": "short",
-                  "fineractClientId": 1,
-                  "tenantId": "default"
-                }
-                """;
+                        {
+                          "username": "alice",
+                          "password": "short",
+                          "fineractClientId": 1,
+                          "tenantId": "default"
+                        }
+                        """;
 
     final MvcResult result =
         mockMvc
@@ -109,12 +106,7 @@ class PasswordValidationApiTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value(LosErrorConstants.MSG_WEAK_PASSWORD))
-            .andExpect(
-                jsonPath(
-                    "$.details",
-                    containsInAnyOrder(
-                        LosErrorConstants.MSG_PASSWORD_TOO_SHORT,
-                        LosErrorConstants.MSG_PASSWORD_TOO_COMMON)))
+            .andExpect(jsonPath("$.details", contains(LosErrorConstants.MSG_PASSWORD_TOO_SHORT)))
             .andReturn();
 
     assertThat(result.getResponse().getContentAsString()).doesNotContain("short");
@@ -128,13 +120,13 @@ class PasswordValidationApiTest {
   void emptyCustomerPasswordRejected() throws Exception {
     final String request =
         """
-                {
-                  "username": "alice",
-                  "password": "",
-                  "fineractClientId": 1,
-                  "tenantId": "default"
-                }
-                """;
+                        {
+                          "username": "alice",
+                          "password": "",
+                          "fineractClientId": 1,
+                          "tenantId": "default"
+                        }
+                        """;
 
     mockMvc
         .perform(
@@ -153,13 +145,13 @@ class PasswordValidationApiTest {
   void invalidCustomerRequestRejected(final CapturedOutput output) throws Exception {
     final String request =
         """
-                    {
-                      "username": "alice",
-                      "password": just-a-password,
-                      "fineractClientId": 1,
-                      "tenantId": "default"
-                    }
-                    """;
+                        {
+                          "username": "alice",
+                          "password": just-a-password,
+                          "fineractClientId": 1,
+                          "tenantId": "default"
+                        }
+                        """;
 
     final MvcResult result =
         mockMvc
@@ -181,21 +173,18 @@ class PasswordValidationApiTest {
   @DisplayName("Returns validation details for a weak staff password")
   void weakStaffPasswordRejected() throws Exception {
     when(passwordValidator.validate("short", "alice", "alice@example.com"))
-        .thenReturn(
-            new PasswordValidationResult(
-                List.of(
-                    PasswordValidationError.TOO_SHORT, PasswordValidationError.COMMON_PASSWORD)));
+        .thenReturn(new PasswordValidationResult(List.of(PasswordValidationError.TOO_SHORT)));
 
     final String request =
         """
-                {
-                  "username": "alice",
-                  "password": "short",
-                  "email": "alice@example.com",
-                  "role": "ROLE_STAFF",
-                  "tenantId": "default"
-                }
-                """;
+                        {
+                          "username": "alice",
+                          "password": "short",
+                          "email": "alice@example.com",
+                          "role": "ROLE_STAFF",
+                          "tenantId": "default"
+                        }
+                        """;
 
     final MvcResult result =
         mockMvc
@@ -206,12 +195,7 @@ class PasswordValidationApiTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value(LosErrorConstants.MSG_WEAK_PASSWORD))
-            .andExpect(
-                jsonPath(
-                    "$.details",
-                    containsInAnyOrder(
-                        LosErrorConstants.MSG_PASSWORD_TOO_SHORT,
-                        LosErrorConstants.MSG_PASSWORD_TOO_COMMON)))
+            .andExpect(jsonPath("$.details", contains(LosErrorConstants.MSG_PASSWORD_TOO_SHORT)))
             .andReturn();
 
     assertThat(result.getResponse().getContentAsString()).doesNotContain("short");
@@ -225,14 +209,14 @@ class PasswordValidationApiTest {
   void emptyStaffPasswordRejected() throws Exception {
     final String request =
         """
-                {
-                  "username": "alice",
-                  "password": "",
-                  "email": "alice@example.com",
-                  "role": "ROLE_STAFF",
-                  "tenantId": "default"
-                }
-                """;
+                        {
+                          "username": "alice",
+                          "password": "",
+                          "email": "alice@example.com",
+                          "role": "ROLE_STAFF",
+                          "tenantId": "default"
+                        }
+                        """;
 
     mockMvc
         .perform(
@@ -249,14 +233,14 @@ class PasswordValidationApiTest {
   void invalidStaffRequestRejected(final CapturedOutput output) throws Exception {
     final String request =
         """
-                    {
-                      "username": "alice",
-                      "password": just-a-password,
-                      "email": "alice@example.com",
-                      "role": "ROLE_STAFF",
-                      "tenantId": "default"
-                    }
-                    """;
+                        {
+                          "username": "alice",
+                          "password": just-a-password,
+                          "email": "alice@example.com",
+                          "role": "ROLE_STAFF",
+                          "tenantId": "default"
+                        }
+                        """;
 
     final MvcResult result =
         mockMvc
@@ -272,5 +256,36 @@ class PasswordValidationApiTest {
 
     verifyNoInteractions(passwordValidator, passwordEncoder, staffCredentialRepository);
     assertThat(output.getAll()).doesNotContain("just-a-password");
+  }
+
+  @Test
+  void weakPasswordUpdateRejected() throws Exception {
+    final String request =
+        """
+                {
+                  "email": "alice@example.com",
+                  "role": "ROLE_STAFF",
+                  "password": "short"
+                }
+                """;
+
+    final StaffCredential staff =
+        new StaffCredential("alice", "password-hash", "alice@example.com", "ROLE_STAFF", "default");
+
+    when(staffCredentialRepository.findById(1L)).thenReturn(Optional.of(staff));
+
+    when(passwordValidator.validate("short", "alice", "alice@example.com"))
+        .thenReturn(new PasswordValidationResult(List.of(PasswordValidationError.TOO_SHORT)));
+
+    mockMvc
+        .perform(
+            patch("/api/v1/admin/staff/1").contentType(MediaType.APPLICATION_JSON).content(request))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value(LosErrorConstants.MSG_WEAK_PASSWORD))
+        .andExpect(jsonPath("$.details", contains(LosErrorConstants.MSG_PASSWORD_TOO_SHORT)));
+
+    verify(passwordValidator).validate("short", "alice", "alice@example.com");
+    verifyNoInteractions(passwordEncoder);
+    verify(staffCredentialRepository, never()).save(any(StaffCredential.class));
   }
 }

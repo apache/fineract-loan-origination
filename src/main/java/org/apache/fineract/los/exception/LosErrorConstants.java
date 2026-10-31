@@ -196,10 +196,6 @@ public final class LosErrorConstants {
   public static final String MSG_PASSWORD_TOO_SHORT =
       "Password must be at least 12 characters long.";
 
-  /** Message when a password is present in the common-password blocklist. */
-  public static final String MSG_PASSWORD_TOO_COMMON =
-      "Password is too common. Choose a less common password.";
-
   /** Message when a password contains the user's username. */
   public static final String MSG_PASSWORD_CONTAINS_USERNAME =
       "Password must not contain the username, regardless of letter case.";

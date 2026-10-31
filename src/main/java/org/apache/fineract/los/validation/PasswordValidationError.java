@@ -25,7 +25,6 @@ import org.apache.fineract.los.exception.LosErrorConstants;
 public enum PasswordValidationError {
   MISSING_PASSWORD(LosErrorConstants.MSG_PASSWORD_REQUIRED),
   TOO_SHORT(LosErrorConstants.MSG_PASSWORD_TOO_SHORT),
-  COMMON_PASSWORD(LosErrorConstants.MSG_PASSWORD_TOO_COMMON),
   CONTAINS_USERNAME(LosErrorConstants.MSG_PASSWORD_CONTAINS_USERNAME),
   CONTAINS_EMAIL(LosErrorConstants.MSG_PASSWORD_CONTAINS_EMAIL);
 

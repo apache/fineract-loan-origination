@@ -19,55 +19,13 @@
 
 package org.apache.fineract.los.validation;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PasswordValidator {
-
-  private final Set<String> commonPasswords;
-
-  public PasswordValidator() {
-    final InputStream stream = PasswordValidator.class.getResourceAsStream("/common-passwords.txt");
-
-    if (stream == null) {
-      throw new IllegalStateException("Password blocklist resource is missing");
-    }
-
-    final Set<String> passwords = createPasswords(stream);
-
-    if (passwords.isEmpty()) {
-      throw new IllegalStateException("Password blocklist is empty");
-    }
-
-    this.commonPasswords = Set.copyOf(passwords);
-  }
-
-  PasswordValidator(final Set<String> commonPasswords) {
-    this.commonPasswords = Set.copyOf(commonPasswords);
-  }
-
-  private static Set<String> createPasswords(final InputStream stream) {
-    final Set<String> passwords = new HashSet<>();
-
-    try (BufferedReader reader =
-        new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-      String line;
-      while ((line = reader.readLine()) != null) {
-        if (!line.isEmpty()) {
-          passwords.add(line);
-        }
-      }
-    } catch (IOException ex) {
-      throw new IllegalStateException("Failed to load password blocklist", ex);
-    }
-    return passwords;
-  }
 
   public PasswordValidationResult validate(
       final String password, final String username, final String email) {
@@ -79,10 +37,6 @@ public class PasswordValidator {
 
     if (password.codePointCount(0, password.length()) < 12) {
       errors.add(PasswordValidationError.TOO_SHORT);
-    }
-
-    if (this.commonPasswords.contains(password)) {
-      errors.add(PasswordValidationError.COMMON_PASSWORD);
     }
 
     final String normalizedPassword = password.toLowerCase(Locale.ROOT);

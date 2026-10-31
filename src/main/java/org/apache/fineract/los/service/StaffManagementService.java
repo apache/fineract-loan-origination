@@ -117,6 +117,17 @@ public class StaffManagementService {
 
     final StaffCredential staff = getOrThrow(id);
 
+    if (plainPassword != null) {
+      final String effectiveEmail = email != null ? email : staff.getEmail();
+
+      final PasswordValidationResult result =
+          passwordValidator.validate(plainPassword, staff.getUsername(), effectiveEmail);
+
+      if (!result.isValid()) {
+        throw new WeakPasswordException(result.errors());
+      }
+    }
+
     if (email != null) staff.setEmail(email);
     if (role != null) staff.setRole(role);
     if (plainPassword != null) staff.setPasswordHash(passwordEncoder.encode(plainPassword));

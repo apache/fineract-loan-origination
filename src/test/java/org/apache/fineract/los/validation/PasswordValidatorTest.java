@@ -21,7 +21,6 @@ package org.apache.fineract.los.validation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,7 +32,7 @@ public class PasswordValidatorTest {
   @Test
   @DisplayName("Rejects a password shorter than 12 characters")
   void tooShortPasswordRejected() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
     final PasswordValidationResult result = validator.validate("a".repeat(11), "test-username");
 
     assertThat(result.isValid()).isFalse();
@@ -41,21 +40,9 @@ public class PasswordValidatorTest {
   }
 
   @Test
-  @DisplayName("Rejects a common and short password")
-  void commonAndShortPasswordRejected() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("short"));
-
-    final PasswordValidationResult result = validator.validate("short", "user-name");
-
-    assertThat(result.errors())
-        .containsExactlyInAnyOrder(
-            PasswordValidationError.TOO_SHORT, PasswordValidationError.COMMON_PASSWORD);
-  }
-
-  @Test
   @DisplayName("Accepts a password containing exactly 12 characters")
   void minLengthPasswordAccepted() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final PasswordValidationResult result = validator.validate("a".repeat(12), "test-username");
 
@@ -64,31 +51,9 @@ public class PasswordValidatorTest {
   }
 
   @Test
-  @DisplayName("Rejects a password from blocklist")
-  void blocklistPasswordRejected() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("a".repeat(15)));
-
-    final PasswordValidationResult result = validator.validate("a".repeat(15), "test-username");
-
-    assertThat(result.isValid()).isFalse();
-    assertThat(result.errors()).containsExactly(PasswordValidationError.COMMON_PASSWORD);
-  }
-
-  @Test
-  @DisplayName("Rejects a password from the bundled blocklist")
-  void blocklistSourcePasswordRejected() {
-    final PasswordValidator validator = new PasswordValidator();
-
-    final PasswordValidationResult result = validator.validate("q1w2e3r4t5y6", "test-username");
-
-    assertThat(result.isValid()).isFalse();
-    assertThat(result.errors()).containsExactly(PasswordValidationError.COMMON_PASSWORD);
-  }
-
-  @Test
   @DisplayName("Rejects a password containing the username regardless of case")
   void passwordContainingUsernameIgnoringCaseRejected() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final PasswordValidationResult result =
         validator.validate("my-uSeR-NamE-like-PASSworD-pass", "USER-NAME-LIKE-PASSWORD");
@@ -102,7 +67,7 @@ public class PasswordValidatorTest {
   @ValueSource(strings = {"   "})
   @DisplayName("Skips an absent or blank username")
   void absentUsernameSkipped(final String username) {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final PasswordValidationResult result = validator.validate("a".repeat(15), username);
 
@@ -113,7 +78,7 @@ public class PasswordValidatorTest {
   @Test
   @DisplayName("Rejects a password containing the email address regardless of case")
   void passwordContainingEmailIgnoringCaseRejected() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final PasswordValidationResult result =
         validator.validate("my-PASS-cont@Email.com-password", "user-name", "PASS-cONt@EmaiL.com");
@@ -127,7 +92,7 @@ public class PasswordValidatorTest {
   @ValueSource(strings = {"   "})
   @DisplayName("Skips an absent or blank email")
   void absentEmailSkipped(final String email) {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final PasswordValidationResult result = validator.validate("a".repeat(15), "user-name", email);
 
@@ -140,7 +105,7 @@ public class PasswordValidatorTest {
   @ValueSource(strings = {"   "})
   @DisplayName("Rejects a missing or blank password")
   void missingPasswordRejected(final String password) {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final PasswordValidationResult result = validator.validate(password, "user-name");
 
@@ -151,15 +116,15 @@ public class PasswordValidatorTest {
   @Test
   @DisplayName("Returns multiple validation errors")
   void returnsMultipleValidationErrors() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final PasswordValidationResult result =
-        validator.validate("common-password", "CoMmOn", "PaSsWoRd");
+        validator.validate("user@x.test", "USER", "USER@X.TEST");
 
     assertThat(result.isValid()).isFalse();
     assertThat(result.errors())
         .containsExactlyInAnyOrder(
-            PasswordValidationError.COMMON_PASSWORD,
+            PasswordValidationError.TOO_SHORT,
             PasswordValidationError.CONTAINS_USERNAME,
             PasswordValidationError.CONTAINS_EMAIL);
   }
@@ -167,7 +132,7 @@ public class PasswordValidatorTest {
   @Test
   @DisplayName("Accepts valid password")
   void validPasswordAccepted() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final PasswordValidationResult result =
         validator.validate("a".repeat(15), "user-name", "user-email");
@@ -179,7 +144,7 @@ public class PasswordValidatorTest {
   @Test
   @DisplayName("Accepts a password containing exactly 12 Unicode code points")
   void acceptsPasswordWithTwelveUnicodeCodePoints() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final String character = "\uD840\uDC00"; // U+20000: 𠀀
 
@@ -192,7 +157,7 @@ public class PasswordValidatorTest {
   @Test
   @DisplayName("Rejects a password containing fewer than 12 Unicode code points")
   void rejectsPasswordWithElevenUnicodeCodePoints() {
-    final PasswordValidator validator = new PasswordValidator(Set.of("common-password"));
+    final PasswordValidator validator = new PasswordValidator();
 
     final String character = "\uD840\uDC00"; // U+20000: 𠀀
 
