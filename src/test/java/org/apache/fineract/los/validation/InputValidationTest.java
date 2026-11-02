@@ -41,13 +41,9 @@ import org.junit.jupiter.api.Test;
  * <p>Verifies that Bean Validation annotations (@Size, @Pattern, @NotBlank, etc.) correctly reject
  * invalid input and prevent:
  *
- * <ul>
- *   <li>SQL injection via malformed strings
- *   <li>XSS attacks via script tags in user input
- *   <li>Path traversal via directory navigation sequences
- *   <li>DoS attacks via unbounded string lengths
- *   <li>Data integrity issues via malformed enums and formats
- * </ul>
+ * <p>SQL injection via malformed strings XSS attacks via script tags in user input Path traversal
+ * via directory navigation sequences DoS attacks via unbounded string lengths Data integrity issues
+ * via malformed enums and formats
  */
 @DisplayName("Input Validation Security Tests")
 class InputValidationTest {

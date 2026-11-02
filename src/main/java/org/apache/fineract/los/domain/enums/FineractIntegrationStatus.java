@@ -25,30 +25,18 @@ package org.apache.fineract.los.domain.enums;
  * <p>Prevents duplicate Fineract operations and enables idempotent retry logic. The LOS application
  * status (APPROVED/DISBURSED) and the Fineract integration status are intentionally decoupled:
  *
- * <ul>
- *   <li>LOS status tracks the origination workflow state
- *   <li>Fineract integration status tracks the external system synchronization state
- * </ul>
+ * <p>LOS status tracks the origination workflow state Fineract integration status tracks the
+ * external system synchronization state
  *
  * <p>This separation allows:
  *
- * <ul>
- *   <li>Recovery from partial failures (e.g., loan created but approval failed)
- *   <li>Clear visibility into which Fineract operation failed
- *   <li>Safe retry of failed operations without duplicate loan creation
- * </ul>
+ * <p>Recovery from partial failures (e.g., loan created but approval failed) Clear visibility into
+ * which Fineract operation failed Safe retry of failed operations without duplicate loan creation
  *
  * <p>Lifecycle progression:
  *
- * <pre>
- * null (not started)
- *   ↓ (POST /loans succeeds)
- * LOAN_CREATED
- *   ↓ (POST /loans/{id}?command=approve succeeds)
- * LOAN_APPROVED
- *   ↓ (POST /loans/{id}?command=disburse succeeds)
- * LOAN_DISBURSED
- * </pre>
+ * <p>null (not started) ↓ (POST /loans succeeds) LOAN_CREATED ↓ (POST /loans/{id}?command=approve
+ * succeeds) LOAN_APPROVED ↓ (POST /loans/{id}?command=disburse succeeds) LOAN_DISBURSED
  *
  * <p>FAILED state is set when any operation fails and can be retried from the last successful
  * state.

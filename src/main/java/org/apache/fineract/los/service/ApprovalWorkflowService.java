@@ -60,13 +60,10 @@ import org.springframework.util.StringUtils;
  *
  * <p>Transition rules applied here:
  *
- * <ul>
- *   <li>REJECT — always terminal, regardless of stage: UNDER_REVIEW → REJECTED
- *   <li>REFER — always returns the application to the applicant: UNDER_REVIEW → REFERRED
- *   <li>APPROVE on a non-final configured stage — application remains UNDER_REVIEW, awaiting the
- *       next stage
- *   <li>APPROVE on the final configured stage — UNDER_REVIEW → APPROVED
- * </ul>
+ * <p>REJECT — always terminal, regardless of stage: UNDER_REVIEW → REJECTED REFER — always returns
+ * the application to the applicant: UNDER_REVIEW → REFERRED APPROVE on a non-final configured stage
+ * — application remains UNDER_REVIEW, awaiting the next stage APPROVE on the final configured stage
+ * — UNDER_REVIEW → APPROVED
  */
 @Slf4j
 @Service

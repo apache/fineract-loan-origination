@@ -50,13 +50,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  *
  * <p>Factor weights (CGAP guidelines, configurable):
  *
- * <ul>
- *   <li>Income-to-loan ratio: 30%
- *   <li>Existing debt burden: 25%
- *   <li>Employment stability: 20%
- *   <li>Repayment history: 15%
- *   <li>Loan purpose risk: 10%
- * </ul>
+ * <p>Income-to-loan ratio: 30% Existing debt burden: 25% Employment stability: 20% Repayment
+ * history: 15% Loan purpose risk: 10%
  */
 @Entity
 @Table(name = "credit_score")

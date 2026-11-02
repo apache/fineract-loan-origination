@@ -40,13 +40,10 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>Responsibilities:
  *
- * <ul>
- *   <li>Builds the immutable {@link ApplicantScoringProfile} input from the {@link
- *       ApplicantProfile} and {@link LoanApplication} entities
- *   <li>Delegates the actual scoring computation to {@link CreditScoringStrategy}
- *   <li>Maps the resulting {@link CreditScoreResult} — including every individual {@link
- *       FactorScore} — onto a persisted {@link CreditScore} entity
- * </ul>
+ * <p>Builds the immutable {@link ApplicantScoringProfile} input from the {@link ApplicantProfile}
+ * and {@link LoanApplication} entities Delegates the actual scoring computation to {@link
+ * CreditScoringStrategy} Maps the resulting {@link CreditScoreResult} — including every individual
+ * {@link FactorScore} — onto a persisted {@link CreditScore} entity
  *
  * <p>{@link CreditScore} is documented as immutable after creation and computed once when an
  * application enters UNDER_REVIEW. This service honours that contract: if a score already exists

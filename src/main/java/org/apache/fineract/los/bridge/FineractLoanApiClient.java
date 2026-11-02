@@ -30,10 +30,8 @@ import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
  * <p>Exactly one implementation is active at runtime, selected via {@code
  * los.fineract.mock-enabled}:
  *
- * <ul>
- *   <li>{@link RestFineractLoanApiClient} — calls a real Fineract instance's loan APIs
- *   <li>{@link MockFineractLoanApiClient} — returns simulated responses for the full loan lifecycle
- * </ul>
+ * <p>{@link RestFineractLoanApiClient} — calls a real Fineract instance's loan APIs {@link
+ * MockFineractLoanApiClient} — returns simulated responses for the full loan lifecycle
  *
  * <p>{@code DisbursementBridgeService} depends only on this interface — swapping implementations
  * requires no change to calling code, satisfying the "bridge isolated behind an interface" risk
@@ -41,11 +39,9 @@ import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
  *
  * <p>Fineract loan lifecycle operations:
  *
- * <ol>
- *   <li>{@link #createLoan} — POST /loans — creates the loan, returns loanId
- *   <li>{@link #approveLoan} — POST /loans/{loanId}?command=approve — approves the loan
- *   <li>{@link #disburseLoan} — POST /loans/{loanId}?command=disburse — disburses funds
- * </ol>
+ * <p>{@link #createLoan} — POST /loans — creates the loan, returns loanId {@link #approveLoan} —
+ * POST /loans/{loanId}?command=approve — approves the loan {@link #disburseLoan} — POST
+ * /loans/{loanId}?command=disburse — disburses funds
  */
 public interface FineractLoanApiClient {
 

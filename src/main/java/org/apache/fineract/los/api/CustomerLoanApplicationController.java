@@ -162,9 +162,9 @@ public class CustomerLoanApplicationController {
   }
 
   /**
-   * Builds customer-facing response with referral information if applicable.
+   * Builds customer-facing response with referral information(if applicable).
    *
-   * <p>If the application is REFERRED, fetches the most recent REFER decision and includes staff
+   * <p>If the application is REFERRED, it fetches the most recent REFER decision and includes staff
    * comments and stage name so the customer understands what needs to be corrected.
    */
   private LoanApplicationResponse buildResponse(final LoanApplication application) {
