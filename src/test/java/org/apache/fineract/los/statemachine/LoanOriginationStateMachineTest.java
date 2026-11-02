@@ -40,12 +40,9 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Coverage targets:
  *
- * <ul>
- *   <li>All 7 valid transitions — must succeed
- *   <li>All representative invalid transitions — must throw
- *   <li>Terminal state guard — must throw on any attempt
- *   <li>Null input guards — must throw IllegalArgumentException
- * </ul>
+ * <p>All 7 valid transitions — must succeed All representative invalid transitions — must throw
+ * Terminal state guard — must throw on any attempt Null input guards — must throw
+ * IllegalArgumentException
  */
 @DisplayName("LoanOriginationStateMachine")
 class LoanOriginationStateMachineTest {

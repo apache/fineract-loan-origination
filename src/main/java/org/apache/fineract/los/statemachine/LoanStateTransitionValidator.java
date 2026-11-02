@@ -39,16 +39,9 @@ import org.springframework.stereotype.Component;
  *
  * <p>Valid transitions:
  *
- * <pre>
- * DRAFT        → SUBMITTED
- * SUBMITTED    → UNDER_REVIEW
- * UNDER_REVIEW → APPROVED
- * UNDER_REVIEW → REJECTED
- * UNDER_REVIEW → REFERRED
- * REFERRED     → SUBMITTED (customer corrects and resubmits)
- * REFERRED     → UNDER_REVIEW (staff starts review directly)
- * APPROVED     → DISBURSED
- * </pre>
+ * <p>DRAFT → SUBMITTED SUBMITTED → UNDER_REVIEW UNDER_REVIEW → APPROVED UNDER_REVIEW → REJECTED
+ * UNDER_REVIEW → REFERRED REFERRED → SUBMITTED (customer corrects and resubmits) REFERRED →
+ * UNDER_REVIEW (staff starts review directly) APPROVED → DISBURSED
  *
  * <p>Terminal states (REJECTED, DISBURSED) have no outgoing transitions — they are excluded from
  * the map entirely.

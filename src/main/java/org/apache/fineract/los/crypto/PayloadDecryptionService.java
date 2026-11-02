@@ -36,13 +36,10 @@ import org.springframework.stereotype.Service;
  *
  * <p>Protocol (matches the Angular {@code PayloadEncryptionService}):
  *
- * <ol>
- *   <li>Angular generates a fresh 256-bit AES-GCM key per login.
- *   <li>Angular encrypts the JSON payload with AES-GCM (96-bit IV prepended to ciphertext).
- *   <li>Angular wraps the AES key with the backend's RSA-OAEP public key.
- *   <li>Both wrapped key and ciphertext are sent as Base64 strings in the request body.
- *   <li>This service unwraps the AES key using the RSA private key, then decrypts the payload.
- * </ol>
+ * <p>Angular generates a fresh 256-bit AES-GCM key per login. Angular encrypts the JSON payload
+ * with AES-GCM (96-bit IV prepended to ciphertext). Angular wraps the AES key with the backend's
+ * RSA-OAEP public key. Both wrapped key and ciphertext are sent as Base64 strings in the request
+ * body. This service unwraps the AES key using the RSA private key, then decrypts the payload.
  *
  * <p>No plaintext credential is ever logged.
  */

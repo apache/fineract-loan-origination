@@ -42,14 +42,10 @@ import org.springframework.stereotype.Component;
  *
  * <p>Applies different rate limits based on endpoint sensitivity:
  *
- * <ul>
- *   <li><strong>Auth endpoints</strong> (/api/v1/auth/**): 100 requests per minute per IP — relaxed
- *       for demo usage allowing multiple role logins
- *   <li><strong>Admin endpoints</strong> (/api/v1/admin/**): 20 requests per minute per IP —
- *       prevents abuse of privileged operations
- *   <li><strong>Other endpoints</strong>: 100 requests per minute per IP — prevents general API
- *       abuse and DoS
- * </ul>
+ * <p>Auth endpoints(/api/v1/auth/**): 100 requests per minute per IP — relaxed for demo usage
+ * allowing multiple role logins Admin endpoints(/api/v1/admin/**): 20 requests per minute per IP —
+ * prevents abuse of privileged operations Other endpoints: 100 requests per minute per IP —
+ * prevents general API abuse and DoS
  *
  * <p>Rate limits are tracked per client IP address using an in-memory cache that expires entries
  * after 15 minutes of inactivity.

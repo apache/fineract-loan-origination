@@ -25,16 +25,8 @@ package org.apache.fineract.los.domain.enums;
  * <p>Valid transitions are enforced exclusively by {@code LoanOriginationStateMachine}. No code
  * outside the state machine may call {@code LoanApplication#setStatus} directly.
  *
- * <pre>
- * DRAFT
- *   └─► SUBMITTED
- *         └─► UNDER_REVIEW
- *               ├─► APPROVED
- *               │     └─► DISBURSED
- *               ├─► REJECTED
- *               └─► REFERRED
- *                     └─► UNDER_REVIEW
- * </pre>
+ * <p>DRAFT └─► SUBMITTED └─► UNDER_REVIEW ├─► APPROVED │ └─► DISBURSED ├─► REJECTED └─► REFERRED
+ * └─► UNDER_REVIEW
  */
 public enum LoanApplicationStatus {
 

@@ -35,10 +35,8 @@ import org.springframework.util.StringUtils;
  *
  * <p>Combines two signals:
  *
- * <ul>
- *   <li>Employment status — EMPLOYED and SELF_EMPLOYED score higher than INFORMAL or UNEMPLOYED
- *   <li>Duration — longer tenure indicates lower job-loss risk
- * </ul>
+ * <p>Employment status — EMPLOYED and SELF_EMPLOYED score higher than INFORMAL or UNEMPLOYED
+ * Duration — longer tenure indicates lower job-loss risk
  *
  * <p>Status contributes 60% of this factor's points, duration contributes the remaining 40% —
  * reflecting that having stable income at all matters more than how long, per CGAP guidance for

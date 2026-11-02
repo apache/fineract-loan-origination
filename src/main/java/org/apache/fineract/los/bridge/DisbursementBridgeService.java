@@ -49,11 +49,8 @@ import org.springframework.web.client.RestClientException;
  *
  * <p>Orchestrates the complete Fineract loan lifecycle:
  *
- * <ol>
- *   <li>Create loan via POST /loans
- *   <li>Approve loan via POST /loans/{id}?command=approve
- *   <li>Disburse loan via POST /loans/{id}?command=disburse
- * </ol>
+ * <p>Create loan via POST /loans Approve loan via POST /loans/{id}?command=approve Disburse loan
+ * via POST /loans/{id}?command=disburse
  *
  * <p>Only after successful disbursement does the LOS application transition to DISBURSED status.
  *

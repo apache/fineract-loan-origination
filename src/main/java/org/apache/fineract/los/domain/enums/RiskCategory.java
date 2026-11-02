@@ -26,11 +26,7 @@ package org.apache.fineract.los.domain.enums;
  * <p>Score ranges follow CGAP microfinance credit assessment guidelines. Thresholds are
  * configurable via {@code application.properties} — these are defaults only.
  *
- * <pre>
- * Score 70-100 → LOW
- * Score 40-69  → MEDIUM
- * Score 0-39   → HIGH
- * </pre>
+ * <p>Score 70-100 → LOW Score 40-69 → MEDIUM Score 0-39 → HIGH
  */
 public enum RiskCategory {
 

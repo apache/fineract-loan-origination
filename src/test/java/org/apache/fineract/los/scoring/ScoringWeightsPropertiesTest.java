@@ -45,7 +45,7 @@ class ScoringWeightsPropertiesTest {
     assertThat(properties.getLoanPurposeRisk()).isEqualTo(10);
 
     properties.validateWeightsSumToHundred();
-    // No exception thrown — validation passed
+    //  validation passed
   }
 
   @Test

@@ -31,13 +31,9 @@ import org.apache.fineract.los.scoring.model.FactorScore;
  *
  * <p>Implementations must be:
  *
- * <ul>
- *   <li><strong>Pure</strong> — no side effects, no database or network access, deterministic
- *       output for the same input
- *   <li><strong>Bounded</strong> — {@code score()} must never return points exceeding {@code
- *       maxPoints()}
- *   <li><strong>Stateless</strong> — safe for concurrent use as a singleton Spring bean
- * </ul>
+ * <p>Pure — no side effects, no database or network access, deterministic output for the same input
+ * Bounded — {@code score()} must never return points exceeding {@code maxPoints()} Stateless — safe
+ * for concurrent use as a singleton Spring bean
  *
  * <p>New factors can be added by implementing this interface and registering as a Spring bean —
  * {@link DefaultCreditScoringStrategy} discovers all factors via constructor injection without
