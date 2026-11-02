@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +63,7 @@ public class AdminStaffController {
 
   public record CreateStaffRequest(
       @NotBlank String username,
-      @NotBlank @Size(min = 8, message = "Password must be at least 8 characters") String password,
+      @NotBlank String password,
       @NotBlank String email,
       @NotBlank
           @Pattern(
@@ -77,7 +76,7 @@ public class AdminStaffController {
       String email,
       @Pattern(regexp = "ROLE_STAFF|ROLE_ADMIN", message = "role must be ROLE_STAFF or ROLE_ADMIN")
           String role,
-      @Size(min = 8, message = "Password must be at least 8 characters") String password) {}
+      String password) {}
 
   public record StaffResponse(
       Long id,

@@ -19,11 +19,15 @@
 
 package org.apache.fineract.los.exception;
 
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.statemachine.LoanStateTransitionException;
+import org.apache.fineract.los.validation.PasswordValidationError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -90,11 +94,30 @@ public class GlobalExceptionHandler {
     return build(HttpStatus.FORBIDDEN, LosErrorConstants.MSG_ACCESS_DENIED);
   }
 
+  @ExceptionHandler(WeakPasswordException.class)
+  public ResponseEntity<ErrorResponse> handleWeakPassword(final WeakPasswordException ex) {
+    final List<String> details =
+        ex.getErrors().stream().map(PasswordValidationError::getMessage).toList();
+
+    return build(HttpStatus.BAD_REQUEST, ex.getMessage(), details);
+  }
+
   @ExceptionHandler(FineractIntegrationException.class)
   public ResponseEntity<ErrorResponse> handleFineractIntegration(
       final FineractIntegrationException ex) {
     log.error("Fineract integration failure", ex);
     return build(HttpStatus.BAD_GATEWAY, ex.getMessage());
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleBeanValidationError(
+      final MethodArgumentNotValidException ex) {
+    final List<String> details =
+        ex.getBindingResult().getFieldErrors().stream()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .toList();
+
+    return build(HttpStatus.BAD_REQUEST, LosErrorConstants.MSG_REQUEST_VALIDATION_FAILED, details);
   }
 
   @ExceptionHandler(IllegalStateException.class)
@@ -116,19 +139,32 @@ public class GlobalExceptionHandler {
     return build(effective, ex.getReason() != null ? ex.getReason() : effective.getReasonPhrase());
   }
 
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+      final HttpMessageNotReadableException ex) {
+    return build(HttpStatus.BAD_REQUEST, LosErrorConstants.MSG_REQUEST_BODY_UNREADABLE);
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleUnexpected(final Exception ex) {
     log.error("Unhandled exception", ex);
     return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.");
   }
 
-  private ResponseEntity<ErrorResponse> build(final HttpStatus status, final String message) {
+  private ResponseEntity<ErrorResponse> build(
+      final HttpStatus status, final String message, final List<String> details) {
+
     return ResponseEntity.status(status)
         .body(
             ErrorResponse.builder()
                 .status(status.value())
                 .error(status.getReasonPhrase())
                 .message(message)
+                .details(List.copyOf(details))
                 .build());
+  }
+
+  private ResponseEntity<ErrorResponse> build(final HttpStatus status, final String message) {
+    return build(status, message, List.of());
   }
 }

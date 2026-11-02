@@ -19,7 +19,9 @@
 
 package org.apache.fineract.los.exception;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -36,6 +38,9 @@ public class ErrorResponse {
   private final int status;
   private final String error;
   private final String message;
+
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
+  private final List<String> details;
 
   @Builder.Default private final LocalDateTime timestamp = LocalDateTime.now();
 }

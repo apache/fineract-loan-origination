@@ -27,7 +27,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.domain.CustomerCredential;
+import org.apache.fineract.los.exception.WeakPasswordException;
 import org.apache.fineract.los.repository.CustomerCredentialRepository;
+import org.apache.fineract.los.validation.PasswordValidationResult;
+import org.apache.fineract.los.validation.PasswordValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,6 +59,7 @@ public class AdminCustomerController {
 
   private final CustomerCredentialRepository credentialRepository;
   private final PasswordEncoder passwordEncoder;
+  private final PasswordValidator passwordValidator;
 
   public record RegisterCustomerRequest(
       @NotBlank String username,
@@ -72,6 +76,12 @@ public class AdminCustomerController {
   @PreAuthorize("hasRole('ADMIN')")
   public RegisterCustomerResponse register(
       @Valid @RequestBody final RegisterCustomerRequest request) {
+    final PasswordValidationResult result =
+        passwordValidator.validate(request.password(), request.username());
+
+    if (!result.isValid()) {
+      throw new WeakPasswordException(result.errors());
+    }
 
     if (credentialRepository.existsByUsernameAndTenantId(request.username(), request.tenantId())) {
       throw new ResponseStatusException(
