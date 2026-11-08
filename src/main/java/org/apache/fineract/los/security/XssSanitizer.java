@@ -28,12 +28,12 @@ import org.springframework.stereotype.Component;
  * <p>Uses OWASP Java Encoder to escape HTML, JavaScript, and other potentially dangerous content
  * before storing in database or rendering in responses.
  *
- * <p><strong>Usage:</strong> Call {@link #sanitizeForHtml(String)} on all user-provided text fields
- * before persistence (comments, names, addresses, etc.) to prevent stored XSS attacks.
+ * <p>Usage: Call {@link #sanitizeForHtml(String)} on all user-provided text fields before
+ * persistence (comments, names, addresses, etc.) to prevent stored XSS attacks.
  *
- * <p><strong>Defense-in-depth:</strong> This is a secondary defense layer. The primary defense is
- * proper output encoding in the frontend (Angular's default sanitization). However, sanitizing on
- * the backend ensures data is safe even if consumed by other clients or displayed in admin panels.
+ * <p>Defense-in-depth: This is a secondary defense layer. The primary defense is proper output
+ * encoding in the frontend (Angular's default sanitization). However, sanitizing on the backend
+ * ensures data is safe even if consumed by other clients or displayed in admin panels.
  */
 @Component
 public class XssSanitizer {
@@ -43,11 +43,9 @@ public class XssSanitizer {
    *
    * <p>Converts characters like {@code <, >, &, ", '} into their HTML entity equivalents:
    *
-   * <ul>
-   *   <li>{@code <script>alert('XSS')</script>} → {@code
-   *       &lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt;}
-   *   <li>{@code <img src=x onerror=alert(1)>} → {@code &lt;img src=x onerror=alert(1)&gt;}
-   * </ul>
+   * <p>{@code <script>alert('XSS')</script>} → {@code
+   * &lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt;} {@code <img src=x onerror=alert(1)>} →
+   * {@code &lt;img src=x onerror=alert(1)&gt;}
    *
    * <p>The encoded string is safe to store in the database and render in HTML without executing
    * malicious scripts.

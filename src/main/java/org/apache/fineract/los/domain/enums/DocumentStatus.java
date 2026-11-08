@@ -22,13 +22,7 @@ package org.apache.fineract.los.domain.enums;
 /**
  * Represents the lifecycle state of a RequiredDocument attached to a LoanApplication.
  *
- * <pre>
- * PENDING
- *   └─► UPLOADED
- *         ├─► VERIFIED
- *         └─► REJECTED
- *               └─► PENDING (re-upload allowed)
- * </pre>
+ * <p>PENDING └─► UPLOADED ├─► VERIFIED └─► REJECTED └─► PENDING (re-upload allowed)
  */
 public enum DocumentStatus {
 

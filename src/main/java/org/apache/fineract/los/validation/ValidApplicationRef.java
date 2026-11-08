@@ -33,27 +33,17 @@ import java.lang.annotation.Target;
  *
  * <p>Enforces the pattern: LOS-{YEAR}-{SEQUENCE} where:
  *
- * <ul>
- *   <li>YEAR is a 4-digit year (e.g., 2026)
- *   <li>SEQUENCE is a 5-digit zero-padded number (e.g., 00001)
- * </ul>
+ * <p>YEAR is a 4-digit year (e.g., 2026) SEQUENCE is a 5-digit zero-padded number (e.g., 00001)
  *
  * <p>Examples of valid references:
  *
- * <ul>
- *   <li>LOS-2026-00001
- *   <li>LOS-2025-12345
- *   <li>LOS-2024-99999
- * </ul>
+ * <p>LOS-2026-00001 LOS-2025-12345 LOS-2024-99999
  *
  * <p>This validation prevents:
  *
- * <ul>
- *   <li>Path traversal attacks (e.g., ../../../etc/passwd)
- *   <li>SQL injection attempts (e.g., '; DROP TABLE)
- *   <li>XSS payloads (e.g., &lt;script&gt;alert(1)&lt;/script&gt;)
- *   <li>Malformed references causing unexpected errors
- * </ul>
+ * <p>Path traversal attacks (e.g., ../../../etc/passwd) SQL injection attempts (e.g., '; DROP
+ * TABLE) XSS payloads (e.g., &lt;script&gt;alert(1)&lt;/script&gt;) Malformed references causing
+ * unexpected errors
  */
 @Target({ElementType.PARAMETER, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

@@ -24,11 +24,8 @@ package org.apache.fineract.los.domain.enums;
  *
  * <p>Each decision maps directly to a {@code LoanApplicationStatus} transition:
  *
- * <ul>
- *   <li>APPROVE → drives toward APPROVED
- *   <li>REJECT → drives toward REJECTED
- *   <li>REFER → drives toward REFERRED
- * </ul>
+ * <p>APPROVE → drives toward APPROVED REJECT → drives toward REJECTED REFER → drives toward
+ * REFERRED
  */
 public enum ApprovalDecision {
 

@@ -34,36 +34,26 @@ import org.springframework.stereotype.Component;
  * LoanApplication#setStatus}. All other layers (service, API, bridge) must go through this class to
  * change application status — direct status mutation is a design violation.
  *
- * <h2>Design Principles Applied</h2>
+ * <p>Design Principles Applied
  *
- * <ul>
- *   <li><strong>Single Responsibility</strong> — this class does one thing: validate and apply
- *       status transitions
- *   <li><strong>Open/Closed</strong> — new transitions are added to {@link
- *       LoanStateTransitionValidator} only, this class never changes
- *   <li><strong>Guard Clause Pattern</strong> — terminal state check precedes transition validation
- *       for early exit
- *   <li><strong>Audit-First</strong> — every transition is logged at INFO level for operational
- *       visibility
- * </ul>
+ * <p>Single Responsibility — this class does one thing: validate and apply status transitions
+ * Open/Closed — new transitions are added to {@link LoanStateTransitionValidator} only, this class
+ * never changes Guard Clause Pattern — terminal state check precedes transition validation for
+ * early exit Audit-First — every transition is logged at INFO level for operational visibility
  *
- * <h2>Concurrency Safety</h2>
+ * <p>Concurrency Safety
  *
  * <p>This class is stateless — all state lives in the {@link LoanApplication} entity which is
  * protected by optimistic locking ({@code @Version}). Concurrent transition attempts on the same
  * application will result in an {@code OptimisticLockException} on the second writer — preventing
  * silent data corruption.
  *
- * <h2>Usage</h2>
+ * <p>Usage
  *
- * <pre>
- * // Correct — always go through state machine
- * stateMachine.transition(application,
- *     LoanApplicationStatus.SUBMITTED);
+ * <p>// Correct — always go through state machine stateMachine.transition(application,
+ * LoanApplicationStatus.SUBMITTED);
  *
- * // Wrong — never call directly
- * application.setStatus(LoanApplicationStatus.SUBMITTED);
- * </pre>
+ * <p>// Wrong — never call directly application.setStatus(LoanApplicationStatus.SUBMITTED);
  */
 @Slf4j
 @Component
