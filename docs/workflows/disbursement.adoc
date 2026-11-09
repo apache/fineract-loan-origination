@@ -77,7 +77,9 @@ Missing either field results in `400 Bad Request` with code `DISBURSEMENT_NOT_AL
 `DisbursementBridgeService` depends on `FineractLoanApiClient` (an interface). Two implementations exist:
 
 * **Real adapter** — calls the Fineract REST API over HTTPS using Basic Auth credentials from configuration. Active when `los.fineract.mock-enabled=false`.
-* **Mock adapter** — returns an incrementing fake loan ID without making any HTTP call. Active when `los.fineract.mock-enabled=true`. Used for local development and tests.
+* **Mock adapter** — returns an incrementing fake loan ID without making any HTTP call. Each ID is higher than any Fineract loan ID already stored, so IDs stay unique across restarts. Active when `los.fineract.mock-enabled=true`. Used for local development and tests.
+
+A Fineract loan ID can be linked to only one application per tenant; the database enforces this with a unique constraint on `(tenant_id, fineract_loan_id)`.
 
 [source,yaml]
 ----
