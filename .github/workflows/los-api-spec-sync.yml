@@ -29,6 +29,20 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: los_db
+          POSTGRES_USER: los_user
+          POSTGRES_PASSWORD: los_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
@@ -46,6 +60,12 @@ jobs:
         run: ./mvnw -DskipTests package -q
 
       - name: Start LOS backend
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/los_db
+          DB_USERNAME: los_user
+          DB_PASSWORD: los_password
+          JWT_SECRET: los-api-spec-sync-ci-only-signing-secret-2026
+          FINERACT_MOCK_ENABLED: 'true'
         run: |
           JAR=$(find . -name '*.jar' -path '*/target/*' ! -name '*sources*' ! -name '*javadoc*' | head -1)
           echo "Starting jar: $JAR"
