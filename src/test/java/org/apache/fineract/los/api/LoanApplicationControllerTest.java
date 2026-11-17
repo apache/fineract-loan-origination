@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -146,6 +147,80 @@ class LoanApplicationControllerTest {
         .andExpect(jsonPath("$.status").value("SUBMITTED"));
 
     assertThat(application.getStatus()).isEqualTo(LoanApplicationStatus.SUBMITTED);
+  }
+
+  @Test
+  @DisplayName("Invalid creation payloads return 400 without persisting an application")
+  void invalidCreationPayloadsReturnBadRequestWithoutPersistence() throws Exception {
+    final String[] payloads = {
+      "{\"currency\":\"USD\",\"tenorMonths\":12,\"applicant\":{\"fullName\":\"Ada Doe\"}}",
+      "{\"requestedAmount\":-1,\"currency\":\"USD\",\"tenorMonths\":12,\"applicant\":{\"fullName\":\"Ada Doe\"}}",
+      "{\"requestedAmount\":100,\"currency\":\"usd\",\"tenorMonths\":12,\"applicant\":{\"fullName\":\"Ada Doe\"}}",
+      "{\"requestedAmount\":100,\"currency\":\"USD\",\"tenorMonths\":12,\"applicant\":{\"fullName\":\"1\"}}",
+      "{\"requestedAmount\":\"many\",\"currency\":\"USD\",\"tenorMonths\":12,\"applicant\":{\"fullName\":\"Ada Doe\"}}",
+      "{\"requestedAmount\":100,\"currency\":\"USD\",\"tenorMonths\":12,\"applicant\":{\"fullName\":\"Ada Doe\"}"
+    };
+
+    for (final String payload : payloads) {
+      mockMvc
+          .perform(
+              post("/api/v1/loan-applications")
+                  .header(TENANT_HEADER, TENANT_ID)
+                  .contentType("application/json")
+                  .content(payload))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.status").value(400))
+          .andExpect(jsonPath("$.message").exists());
+    }
+
+    verify(loanApplicationRepository, never()).save(any());
+    verify(applicantProfileRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("Missing required amount returns a field-level error")
+  void missingAmountReturnsFieldError() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/v1/loan-applications")
+                .header(TENANT_HEADER, TENANT_ID)
+                .contentType("application/json")
+                .content(
+                    "{\"currency\":\"USD\",\"tenorMonths\":12,\"applicant\":{\"fullName\":\"Ada Doe\"}}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(
+            jsonPath("$.details[0]")
+                .value(org.hamcrest.Matchers.containsString("requestedAmount")));
+
+    verify(loanApplicationRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("A valid creation payload reaches the service")
+  void validCreationPayloadPassesRequestValidation() throws Exception {
+    when(loanApplicationRepository.save(any(LoanApplication.class))).then(returnsFirstArg());
+    when(applicantProfileRepository.save(any())).then(returnsFirstArg());
+
+    mockMvc
+        .perform(
+            post("/api/v1/loan-applications")
+                .header(TENANT_HEADER, TENANT_ID)
+                .contentType("application/json")
+                .content(
+                    "{\"requestedAmount\":100,\"currency\":\"USD\",\"tenorMonths\":12,\"applicant\":{\"fullName\":\"Ada Doe\"}}"))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  @DisplayName("Invalid method parameter validation returns 400")
+  void invalidApplicationReferenceReturnsBadRequest() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/loan-applications/{ref}", "invalid-reference"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.details[0]").exists());
+
+    verify(loanApplicationRepository, never()).findByApplicationRefAndTenantId(any(), any());
   }
 
   private LoanApplication existingApplication(final LoanApplicationStatus status) {
