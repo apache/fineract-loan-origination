@@ -27,9 +27,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.BindException;
+import org.springframework.validation.method.ParameterValidationResult;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * Centralised mapping from LOS exceptions to HTTP responses.
@@ -114,10 +120,59 @@ public class GlobalExceptionHandler {
       final MethodArgumentNotValidException ex) {
     final List<String> details =
         ex.getBindingResult().getFieldErrors().stream()
-            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .map(error -> error.getField() + ": " + validationMessage(error.getDefaultMessage()))
             .toList();
 
     return build(HttpStatus.BAD_REQUEST, LosErrorConstants.MSG_REQUEST_VALIDATION_FAILED, details);
+  }
+
+  @ExceptionHandler(HandlerMethodValidationException.class)
+  public ResponseEntity<ErrorResponse> handleMethodValidation(HandlerMethodValidationException ex) {
+    if (ex.isForReturnValue()) {
+      return handleUnexpected(ex);
+    }
+    final List<String> details =
+        ex.getParameterValidationResults().stream()
+            .flatMap(
+                result ->
+                    result.getResolvableErrors().stream()
+                        .map(error -> validationDetail(result, error.getDefaultMessage())))
+            .toList();
+    return build(HttpStatus.BAD_REQUEST, LosErrorConstants.MSG_REQUEST_VALIDATION_FAILED, details);
+  }
+
+  private String validationDetail(ParameterValidationResult result, String message) {
+    final String parameterName = result.getMethodParameter().getParameterName();
+    return (parameterName != null ? parameterName : "request") + ": " + validationMessage(message);
+  }
+
+  private String validationMessage(String message) {
+    return message != null ? message : "is invalid";
+  }
+
+  @ExceptionHandler(BindException.class)
+  public ResponseEntity<ErrorResponse> handleBindException(BindException ex) {
+    final List<String> details =
+        ex.getBindingResult().getFieldErrors().stream()
+            .map(error -> error.getField() + ": " + validationMessage(error.getDefaultMessage()))
+            .toList();
+    return build(HttpStatus.BAD_REQUEST, LosErrorConstants.MSG_REQUEST_VALIDATION_FAILED, details);
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public ResponseEntity<ErrorResponse> handleMissingRequestParameter(
+      MissingServletRequestParameterException ex) {
+    return build(
+        HttpStatus.BAD_REQUEST,
+        LosErrorConstants.MSG_REQUEST_VALIDATION_FAILED,
+        List.of(ex.getParameterName() + ": is required"));
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    final String detail = ex.getName() + ": has an invalid value";
+    return build(
+        HttpStatus.BAD_REQUEST, LosErrorConstants.MSG_REQUEST_BODY_UNREADABLE, List.of(detail));
   }
 
   @ExceptionHandler(IllegalStateException.class)
@@ -143,6 +198,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
       final HttpMessageNotReadableException ex) {
     return build(HttpStatus.BAD_REQUEST, LosErrorConstants.MSG_REQUEST_BODY_UNREADABLE);
+  }
+
+  @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+  public ResponseEntity<ErrorResponse> handleUnsupportedMediaType(
+      HttpMediaTypeNotSupportedException ex) {
+    return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Content type is not supported.");
   }
 
   @ExceptionHandler(Exception.class)
