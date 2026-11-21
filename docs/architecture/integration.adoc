@@ -50,7 +50,7 @@ RealFineractAdapter   MockFineractAdapter
 Apache Fineract
 ----
 
-`RealFineractAdapter` is active in production. `MockFineractAdapter` is active in `dev` and `test` profiles. The mock returns a deterministic fake loan ID without making any HTTP call, allowing local development and CI tests to run without a Fineract instance.
+The REST adapter is selected by default. The mock adapter must be explicitly enabled with `los.fineract.mock-enabled=true`, the deployment identity must be `development` or `test`, and every active Spring profile must be `dev` or `test`. Deployment identity defaults to `production`, which rejects the mock regardless of active profiles. The mock returns a deterministic fake loan ID without making any HTTP call, allowing local development and CI tests to run without a Fineract instance.
 
 The active adapter is selected via configuration (`los.fineract.mock-enabled`).
 

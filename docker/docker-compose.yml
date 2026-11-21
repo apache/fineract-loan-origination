@@ -45,6 +45,8 @@ services:
       SPRING_DATASOURCE_USERNAME: los_user
       SPRING_DATASOURCE_PASSWORD: los_password
       SPRING_PROFILES_ACTIVE: dev
+      LOS_DEPLOYMENT_ENVIRONMENT: development
+      FINERACT_MOCK_ENABLED: "true"
     ports:
       - "8080:8080"
 

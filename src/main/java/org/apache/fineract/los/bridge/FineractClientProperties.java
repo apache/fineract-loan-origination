@@ -30,10 +30,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * <p>Bound from {@code application.yml} under the prefix {@code los.fineract}.
  *
- * <p>Per the GSoC proposal's alignment strategy: while FINERACT-2418 is unresolved, {@code
- * mockEnabled} defaults to {@code true} so the full origination flow can be demonstrated end-to-end
- * without a live Fineract instance. Once real endpoints are available, institutions flip this
- * single flag — no code changes required.
+ * <p>The mock adapter is opt-in and is intended only for development and test environments.
  */
 @Getter
 @Setter
@@ -54,10 +51,10 @@ public class FineractClientProperties {
 
   /**
    * When true, the disbursement bridge uses {@code MockFineractLoanApiClient} instead of calling a
-   * real Fineract instance. Defaults to true so the POC is demonstrable without a live dependency
-   * on FINERACT-2418.
+   * real Fineract instance. Defaults to false so the REST adapter is used unless explicitly
+   * enabled.
    */
-  private boolean mockEnabled = true;
+  private boolean mockEnabled = false;
 
   /** Connect timeout in milliseconds for calls to Fineract. */
   private int connectTimeoutMs = 5000;

@@ -113,8 +113,10 @@ Local setup notes:
   machine.
 - The `los-app` Compose service needs a `Dockerfile` that does not exist yet, so start `los-db`
   only.
-- `los.fineract.mock-enabled` defaults to `true`, so no Fineract instance is needed for local
-  work or tests.
+- `los.fineract.mock-enabled` defaults to `false`, selecting the REST adapter. The deployment
+  identity defaults to `production`; set `LOS_DEPLOYMENT_ENVIRONMENT=development` or `test` plus
+  the matching `dev` or `test` profile and `FINERACT_MOCK_ENABLED=true` to work without Fineract.
+  Production identity rejects the mock regardless of Spring profiles.
 
 ## Repository map
 

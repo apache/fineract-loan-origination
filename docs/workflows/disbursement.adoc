@@ -76,12 +76,14 @@ Missing either field results in `400 Bad Request` with code `DISBURSEMENT_NOT_AL
 
 `DisbursementBridgeService` depends on `FineractLoanApiClient` (an interface). Two implementations exist:
 
-* **Real adapter** — calls the Fineract REST API over HTTPS using Basic Auth credentials from configuration. Active when `los.fineract.mock-enabled=false`.
-* **Mock adapter** — returns an incrementing fake loan ID without making any HTTP call. Active when `los.fineract.mock-enabled=true`. Used for local development and tests.
+* **Real adapter** — calls the Fineract REST API over HTTPS using Basic Auth credentials from configuration. Active when `los.fineract.mock-enabled=false` or when the property is missing.
+* **Mock adapter** — returns an incrementing fake loan ID without making any HTTP call. It requires `los.fineract.mock-enabled=true`, an allowed Spring profile (`dev` or `test`), and a matching deployment identity (`development` or `test`). Production deployments cannot enable the mock; startup fails regardless of the active Spring profile.
 
 [source,yaml]
 ----
 los:
+  deployment:
+    environment: ${LOS_DEPLOYMENT_ENVIRONMENT:production}
   fineract:
     base-url: ${FINERACT_BASE_URL:https://localhost:8443}
     tenant-id: ${FINERACT_TENANT_ID:default}
@@ -89,6 +91,8 @@ los:
     password: ${FINERACT_PASSWORD:password}
     mock-enabled: false
 ----
+
+For local mock usage, set `SPRING_PROFILES_ACTIVE=dev`, `LOS_DEPLOYMENT_ENVIRONMENT=development`, and `FINERACT_MOCK_ENABLED=true`. The deployment identity defaults to `production`, so setting only the mock flag or a dev/test Spring profile cannot enable the mock in a production deployment.
 
 == Failures
 

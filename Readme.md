@@ -116,12 +116,14 @@ The LOS integrates with Fineract via REST APIs. Configure in `src/main/resources
 
 ```yaml
 los:
+  deployment:
+    environment: ${LOS_DEPLOYMENT_ENVIRONMENT:production}
   fineract:
     base-url: ${FINERACT_BASE_URL:https://localhost:8443}
     mock-enabled: false
 ```
 
-Set `mock-enabled: true` for offline development. See [docs/architecture/integration.adoc](docs/architecture/integration.adoc) for details.
+Mock activation requires both an allowed Spring profile (`dev` or `test`) and a matching deployment identity (`development` or `test`). For offline development, set `SPRING_PROFILES_ACTIVE=dev`, `LOS_DEPLOYMENT_ENVIRONMENT=development`, and `FINERACT_MOCK_ENABLED=true`. Production deployments must use `LOS_DEPLOYMENT_ENVIRONMENT=production`; startup rejects the mock regardless of the active Spring profile. The deployment identity defaults to `production`. See [docs/architecture/integration.adoc](docs/architecture/integration.adoc) for details.
 
 For Fineract setup, follow the [Apache Fineract Quick Start](https://github.com/apache/fineract#quick-start).
 
