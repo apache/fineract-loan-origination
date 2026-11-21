@@ -35,6 +35,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @ActiveProfiles("test")
 @TestPropertySource(
     properties = {
+      "los.deployment.environment=test",
       "los.fineract.mock-enabled=true",
       "los.workflow.stages[0]=LOAN_OFFICER",
       "los.workflow.stages[1]=CREDIT_COMMITTEE",

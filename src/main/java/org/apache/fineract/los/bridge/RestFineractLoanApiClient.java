@@ -46,7 +46,11 @@ import org.springframework.web.client.RestClientException;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix = "los.fineract", name = "mock-enabled", havingValue = "false")
+@ConditionalOnProperty(
+    prefix = "los.fineract",
+    name = "mock-enabled",
+    havingValue = "false",
+    matchIfMissing = true)
 public class RestFineractLoanApiClient implements FineractLoanApiClient {
 
   private final FineractClientProperties properties;
