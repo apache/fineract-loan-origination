@@ -223,12 +223,15 @@ class DisbursementBridgeServiceTest {
       final ApplicantProfile profile = profileWithClientId(42L);
       stubLookup(app, profile);
 
-      when(fineractLoanApiClient.createLoan(any()))
-          .thenThrow(new RestClientException("Network error"));
+      final RestClientException cause = new RestClientException("Network error");
+      when(fineractLoanApiClient.createLoan(any())).thenThrow(cause);
 
       assertThatThrownBy(
               () -> service.executeFullDisbursement(app.getApplicationRef(), app.getTenantId()))
-          .isInstanceOf(FineractIntegrationException.class);
+          .isInstanceOf(FineractIntegrationException.class)
+          .hasMessageContaining("POST /loans failed")
+          .hasMessageContaining("Network error")
+          .hasCauseReference(cause);
 
       assertThat(app.getFineractIntegrationStatus()).isEqualTo(FineractIntegrationStatus.FAILED);
       verify(loanApplicationRepository).save(app);
@@ -244,12 +247,15 @@ class DisbursementBridgeServiceTest {
       final ApplicantProfile profile = profileWithClientId(42L);
       stubLookup(app, profile);
 
-      when(fineractLoanApiClient.approveLoan(eq(999L), any()))
-          .thenThrow(new RestClientException("Approval rejected"));
+      final RestClientException cause = new RestClientException("Approval rejected");
+      when(fineractLoanApiClient.approveLoan(eq(999L), any())).thenThrow(cause);
 
       assertThatThrownBy(
               () -> service.executeFullDisbursement(app.getApplicationRef(), app.getTenantId()))
-          .isInstanceOf(FineractIntegrationException.class);
+          .isInstanceOf(FineractIntegrationException.class)
+          .hasMessageContaining("POST /loans/{id}?command=approve failed")
+          .hasMessageContaining("Approval rejected")
+          .hasCauseReference(cause);
 
       assertThat(app.getFineractIntegrationStatus()).isEqualTo(FineractIntegrationStatus.FAILED);
     }
@@ -264,12 +270,15 @@ class DisbursementBridgeServiceTest {
       final ApplicantProfile profile = profileWithClientId(42L);
       stubLookup(app, profile);
 
-      when(fineractLoanApiClient.disburseLoan(eq(999L), any()))
-          .thenThrow(new RestClientException("Insufficient balance"));
+      final RestClientException cause = new RestClientException("Insufficient balance");
+      when(fineractLoanApiClient.disburseLoan(eq(999L), any())).thenThrow(cause);
 
       assertThatThrownBy(
               () -> service.executeFullDisbursement(app.getApplicationRef(), app.getTenantId()))
-          .isInstanceOf(FineractIntegrationException.class);
+          .isInstanceOf(FineractIntegrationException.class)
+          .hasMessageContaining("POST /loans/{id}?command=disburse failed")
+          .hasMessageContaining("Insufficient balance")
+          .hasCauseReference(cause);
 
       assertThat(app.getFineractIntegrationStatus()).isEqualTo(FineractIntegrationStatus.FAILED);
     }

@@ -97,6 +97,29 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
+  @DisplayName("Fineract integration errors retain the 502 response contract")
+  void fineractIntegrationErrorResponseRemainsCompatible() {
+    final FineractIntegrationException ex =
+        new FineractIntegrationException(
+            "LOS-1",
+            FineractIntegrationException.Operation.APPROVE_LOAN,
+            new IllegalStateException("Fineract rejected approval"));
+
+    final ResponseEntity<ErrorResponse> response = handler.handleFineractIntegration(ex);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().getStatus()).isEqualTo(502);
+    assertThat(response.getBody().getError()).isEqualTo("Bad Gateway");
+    assertThat(response.getBody().getMessage())
+        .contains("POST /loans/{id}?command=approve", "LOS-1", "Fineract rejected approval");
+    assertThat(response.getBody().getDetails()).isEmpty();
+    assertThat(response.getBody().getTimestamp()).isNotNull();
+    assertThat(LosErrorConstants.ERR_FINERACT_INTEGRATION)
+        .isEqualTo("los.error.fineract.integration-failure");
+  }
+
+  @Test
   @DisplayName("AuthorizationDeniedException maps to 403 Forbidden with a fixed message")
   void authorizationDeniedReturnsForbidden() {
     final ResponseEntity<ErrorResponse> response =
