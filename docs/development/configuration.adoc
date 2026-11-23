@@ -69,6 +69,8 @@ See link:../security/authentication.adoc[Authentication] for how the JWT is used
 [source,yaml]
 ----
 los:
+  deployment:
+    environment: ${LOS_DEPLOYMENT_ENVIRONMENT:production}
   fineract:
     base-url: ${FINERACT_BASE_URL:https://localhost:8443}
     tenant-id: ${FINERACT_TENANT_ID:default}
@@ -77,7 +79,7 @@ los:
     mock-enabled: false
 ----
 
-Set `mock-enabled: true` to use the mock Fineract adapter for local development without a running Fineract instance. This causes disbursement to generate a fake loan ID instead of calling Fineract.
+The REST adapter is used by default. `FINERACT_MOCK_ENABLED` accepts only the literal values `true` or `false`, case-insensitively; aliases such as `yes` and `no`, empty values, and other strings fail startup. Mock activation requires both the `dev` or `test` Spring profile and the matching deployment identity (`development` or `test`). For example, local development requires `SPRING_PROFILES_ACTIVE=dev`, `LOS_DEPLOYMENT_ENVIRONMENT=development`, and `FINERACT_MOCK_ENABLED=true`. The deployment identity defaults to `production`; production startup fails if the mock is enabled regardless of active profiles. Mock disbursement generates a fake loan ID and performs no operation against Fineract.
 
 See link:../architecture/integration.adoc[Integration Architecture] for how these values are used.
 

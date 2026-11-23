@@ -19,6 +19,7 @@
 
 package org.apache.fineract.los.bridge;
 
+import jakarta.annotation.PostConstruct;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateRequest;
@@ -32,10 +33,7 @@ import org.springframework.stereotype.Component;
  * Mock {@link FineractLoanApiClient} implementation — simulates the complete Fineract loan
  * lifecycle without calling a real Fineract instance.
  *
- * <p>Active by default ({@code los.fineract.mock-enabled=true}), per the proposal's risk mitigation
- * for FINERACT-2418 being unavailable during the coding period: "the integration layer will use
- * mocked or simulated Fineract responses so that all origination flows can be fully demonstrated
- * without dependency on unreleased APIs."
+ * <p>Enabled only when {@code los.fineract.mock-enabled=true} in a dev or test profile.
  *
  * <p>Generates monotonically increasing fake {@code loanId} per JVM instance — sufficient for
  * demonstrating the end-to-end DRAFT → ... → DISBURSED flow in local development, integration
@@ -43,17 +41,20 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(
-    prefix = "los.fineract",
-    name = "mock-enabled",
-    havingValue = "true",
-    matchIfMissing = true)
+@ConditionalOnProperty(prefix = "los.fineract", name = "mock-enabled", havingValue = "true")
 public class MockFineractLoanApiClient implements FineractLoanApiClient {
 
   private static final long MOCK_OFFICE_ID = 1L;
   private static final long MOCK_ID_SEED = 100000L;
 
   private final AtomicLong sequence = new AtomicLong(MOCK_ID_SEED);
+
+  @PostConstruct
+  void logMockActivation() {
+    log.warn(
+        "MOCK FINERACT ADAPTER ACTIVE: no real Fineract operations will be performed; "
+            + "loan IDs and lifecycle responses are simulated.");
+  }
 
   @Override
   public FineractLoanCreateResponse createLoan(final FineractLoanCreateRequest request) {
