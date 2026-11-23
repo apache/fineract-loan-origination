@@ -20,13 +20,13 @@
 package org.apache.fineract.los.bridge;
 
 import jakarta.annotation.PostConstruct;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateRequest;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateResponse;
 import org.apache.fineract.los.bridge.dto.FineractLoanRequest;
 import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -45,9 +45,11 @@ import org.springframework.stereotype.Component;
 public class MockFineractLoanApiClient implements FineractLoanApiClient {
 
   private static final long MOCK_OFFICE_ID = 1L;
-  private static final long MOCK_ID_SEED = 100000L;
+  private final JdbcTemplate jdbcTemplate;
 
-  private final AtomicLong sequence = new AtomicLong(MOCK_ID_SEED);
+  public MockFineractLoanApiClient(final JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
+  }
 
   @PostConstruct
   void logMockActivation() {
@@ -58,7 +60,8 @@ public class MockFineractLoanApiClient implements FineractLoanApiClient {
 
   @Override
   public FineractLoanCreateResponse createLoan(final FineractLoanCreateRequest request) {
-    final long fakeLoanId = sequence.incrementAndGet();
+    final Long fakeLoanId =
+        jdbcTemplate.queryForObject("SELECT nextval('mock_fineract_loan_id_seq')", Long.class);
 
     log.warn(
         "MOCK Fineract loan creation response. clientId={} productId={} principal={} mockLoanId={}",

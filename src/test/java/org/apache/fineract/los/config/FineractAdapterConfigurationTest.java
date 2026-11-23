@@ -19,6 +19,7 @@
 package org.apache.fineract.los.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.apache.fineract.los.bridge.FineractLoanApiClient;
 import org.apache.fineract.los.bridge.MockFineractLoanApiClient;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 class FineractAdapterConfigurationTest {
 
@@ -206,6 +208,11 @@ class FineractAdapterConfigurationTest {
 
   @Configuration(proxyBeanMethods = false)
   static class AdapterInjectionConfiguration {
+
+    @Bean
+    JdbcTemplate jdbcTemplate() {
+      return mock(JdbcTemplate.class);
+    }
 
     @Bean
     AdapterConsumer adapterConsumer(final FineractLoanApiClient adapter) {
