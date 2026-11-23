@@ -28,12 +28,36 @@ package org.apache.fineract.los.exception;
  */
 public class FineractIntegrationException extends RuntimeException {
 
-  public FineractIntegrationException(final String applicationRef, final Throwable cause) {
+  /** Fineract endpoint operation performed by the disbursement bridge. */
+  public enum Operation {
+    CREATE_LOAN("POST /loans"),
+    APPROVE_LOAN("POST /loans/{id}?command=approve"),
+    DISBURSE_LOAN("POST /loans/{id}?command=disburse");
+
+    private final String endpoint;
+
+    Operation(final String endpoint) {
+      this.endpoint = endpoint;
+    }
+
+    public String getEndpoint() {
+      return endpoint;
+    }
+  }
+
+  public FineractIntegrationException(
+      final String applicationRef, final Operation operation, final Throwable cause) {
     super(
         String.format(
             LosErrorConstants.MSG_FINERACT_CALL_FAILED_TEMPLATE,
+            operation.getEndpoint(),
             applicationRef,
             cause.getMessage()),
         cause);
+  }
+
+  /** Retained for callers compiled against the original create-loan exception constructor. */
+  public FineractIntegrationException(final String applicationRef, final Throwable cause) {
+    this(applicationRef, Operation.CREATE_LOAN, cause);
   }
 }

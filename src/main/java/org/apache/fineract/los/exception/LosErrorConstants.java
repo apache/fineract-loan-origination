@@ -144,9 +144,9 @@ public final class LosErrorConstants {
           + "Configure a product mapping for loan purpose [%s] before "
           + "approval.";
 
-  /** Template for Fineract integration failure. Parameters: applicationRef, root cause message. */
+  /** Template for Fineract integration failure. Parameters: operation, applicationRef, cause. */
   public static final String MSG_FINERACT_CALL_FAILED_TEMPLATE =
-      "Call to Fineract POST /loans failed for application [%s]: %s";
+      "Call to Fineract %s failed for application [%s]: %s";
 
   /** Template for duplicate approval decision. Parameters: applicationRef, assignedOfficer. */
   public static final String MSG_DUPLICATE_APPROVAL_TEMPLATE =

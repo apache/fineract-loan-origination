@@ -173,7 +173,8 @@ public class DisbursementBridgeService {
           ex.getMessage());
       application.setFineractIntegrationStatus(FineractIntegrationStatus.FAILED);
       loanApplicationRepository.save(application);
-      throw new FineractIntegrationException(application.getApplicationRef(), ex);
+      throw new FineractIntegrationException(
+          application.getApplicationRef(), FineractIntegrationException.Operation.CREATE_LOAN, ex);
     }
 
     application.setFineractLoanId(response.getLoanId());
@@ -224,7 +225,8 @@ public class DisbursementBridgeService {
           ex);
       application.setFineractIntegrationStatus(FineractIntegrationStatus.FAILED);
       loanApplicationRepository.save(application);
-      throw new FineractIntegrationException(application.getApplicationRef(), ex);
+      throw new FineractIntegrationException(
+          application.getApplicationRef(), FineractIntegrationException.Operation.APPROVE_LOAN, ex);
     }
 
     application.setFineractIntegrationStatus(FineractIntegrationStatus.LOAN_APPROVED);
@@ -276,7 +278,10 @@ public class DisbursementBridgeService {
           ex);
       application.setFineractIntegrationStatus(FineractIntegrationStatus.FAILED);
       loanApplicationRepository.save(application);
-      throw new FineractIntegrationException(application.getApplicationRef(), ex);
+      throw new FineractIntegrationException(
+          application.getApplicationRef(),
+          FineractIntegrationException.Operation.DISBURSE_LOAN,
+          ex);
     }
 
     application.setFineractIntegrationStatus(FineractIntegrationStatus.LOAN_DISBURSED);
