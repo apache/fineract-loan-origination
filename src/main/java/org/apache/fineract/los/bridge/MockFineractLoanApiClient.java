@@ -35,9 +35,9 @@ import org.springframework.stereotype.Component;
  *
  * <p>Enabled only when {@code los.fineract.mock-enabled=true} in a dev or test profile.
  *
- * <p>Generates monotonically increasing fake {@code loanId} per JVM instance — sufficient for
- * demonstrating the end-to-end DRAFT → ... → DISBURSED flow in local development, integration
- * tests, and CI, without a running Fineract dependency.
+ * <p>Allocates fake {@code loanId} values from the shared PostgreSQL sequence, so allocations
+ * remain unique across adapter instances and application restarts. This supports demonstrating the
+ * complete loan lifecycle without a running Fineract dependency.
  */
 @Slf4j
 @Component

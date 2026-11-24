@@ -42,7 +42,19 @@ spring:
 
 When using the provided Docker Compose setup, the database is on port **5433** and the container maps it to the internal port 5432. Override `DB_URL` if your PostgreSQL is on a different host or port.
 
-Database schema is managed by **Flyway**. Migrations run automatically on startup from `src/main/resources/db/migration/`.
+Database schema is managed by **Flyway**. Migrations run automatically on startup from `src/main/resources/db/migration/`; Hibernate validates the resulting schema and does not create or update it.
+
+An empty database runs migrations V1 through V10. The staff credentials migration is V8.1 so both V8 changes have distinct Flyway versions; its SQL contents are unchanged.
+
+=== Existing databases
+
+Earlier application versions used Hibernate `ddl-auto: create` or `update`, while the Spring Boot 4 Flyway integration module was absent. The documented application startup therefore created or updated tables through Hibernate without recording Flyway history. Adoption of such a database is explicit: back up the database, stop the application, and confirm that `public.flyway_schema_history` does not exist. Check that the existing schema contains the V1–V9 application tables and columns expected by the current entities, including `loan_application.fineract_loan_id`, and check for duplicate non-null `(tenant_id, fineract_loan_id)` values. Resolve any duplicates against Fineract; migration V10 intentionally refuses to rewrite loan references.
+
+For a verified existing schema without Flyway history, set `SPRING_FLYWAY_BASELINE_ON_MIGRATE=true` for one startup. Flyway records baseline version 9, then runs V10 to create and initialize the mock sequence and add the tenant-scoped unique constraint. Baseline adoption does not replay V1–V9 SQL: SQL-only indexes from those migrations are not added, and V8.1's default staff rows are not inserted. This preserves the existing Hibernate-created database's prior behavior; provision any required staff accounts through the normal administrative process. After successful startup, remove the override; the baseline is recorded in the database. Do not use this override on an empty database or a database whose schema has not been checked.
+
+If `flyway_schema_history` already exists, do not use the baseline override. Inspect its recorded versions before upgrading. In particular, a recorded V8 entry for `create staff credentials` may fail validation after the file is renumbered to V8.1, while a V8 entry for `add fineract client id` remains the current V8 migration. Such histories require an individually reviewed reconciliation plan; do not run `repair` or alter recorded history blindly.
+
+`spring.flyway.baseline-version` defaults to 9 for this adoption path. `spring.flyway.baseline-on-migrate` remains false by default and can be enabled with `SPRING_FLYWAY_BASELINE_ON_MIGRATE` only after the checks above.
 
 == Authentication
 
