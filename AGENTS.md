@@ -179,8 +179,10 @@ These rules hold the design together. Change one only after maintainers agree.
   `@Builder` immutables for scoring models. Never use `@SneakyThrows`. Formatting is
   google-java-format; run Spotless instead of formatting by hand.
 - **Database:** every schema change is a new Flyway migration, `V<n>__<description>.sql`. Never
-  edit a migration that has been merged. Version 8 is already used twice, so use the next unused
-  number (currently `V10`). Write the migration even though `ddl-auto` is set to `update`.
+  edit a migration that has been merged. The legacy staff credentials migration uses version 8.1
+  to resolve the duplicate V8 version; the next unused version is currently `V11`. Flyway owns
+  schema changes and Hibernate uses `ddl-auto: validate`. Existing Hibernate-created databases
+  need the documented, explicit Flyway baseline adoption in `docs/development/configuration.adoc`.
 - **License headers:** every new file RAT scans (Java, TypeScript, HTML, SCSS, SQL, YAML,
   Markdown, and so on) needs the ASF license header. Copy it from a neighbouring file of the same
   type.

@@ -20,13 +20,13 @@
 package org.apache.fineract.los.bridge;
 
 import jakarta.annotation.PostConstruct;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateRequest;
 import org.apache.fineract.los.bridge.dto.FineractLoanCreateResponse;
 import org.apache.fineract.los.bridge.dto.FineractLoanRequest;
 import org.apache.fineract.los.bridge.dto.FineractLoanResponse;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,9 +35,9 @@ import org.springframework.stereotype.Component;
  *
  * <p>Enabled only when {@code los.fineract.mock-enabled=true} in a dev or test profile.
  *
- * <p>Generates monotonically increasing fake {@code loanId} per JVM instance — sufficient for
- * demonstrating the end-to-end DRAFT → ... → DISBURSED flow in local development, integration
- * tests, and CI, without a running Fineract dependency.
+ * <p>Allocates fake {@code loanId} values from the shared PostgreSQL sequence, so allocations
+ * remain unique across adapter instances and application restarts. This supports demonstrating the
+ * complete loan lifecycle without a running Fineract dependency.
  */
 @Slf4j
 @Component
@@ -45,9 +45,11 @@ import org.springframework.stereotype.Component;
 public class MockFineractLoanApiClient implements FineractLoanApiClient {
 
   private static final long MOCK_OFFICE_ID = 1L;
-  private static final long MOCK_ID_SEED = 100000L;
+  private final JdbcTemplate jdbcTemplate;
 
-  private final AtomicLong sequence = new AtomicLong(MOCK_ID_SEED);
+  public MockFineractLoanApiClient(final JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
+  }
 
   @PostConstruct
   void logMockActivation() {
@@ -58,7 +60,8 @@ public class MockFineractLoanApiClient implements FineractLoanApiClient {
 
   @Override
   public FineractLoanCreateResponse createLoan(final FineractLoanCreateRequest request) {
-    final long fakeLoanId = sequence.incrementAndGet();
+    final Long fakeLoanId =
+        jdbcTemplate.queryForObject("SELECT nextval('mock_fineract_loan_id_seq')", Long.class);
 
     log.warn(
         "MOCK Fineract loan creation response. clientId={} productId={} principal={} mockLoanId={}",
