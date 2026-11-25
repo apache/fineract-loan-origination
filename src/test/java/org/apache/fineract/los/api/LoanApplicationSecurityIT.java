@@ -21,11 +21,14 @@ package org.apache.fineract.los.api;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import io.restassured.response.Response;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.fineract.los.api.dto.response.FineractAuthResponse;
 import org.apache.fineract.los.security.JwtService;
+import org.apache.fineract.los.service.FineractCredentialValidationService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +41,7 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -65,6 +69,23 @@ class LoanApplicationSecurityIT {
   private static final String TENANT_ID = "default";
   private static final String TENANT_HEADER = "X-Fineract-Platform-TenantId";
   private static final Long CLIENT_ID = 900001L;
+  private static final String APPLICATION_REQUEST_BODY =
+      """
+              {
+                "requestedAmount": 1000,
+                "currency": "USD",
+                "loanPurpose": "PERSONAL",
+                "tenorMonths": 12,
+                "applicant": {
+                  "fullName": "Security Test Applicant",
+                  "nationalId": "TEST-ONLY-ID",
+                  "monthlyIncome": 5000,
+                  "employmentStatus": "EMPLOYED",
+                  "employmentDurationMonths": 24,
+                  "existingLoanObligations": 0
+                }
+              }
+          """;
 
   @Container @ServiceConnection
   static PostgreSQLContainer<?> postgres =
@@ -75,6 +96,7 @@ class LoanApplicationSecurityIT {
 
   @LocalServerPort private int port;
   @Autowired private JwtService jwtService;
+  @MockitoBean private FineractCredentialValidationService fineractCredentialValidationService;
 
   @Autowired
   @Qualifier("requestMappingHandlerMapping")
@@ -92,26 +114,146 @@ class LoanApplicationSecurityIT {
             .header("Authorization", bearer(customerToken))
             .header(TENANT_HEADER, TENANT_ID)
             .contentType("application/json")
-            .body(
-                """
-                        {
-                          "requestedAmount": 1000,
-                          "currency": "USD",
-                          "loanPurpose": "PERSONAL",
-                          "tenorMonths": 12,
-                          "applicant": {
-                            "fullName": "Security Test Applicant",
-                            "nationalId": "TEST-ONLY-ID",
-                            "monthlyIncome": 5000,
-                            "employmentStatus": "EMPLOYED",
-                            "employmentDurationMonths": 24,
-                            "existingLoanObligations": 0
-                          }
-                        }
-                """)
+            .body(APPLICATION_REQUEST_BODY)
             .post("/api/v1/customer/loan-applications");
     Assertions.assertEquals(201, response.statusCode());
     applicationRef = response.jsonPath().getString("applicationRef");
+  }
+
+  @Test
+  @DisplayName("Customer JWT can read customer profile, list, and owned application")
+  void customerCanReadCustomerRoutes() {
+    final Response profile = get("/api/v1/customer/me", customerToken);
+    Assertions.assertEquals(200, profile.statusCode());
+    assertThat(profile.jsonPath().getLong("clientId")).isEqualTo(CLIENT_ID);
+
+    final Response applications = get("/api/v1/customer/loan-applications", customerToken);
+    Assertions.assertEquals(200, applications.statusCode());
+    assertThat(applications.getBody().asString()).contains(applicationRef);
+
+    final Response application = get(customerApplicationPath(), customerToken);
+    Assertions.assertEquals(200, application.statusCode());
+    assertThat(application.jsonPath().getString("applicationRef")).isEqualTo(applicationRef);
+  }
+
+  @Test
+  @DisplayName("Staff JWT is denied on customer profile, list, and application detail")
+  void staffCannotAccessCustomerRoutes() {
+    final List<String> staffTokens =
+        List.of(
+            staffToken(),
+            jwtService.generateStaffToken("security-test-admin", TENANT_ID, "ROLE_ADMIN"));
+    for (String token : staffTokens) {
+      for (String path :
+          List.of(
+              "/api/v1/customer/me",
+              "/api/v1/customer/loan-applications",
+              customerApplicationPath())) {
+        final Response response = get(path, token);
+        Assertions.assertEquals(403, response.statusCode(), path);
+        assertNoSensitiveData(response.getBody().asString());
+      }
+    }
+  }
+
+  @Test
+  @DisplayName(
+      "Customer JWT can submit own application but cannot access another customer's application")
+  void customerApplicationOperationsKeepOwnershipChecks() {
+    final String otherCustomerToken =
+        jwtService.generateToken("other-security-test-customer", CLIENT_ID + 1, TENANT_ID);
+
+    final Response otherCustomerDetail = get(customerApplicationPath(), otherCustomerToken);
+    Assertions.assertEquals(404, otherCustomerDetail.statusCode());
+    assertNoSensitiveData(otherCustomerDetail.getBody().asString());
+
+    final Response otherCustomerSubmit =
+        request(HttpMethod.POST, customerApplicationPath() + "/submit", otherCustomerToken);
+    Assertions.assertEquals(404, otherCustomerSubmit.statusCode());
+    assertNoSensitiveData(otherCustomerSubmit.getBody().asString());
+
+    final Response ownerApplication = get(customerApplicationPath(), customerToken);
+    Assertions.assertEquals(200, ownerApplication.statusCode());
+    assertThat(ownerApplication.jsonPath().getString("status")).isEqualTo("DRAFT");
+
+    final Response ownerSubmit =
+        request(HttpMethod.POST, customerApplicationPath() + "/submit", customerToken);
+    Assertions.assertEquals(200, ownerSubmit.statusCode());
+    assertThat(ownerSubmit.getBody().asString()).contains(applicationRef);
+
+    final Response otherCustomerAfterSubmit = get(customerApplicationPath(), otherCustomerToken);
+    Assertions.assertEquals(404, otherCustomerAfterSubmit.statusCode());
+    assertNoSensitiveData(otherCustomerAfterSubmit.getBody().asString());
+  }
+
+  @Test
+  @DisplayName(
+      "Fineract Basic-authenticated staff can access staff identity through security chain")
+  void fineractBasicAuthenticationCanAccessStaffIdentity() {
+    final FineractAuthResponse fineractResponse = new FineractAuthResponse();
+    fineractResponse.setAuthenticated(true);
+    fineractResponse.setPermissions(List.of("ROLE_LOAN_OFFICER"));
+    when(fineractCredentialValidationService.validate("security-test-basic", "test-password"))
+        .thenReturn(fineractResponse);
+
+    final Response response =
+        given()
+            .port(port)
+            .auth()
+            .preemptive()
+            .basic("security-test-basic", "test-password")
+            .get("/api/v1/staff/me");
+
+    Assertions.assertEquals(200, response.statusCode());
+    assertThat(response.jsonPath().getString("username")).isEqualTo("security-test-basic");
+    assertThat(response.jsonPath().getString("losRole")).isEqualTo("LOAN_OFFICER");
+  }
+
+  @Test
+  @DisplayName("Staff JWT cannot create a customer application")
+  void staffCannotCreateCustomerApplication() {
+    final Response applicationsBefore = get("/api/v1/customer/loan-applications", customerToken);
+    Assertions.assertEquals(200, applicationsBefore.statusCode());
+
+    final Response deniedResponse =
+        given()
+            .port(port)
+            .header("Authorization", bearer(staffToken()))
+            .header(TENANT_HEADER, TENANT_ID)
+            .contentType("application/json")
+            .body(APPLICATION_REQUEST_BODY)
+            .post("/api/v1/customer/loan-applications");
+    Assertions.assertEquals(403, deniedResponse.statusCode());
+
+    final Response applicationsAfter = get("/api/v1/customer/loan-applications", customerToken);
+    Assertions.assertEquals(200, applicationsAfter.statusCode());
+    assertThat(applicationsAfter.getBody().asString())
+        .isEqualTo(applicationsBefore.getBody().asString());
+  }
+
+  @Test
+  @DisplayName("Only staff JWT can access staff identity; anonymous and customer are denied")
+  void staffIdentityRequiresStaffAuthentication() {
+    final Response customerResponse = get("/api/v1/staff/me", customerToken);
+    Assertions.assertEquals(403, customerResponse.statusCode());
+    assertThat(customerResponse.getBody().asString()).doesNotContain("security-test-customer");
+
+    final Response staffResponse = get("/api/v1/staff/me", staffToken());
+    Assertions.assertEquals(200, staffResponse.statusCode());
+    assertThat(staffResponse.jsonPath().getString("username")).isEqualTo("security-test-staff");
+    assertThat(staffResponse.jsonPath().getString("losRole")).isEqualTo("LOAN_OFFICER");
+
+    final Response anonymousResponse = given().port(port).get("/api/v1/staff/me");
+    Assertions.assertEquals(401, anonymousResponse.statusCode());
+    assertThat(anonymousResponse.getBody().asString()).doesNotContain("security-test-staff");
+  }
+
+  @Test
+  @DisplayName("Anonymous customer route remains unauthenticated")
+  void anonymousCustomerRequestIsUnauthorized() {
+    final Response response = given().port(port).get("/api/v1/customer/me");
+    Assertions.assertEquals(401, response.statusCode());
+    assertThat(response.getBody().asString()).doesNotContain("clientId", "displayName");
   }
 
   @Test
@@ -176,6 +318,14 @@ class LoanApplicationSecurityIT {
 
   private String staffDetailPath() {
     return "/api/v1/loan-applications/" + applicationRef + "/staff-detail";
+  }
+
+  private String customerApplicationPath() {
+    return "/api/v1/customer/loan-applications/" + applicationRef;
+  }
+
+  private String staffToken() {
+    return jwtService.generateStaffToken("security-test-staff", TENANT_ID, "ROLE_LOAN_OFFICER");
   }
 
   private Response get(String path, String token) {
