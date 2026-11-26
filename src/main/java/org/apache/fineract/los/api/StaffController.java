@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.los.api.dto.response.StaffProfileResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,6 +51,7 @@ public class StaffController {
 
   @Operation(summary = "Return the authenticated staff member's LOS workflow role")
   @GetMapping("/me")
+  @PreAuthorize("hasRole('STAFF')")
   public StaffProfileResponse getCurrentStaff(final Authentication authentication) {
 
     // For JWT-authenticated staff the role is the primary authority (e.g. ROLE_ADMIN).

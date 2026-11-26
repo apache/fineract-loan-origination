@@ -78,7 +78,7 @@ public class SecurityConfig {
 
     http.securityMatcher("/api/v1/customer/**")
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        .authorizeHttpRequests(auth -> auth.anyRequest().hasRole("CUSTOMER"))
         .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
         .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/customer/**"))
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
